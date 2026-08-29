@@ -85,17 +85,21 @@ def engineer_features(
         ts = row["_parsed_ts"].to_pydatetime()
         clock_h = _clock_time_hours(ts)
 
-        priors = agent_histories.get(agent_id, [])
+        all_priors = agent_histories.get(agent_id, [])
+
+        # Bound history to a 14-day rolling window to prevent stale cross-session state leakage
+        window_cutoff = ts - timedelta(days=14)
+        priors = [p for p in all_priors if p["ts"] >= window_cutoff]
 
         # 1. amount_ratio
         amount_ratio = amt / cap if cap > 0 else 0.0
 
-        # 2. category_novelty
-        prior_categories = {p["category"] for p in priors}
+        # 2. category_novelty (evaluated against agent lifetime history)
+        prior_categories = {p["category"] for p in all_priors}
         category_novelty = 1 if cat not in prior_categories else 0
 
-        # 3. merchant_novelty
-        prior_merchants = {p["merchant"] for p in priors}
+        # 3. merchant_novelty (evaluated against agent lifetime history)
+        prior_merchants = {p["merchant"] for p in all_priors}
         merchant_novelty = 1 if merch not in prior_merchants else 0
 
         # 4. trailing_1h_count & trailing 1h sum
@@ -112,26 +116,46 @@ def engineer_features(
         # 6. rolling_sum_ratio (including this transaction)
         rolling_sum_ratio = (trailing_1h_sum + amt) / cap if cap > 0 else 0.0
 
-        # 7. time_deviation
+        # 7. time_deviation (exponential decay weighted over rolling window)
         if len(priors) > 0:
-            mean_clock_h = np.mean([p["clock_h"] for p in priors])
-            time_deviation = abs(clock_h - mean_clock_h)
+            weights = np.array([
+                np.exp(-(ts - p["ts"]).total_seconds() / (7.0 * 86400.0))
+                for p in priors
+            ])
+            weights_sum = weights.sum()
+            if weights_sum > 0:
+                weights /= weights_sum
+                mean_clock_h = float(np.sum(weights * np.array([p["clock_h"] for p in priors])))
+                time_deviation = abs(clock_h - mean_clock_h)
+            else:
+                time_deviation = 0.0
         else:
             time_deviation = 0.0
 
-        # 8. amount_zscore
+        # 8. amount_zscore (exponential decay weighted over rolling window)
         if len(priors) >= 3:
-            prior_amts = [p["amount"] for p in priors]
-            std_amt = np.std(prior_amts)
-            if std_amt > 1e-6:
-                amount_zscore = (amt - np.mean(prior_amts)) / std_amt
+            prior_amts = np.array([p["amount"] for p in priors])
+            weights = np.array([
+                np.exp(-(ts - p["ts"]).total_seconds() / (7.0 * 86400.0))
+                for p in priors
+            ])
+            weights_sum = weights.sum()
+            if weights_sum > 0:
+                weights /= weights_sum
+                mean_amt = float(np.sum(weights * prior_amts))
+                variance = float(np.sum(weights * ((prior_amts - mean_amt) ** 2)))
+                std_amt = np.sqrt(variance)
+                if std_amt > 1e-4:
+                    amount_zscore = (amt - mean_amt) / std_amt
+                else:
+                    amount_zscore = 0.0
             else:
                 amount_zscore = 0.0
         else:
             amount_zscore = 0.0
 
         # 9. is_new_agent
-        is_new_agent = 1 if len(priors) < 5 else 0
+        is_new_agent = 1 if len(all_priors) < 5 else 0
 
         feat_dict = {
             "index": row["index"],
