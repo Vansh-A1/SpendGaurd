@@ -1,0 +1,103 @@
+[
+  {
+    "id": "mandate_shop_01",
+    "agent_id": "agent_shopping_01",
+    "per_transaction_cap": 40000.0,
+    "categories": [
+      "electronics"
+    ],
+    "merchants": [
+      "Amazon",
+      "Croma",
+      "Sony Center",
+      "Dell Official Store",
+      "Apple Store",
+      "Reliance Digital"
+    ],
+    "time_window_start": "08:00",
+    "time_window_end": "22:00",
+    "issued_at": "2026-08-01T10:30:00Z",
+    "ttl_seconds": 2592000
+  },
+  {
+    "id": "mandate_trav_01",
+    "agent_id": "agent_travel_01",
+    "per_transaction_cap": 60000.0,
+    "categories": [
+      "travel"
+    ],
+    "merchants": [
+      "IndiGo",
+      "Air India",
+      "Taj Hotels",
+      "Marriott",
+      "Uber",
+      "MakeMyTrip",
+      "Zostel"
+    ],
+    "time_window_start": "06:00",
+    "time_window_end": "23:59",
+    "issued_at": "2026-08-01T10:30:00Z",
+    "ttl_seconds": 2592000
+  },
+  {
+    "id": "mandate_groc_01",
+    "agent_id": "agent_grocery_01",
+    "per_transaction_cap": 5000.0,
+    "categories": [
+      "groceries"
+    ],
+    "merchants": [
+      "Blinkit",
+      "Instamart",
+      "Zepto",
+      "BigBasket",
+      "Amazon Fresh"
+    ],
+    "time_window_start": "06:00",
+    "time_window_end": "23:00",
+    "issued_at": "2026-08-01T10:30:00Z",
+    "ttl_seconds": 2592000
+  },
+  {
+    "id": "mandate_soft_01",
+    "agent_id": "agent_software_01",
+    "per_transaction_cap": 50000.0,
+    "categories": [
+      "software"
+    ],
+    "merchants": [
+      "GitHub",
+      "JetBrains",
+      "Notion",
+      "OpenAI",
+      "Adobe",
+      "1Password",
+      "AWS"
+    ],
+    "time_window_start": "00:00",
+    "time_window_end": "23:59",
+    "issued_at": "2026-08-01T10:30:00Z",
+    "ttl_seconds": 2592000
+  },
+  {
+    "id": "mandate_shop_cold",
+    "agent_id": "agent_shopping_cold",
+    "per_transaction_cap": 35000.0,
+    "categories": [
+      "electronics",
+      "software"
+    ],
+    "merchants": [
+      "Amazon",
+      "Flipkart",
+      "Apple Store",
+      "GitHub",
+      "Notion"
+    ],
+    "time_window_start": "08:00",
+    "time_window_end": "22:00",
+    "issued_at": "2026-08-28T15:00:00Z",
+    "ttl_seconds": 1209600
+  }
+]

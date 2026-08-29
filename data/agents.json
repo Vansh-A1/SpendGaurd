@@ -1,0 +1,32 @@
+[
+  {
+    "id": "agent_shopping_01",
+    "type": "shopping",
+    "name": "Primary Consumer Shopping Agent",
+    "created_at": "2026-08-01T10:00:00Z"
+  },
+  {
+    "id": "agent_travel_01",
+    "type": "travel",
+    "name": "Corporate Travel Booking Agent",
+    "created_at": "2026-08-01T10:00:00Z"
+  },
+  {
+    "id": "agent_grocery_01",
+    "type": "grocery",
+    "name": "Household Grocery Procurement Agent",
+    "created_at": "2026-08-01T10:00:00Z"
+  },
+  {
+    "id": "agent_software_01",
+    "type": "software",
+    "name": "DevOps & Engineering SaaS License Agent",
+    "created_at": "2026-08-01T10:00:00Z"
+  },
+  {
+    "id": "agent_shopping_cold",
+    "type": "shopping",
+    "name": "Cold-Start Guest Shopping Agent",
+    "created_at": "2026-08-28T14:30:00Z"
+  }
+]

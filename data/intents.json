@@ -1,0 +1,1509 @@
+{
+  "intent_0001": {
+    "id": "intent_0001",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Apple",
+      "category": "electronics",
+      "max_price": 115900.0
+    },
+    "soft_preferences": {
+      "color": "midnight"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T11:45:00Z"
+  },
+  "intent_0002": {
+    "id": "intent_0002",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Samsung",
+      "category": "electronics",
+      "max_price": 130999.0
+    },
+    "soft_preferences": {
+      "color": "titanium black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T13:45:00Z"
+  },
+  "intent_0003": {
+    "id": "intent_0003",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Dell",
+      "category": "electronics",
+      "max_price": 99990.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T15:45:00Z"
+  },
+  "intent_0004": {
+    "id": "intent_0004",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Dell",
+      "category": "electronics",
+      "max_price": 75990.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T17:45:00Z"
+  },
+  "intent_0005": {
+    "id": "intent_0005",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Apple",
+      "category": "electronics",
+      "max_price": 115900.0
+    },
+    "soft_preferences": {
+      "color": "midnight"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T19:45:00Z"
+  },
+  "intent_0006": {
+    "id": "intent_0006",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Nutraj",
+      "category": "groceries",
+      "max_price": 10490.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T21:45:00Z"
+  },
+  "intent_0007": {
+    "id": "intent_0007",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Daawat",
+      "category": "groceries",
+      "max_price": 6700.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T23:45:00Z"
+  },
+  "intent_0008": {
+    "id": "intent_0008",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Ferrero Rocher",
+      "category": "groceries",
+      "max_price": 7570.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T01:45:00Z"
+  },
+  "intent_0009": {
+    "id": "intent_0009",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Fortune",
+      "category": "groceries",
+      "max_price": 6800.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T03:45:00Z"
+  },
+  "intent_0010": {
+    "id": "intent_0010",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Taj Hotels",
+      "category": "travel",
+      "max_price": 68500.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T05:45:00Z"
+  },
+  "intent_0011": {
+    "id": "intent_0011",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Marriott",
+      "category": "travel",
+      "max_price": 68200.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T07:45:00Z"
+  },
+  "intent_0012": {
+    "id": "intent_0012",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Air India",
+      "category": "travel",
+      "max_price": 97000.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T09:45:00Z"
+  },
+  "intent_0013": {
+    "id": "intent_0013",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Adobe",
+      "category": "software",
+      "max_price": 48800.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T11:45:00Z"
+  },
+  "intent_0014": {
+    "id": "intent_0014",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Dell",
+      "category": "electronics",
+      "max_price": 75990.0
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T13:45:00Z"
+  },
+  "intent_0015": {
+    "id": "intent_0015",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Apple",
+      "category": "electronics",
+      "max_price": 115900.0
+    },
+    "soft_preferences": {
+      "color": "midnight"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T15:45:00Z"
+  },
+  "intent_0016": {
+    "id": "intent_0016",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T12:45:00Z"
+  },
+  "intent_0017": {
+    "id": "intent_0017",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Apple",
+      "model": "AirPods Pro (2nd Gen)"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T14:45:00Z"
+  },
+  "intent_0018": {
+    "id": "intent_0018",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T16:45:00Z"
+  },
+  "intent_0019": {
+    "id": "intent_0019",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Bose",
+      "model": "QuietComfort 45"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T18:45:00Z"
+  },
+  "intent_0020": {
+    "id": "intent_0020",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Apple",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T20:45:00Z"
+  },
+  "intent_0021": {
+    "id": "intent_0021",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "IndiGo",
+      "model": "Flight DEL-BLR 6E-2035"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T22:45:00Z"
+  },
+  "intent_0022": {
+    "id": "intent_0022",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Taj Hotels",
+      "model": "The Taj Mahal Palace - Deluxe Room"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T00:45:00Z"
+  },
+  "intent_0023": {
+    "id": "intent_0023",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Air India",
+      "route": "DEL-LHR"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T02:45:00Z"
+  },
+  "intent_0024": {
+    "id": "intent_0024",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Marriott",
+      "city": "Bengaluru"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T04:45:00Z"
+  },
+  "intent_0025": {
+    "id": "intent_0025",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Daawat",
+      "model": "Ultima Extra Long Basmati Rice 5kg"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T06:45:00Z"
+  },
+  "intent_0026": {
+    "id": "intent_0026",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Nescafe",
+      "model": "Gold Blend Instant Coffee 200g"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T08:45:00Z"
+  },
+  "intent_0027": {
+    "id": "intent_0027",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Ferrero Rocher"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T10:45:00Z"
+  },
+  "intent_0028": {
+    "id": "intent_0028",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T12:45:00Z"
+  },
+  "intent_0029": {
+    "id": "intent_0029",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "OpenAI",
+      "model": "ChatGPT Plus Subscription (1 Month)"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T14:45:00Z"
+  },
+  "intent_0030": {
+    "id": "intent_0030",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T16:45:00Z"
+  },
+  "intent_0031": {
+    "id": "intent_0031",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH720N",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "anc": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-15T13:45:00Z"
+  },
+  "intent_0032": {
+    "id": "intent_0032",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH720N",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "anc": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-15T15:45:00Z"
+  },
+  "intent_0033": {
+    "id": "intent_0033",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH520",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "anc": false
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-15T17:45:00Z"
+  },
+  "intent_0034": {
+    "id": "intent_0034",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "anc": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-15T19:45:00Z"
+  },
+  "intent_0035": {
+    "id": "intent_0035",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Bose",
+      "model": "QuietComfort 45",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "anc": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-15T21:45:00Z"
+  },
+  "intent_0036": {
+    "id": "intent_0036",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH720N",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "anc": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-15T23:45:00Z"
+  },
+  "intent_0037": {
+    "id": "intent_0037",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Apple",
+      "model": "AirPods Pro (2nd Gen)",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "anc": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T01:45:00Z"
+  },
+  "intent_0038": {
+    "id": "intent_0038",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Taj Hotels",
+      "model": "The Taj Mahal Palace - Deluxe Room",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "breakfast": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T03:45:00Z"
+  },
+  "intent_0039": {
+    "id": "intent_0039",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Air India",
+      "model": "Flight DEL-BLR AI-505",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "refundable": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T05:45:00Z"
+  },
+  "intent_0040": {
+    "id": "intent_0040",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Taj Hotels",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "ac": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T07:45:00Z"
+  },
+  "intent_0041": {
+    "id": "intent_0041",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Nescafe",
+      "model": "Gold Blend Instant Coffee 200g",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "hot_beverage": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T09:45:00Z"
+  },
+  "intent_0042": {
+    "id": "intent_0042",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Ferrero Rocher",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "snack": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T11:45:00Z"
+  },
+  "intent_0043": {
+    "id": "intent_0043",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "ai_assist": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T13:45:00Z"
+  },
+  "intent_0044": {
+    "id": "intent_0044",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "coding": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T15:45:00Z"
+  },
+  "intent_0045": {
+    "id": "intent_0045",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "Notion",
+      "model": "Notion Plus Plan (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "productivity": true
+    },
+    "substitution_allowed": true,
+    "created_at": "2026-08-16T17:45:00Z"
+  },
+  "intent_0046": {
+    "id": "intent_0046",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T13:45:00Z"
+  },
+  "intent_0047": {
+    "id": "intent_0047",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T13:48:00Z"
+  },
+  "intent_0048": {
+    "id": "intent_0048",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T13:51:00Z"
+  },
+  "intent_0049": {
+    "id": "intent_0049",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T13:54:00Z"
+  },
+  "intent_0050": {
+    "id": "intent_0050",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T13:57:00Z"
+  },
+  "intent_0051": {
+    "id": "intent_0051",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T14:00:00Z"
+  },
+  "intent_0052": {
+    "id": "intent_0052",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T14:03:00Z"
+  },
+  "intent_0053": {
+    "id": "intent_0053",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T14:06:00Z"
+  },
+  "intent_0054": {
+    "id": "intent_0054",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T14:09:00Z"
+  },
+  "intent_0055": {
+    "id": "intent_0055",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-20T14:12:00Z"
+  },
+  "intent_0056": {
+    "id": "intent_0056",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:45:00Z"
+  },
+  "intent_0057": {
+    "id": "intent_0057",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:47:00Z"
+  },
+  "intent_0058": {
+    "id": "intent_0058",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:49:00Z"
+  },
+  "intent_0059": {
+    "id": "intent_0059",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:51:00Z"
+  },
+  "intent_0060": {
+    "id": "intent_0060",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:53:00Z"
+  },
+  "intent_0061": {
+    "id": "intent_0061",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:55:00Z"
+  },
+  "intent_0062": {
+    "id": "intent_0062",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:57:00Z"
+  },
+  "intent_0063": {
+    "id": "intent_0063",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T10:59:00Z"
+  },
+  "intent_0064": {
+    "id": "intent_0064",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T11:01:00Z"
+  },
+  "intent_0065": {
+    "id": "intent_0065",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "billing": "Annual"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-22T11:03:00Z"
+  },
+  "intent_0066": {
+    "id": "intent_0066",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Dell",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T14:45:00Z"
+  },
+  "intent_0067": {
+    "id": "intent_0067",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T16:45:00Z"
+  },
+  "intent_0068": {
+    "id": "intent_0068",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Amazon",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T18:45:00Z"
+  },
+  "intent_0069": {
+    "id": "intent_0069",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Apple",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T20:45:00Z"
+  },
+  "intent_0070": {
+    "id": "intent_0070",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Bose",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T22:45:00Z"
+  },
+  "intent_0071": {
+    "id": "intent_0071",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Daawat",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T00:45:00Z"
+  },
+  "intent_0072": {
+    "id": "intent_0072",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Fortune",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T02:45:00Z"
+  },
+  "intent_0073": {
+    "id": "intent_0073",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Amul",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T04:45:00Z"
+  },
+  "intent_0074": {
+    "id": "intent_0074",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Nutraj",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T06:45:00Z"
+  },
+  "intent_0075": {
+    "id": "intent_0075",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "IndiGo",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T08:45:00Z"
+  },
+  "intent_0076": {
+    "id": "intent_0076",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Taj Hotels",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T10:45:00Z"
+  },
+  "intent_0077": {
+    "id": "intent_0077",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Uber",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T12:45:00Z"
+  },
+  "intent_0078": {
+    "id": "intent_0078",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "Notion",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T14:45:00Z"
+  },
+  "intent_0079": {
+    "id": "intent_0079",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "OpenAI",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T16:45:00Z"
+  },
+  "intent_0080": {
+    "id": "intent_0080",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Sony",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-16T18:45:00Z"
+  },
+  "intent_0081": {
+    "id": "intent_0081",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T10:15:00Z"
+  },
+  "intent_0082": {
+    "id": "intent_0082",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH720N",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T11:15:00Z"
+  },
+  "intent_0083": {
+    "id": "intent_0083",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Apple",
+      "model": "AirPods Pro (2nd Gen)",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "white"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T12:15:00Z"
+  },
+  "intent_0084": {
+    "id": "intent_0084",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Bose",
+      "model": "QuietComfort 45",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "triple black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T13:15:00Z"
+  },
+  "intent_0085": {
+    "id": "intent_0085",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "IndiGo",
+      "model": "Flight DEL-BLR 6E-2035",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T14:15:00Z"
+  },
+  "intent_0086": {
+    "id": "intent_0086",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Marriott",
+      "model": "JW Marriott Bengaluru - Executive Suite",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T15:15:00Z"
+  },
+  "intent_0087": {
+    "id": "intent_0087",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Uber",
+      "model": "Uber Premier Rental (8hr/80km)",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T16:15:00Z"
+  },
+  "intent_0088": {
+    "id": "intent_0088",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Amul",
+      "model": "Gold Full Cream Milk 1L (Pack of 6)",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T17:15:00Z"
+  },
+  "intent_0089": {
+    "id": "intent_0089",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Daawat",
+      "model": "Ultima Extra Long Basmati Rice 5kg",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T18:15:00Z"
+  },
+  "intent_0090": {
+    "id": "intent_0090",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Nutraj",
+      "model": "California Raw Almonds 1kg",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T19:15:00Z"
+  },
+  "intent_0091": {
+    "id": "intent_0091",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T20:15:00Z"
+  },
+  "intent_0092": {
+    "id": "intent_0092",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "JetBrains",
+      "model": "All Products Pack (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T21:15:00Z"
+  },
+  "intent_0093": {
+    "id": "intent_0093",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "Notion",
+      "model": "Notion Plus Plan (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-15T22:15:00Z"
+  },
+  "intent_0094": {
+    "id": "intent_0094",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH720N",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-27T03:45:00Z"
+  },
+  "intent_0095": {
+    "id": "intent_0095",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-09-27T04:45:00Z"
+  },
+  "intent_0096": {
+    "id": "intent_0096",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-17T11:45:00Z"
+  },
+  "intent_0097": {
+    "id": "intent_0097",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Apple",
+      "model": "AirPods Pro (2nd Gen)",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "white"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-17T13:45:00Z"
+  },
+  "intent_0098": {
+    "id": "intent_0098",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH720N",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-17T15:45:00Z"
+  },
+  "intent_0099": {
+    "id": "intent_0099",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-17T17:45:00Z"
+  },
+  "intent_0100": {
+    "id": "intent_0100",
+    "agent_id": "agent_shopping_cold",
+    "hard_requirements": {
+      "brand": "Notion",
+      "model": "Notion Plus Plan (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-17T19:45:00Z"
+  },
+  "intent_0101": {
+    "id": "intent_0101",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-17T21:45:00Z"
+  },
+  "intent_0102": {
+    "id": "intent_0102",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Bose",
+      "model": "QuietComfort 45",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "triple black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-17T23:45:00Z"
+  },
+  "intent_0103": {
+    "id": "intent_0103",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Amazon",
+      "model": "Kindle Paperwhite",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T01:45:00Z"
+  },
+  "intent_0104": {
+    "id": "intent_0104",
+    "agent_id": "agent_shopping_01",
+    "hard_requirements": {
+      "brand": "Sony",
+      "model": "WH-CH720N",
+      "category": "electronics"
+    },
+    "soft_preferences": {
+      "color": "black"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T03:45:00Z"
+  },
+  "intent_0105": {
+    "id": "intent_0105",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "IndiGo",
+      "model": "Flight DEL-BLR 6E-2035",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T05:45:00Z"
+  },
+  "intent_0106": {
+    "id": "intent_0106",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Air India",
+      "model": "Flight DEL-LHR AI-161",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T07:45:00Z"
+  },
+  "intent_0107": {
+    "id": "intent_0107",
+    "agent_id": "agent_travel_01",
+    "hard_requirements": {
+      "brand": "Taj Hotels",
+      "model": "The Taj Mahal Palace - Deluxe Room",
+      "category": "travel"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T09:45:00Z"
+  },
+  "intent_0108": {
+    "id": "intent_0108",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Amul",
+      "model": "Gold Full Cream Milk 1L (Pack of 6)",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T11:45:00Z"
+  },
+  "intent_0109": {
+    "id": "intent_0109",
+    "agent_id": "agent_grocery_01",
+    "hard_requirements": {
+      "brand": "Daawat",
+      "model": "Ultima Extra Long Basmati Rice 5kg",
+      "category": "groceries"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T13:45:00Z"
+  },
+  "intent_0110": {
+    "id": "intent_0110",
+    "agent_id": "agent_software_01",
+    "hard_requirements": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
+      "category": "software"
+    },
+    "soft_preferences": {
+      "color": "standard"
+    },
+    "substitution_allowed": false,
+    "created_at": "2026-08-18T15:45:00Z"
+  }
+}
