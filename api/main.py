@@ -77,10 +77,15 @@ class VerifyRequest(BaseModel):
     approved: bool
 
 
+from payments.razorpay_client import create_test_order
+from api.db import get_db_connection
+
+
 @app.post("/transactions/evaluate", response_model=DecisionReceipt)
 def evaluate(transaction: TransactionRequest):
     """
     Evaluates an agent purchase request across the 4 Trust Gate pillars,
+    triggers real Razorpay test-mode orders on ALLOW decisions,
     persists the DecisionReceipt and provenance trail to SQLite, and logs an audit event.
     """
     mandates_map, intents_map, catalog, risk_model = get_resources()
@@ -123,7 +128,19 @@ def evaluate(transaction: TransactionRequest):
         history_df=history_df,
     )
 
-    # 5. Persist to DB
+    # 5. Execute Razorpay test-mode payment on ALLOW only
+    if receipt.decision == "ALLOW":
+        try:
+            order = create_test_order(
+                amount=transaction.amount,
+                currency="INR",
+                receipt_id=transaction.id,
+            )
+            receipt.razorpay_order_id = order.get("id")
+        except Exception as e:
+            receipt.payment_error = str(e)
+
+    # 6. Persist to DB
     tx_dict = transaction.model_dump(mode="json")
     receipt_dict = receipt.model_dump(mode="json")
     save_transaction_evaluation(tx_dict, receipt_dict, actor="system")
@@ -153,7 +170,7 @@ def get_receipt(id: str):
 def verify_transaction(id: str, body: VerifyRequest):
     """
     Human-in-the-loop review endpoint for transactions in VERIFY state.
-    Updates decision to ALLOW or BLOCK and logs an audit record.
+    Updates decision to ALLOW or BLOCK, executes Razorpay payment on ALLOW, and logs an audit record.
     """
     receipt = get_transaction_receipt(id)
     if not receipt:
@@ -173,15 +190,40 @@ def verify_transaction(id: str, body: VerifyRequest):
         else "human denied after verification review"
     )
 
+    razorpay_order_id = None
+    payment_error = None
+
+    # Trigger Razorpay order creation on human ALLOW
+    if body.approved:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT amount FROM transactions WHERE id = ?", (id,))
+        row = cursor.fetchone()
+        conn.close()
+        amt = float(row["amount"]) if row else 0.0
+
+        try:
+            order = create_test_order(
+                amount=amt,
+                currency="INR",
+                receipt_id=id,
+            )
+            razorpay_order_id = order.get("id")
+        except Exception as e:
+            payment_error = str(e)
+
     success = update_transaction_decision(
         transaction_id=id,
         new_decision=new_decision,
         actor="human",
         action=action,
         reason=reason,
+        razorpay_order_id=razorpay_order_id,
     )
     if not success:
         raise HTTPException(status_code=500, detail="Failed to update transaction decision")
 
     updated_receipt = get_transaction_receipt(id)
+    if payment_error:
+        updated_receipt["payment_error"] = payment_error
     return updated_receipt

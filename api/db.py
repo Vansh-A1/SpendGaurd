@@ -232,16 +232,24 @@ def update_transaction_decision(
     actor: str,
     action: str,
     reason: str,
+    razorpay_order_id: Optional[str] = None,
     db_path: Optional[Path] = None,
 ) -> bool:
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    cursor.execute(
-        "UPDATE transactions SET decision = ?, decision_reason = ? WHERE id = ?",
-        (new_decision, reason, transaction_id),
-    )
+    if razorpay_order_id:
+        cursor.execute(
+            "UPDATE transactions SET decision = ?, decision_reason = ?, razorpay_order_id = ? WHERE id = ?",
+            (new_decision, reason, razorpay_order_id, transaction_id),
+        )
+    else:
+        cursor.execute(
+            "UPDATE transactions SET decision = ?, decision_reason = ? WHERE id = ?",
+            (new_decision, reason, transaction_id),
+        )
+
     if cursor.rowcount == 0:
         conn.close()
         return False

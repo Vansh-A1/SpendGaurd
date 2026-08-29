@@ -30,6 +30,8 @@ class DecisionReceipt(BaseModel):
     provenance_trail: List[Dict[str, Any]]
     decision: Literal["ALLOW", "VERIFY", "BLOCK"]
     decision_reason: str
+    razorpay_order_id: Optional[str] = None
+    payment_error: Optional[str] = None
 
 
 def evaluate_transaction(
