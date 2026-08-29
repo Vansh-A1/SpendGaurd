@@ -1,0 +1,11 @@
+[
+  "amount_ratio",
+  "category_novelty",
+  "merchant_novelty",
+  "trailing_1h_count",
+  "trailing_24h_sum",
+  "rolling_sum_ratio",
+  "time_deviation",
+  "amount_zscore",
+  "is_new_agent"
+]
