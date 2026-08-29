@@ -192,26 +192,26 @@ def generate_scenarios():
     # =========================================================================
     sub_cases = [
         # Requested Sony WH-CH720N (ANC), bought WH-CH520 (no ANC)
-        ("agent_shopping_01", "ELEC-SONY-WHCH520-BLK", 4490.0, "Amazon", {"brand": "Sony", "model": "WH-CH720N", "category": "electronics"}, {"anc": True}),
-        ("agent_shopping_01", "ELEC-SONY-WHCH520-BLK", 4490.0, "Sony Center", {"brand": "Sony", "model": "WH-CH720N", "category": "electronics"}, {"anc": True}),
-        ("agent_shopping_01", "ELEC-SONY-WHCH720N-BLK", 9990.0, "Croma", {"brand": "Sony", "model": "WH-CH520", "category": "electronics"}, {"anc": False}),
+        ("agent_shopping_01", "ELEC-SONY-WHCH520-BLK", 4490.0, "Amazon", {"brand": "Sony", "category": "electronics"}, {"model": "WH-CH720N", "anc": True}),
+        ("agent_shopping_01", "ELEC-SONY-WHCH520-BLK", 4490.0, "Sony Center", {"brand": "Sony", "category": "electronics"}, {"model": "WH-CH720N", "anc": True}),
+        ("agent_shopping_01", "ELEC-SONY-WHCH720N-BLK", 9990.0, "Croma", {"brand": "Sony", "category": "electronics"}, {"model": "WH-CH520", "anc": False}),
         # Requested Sony WH-1000XM5, substituted with Bose QC45
-        ("agent_shopping_01", "ELEC-BOSE-QC45-BLK", 26900.0, "Amazon", {"brand": "Sony", "model": "WH-1000XM5", "category": "electronics"}, {"anc": True}),
-        ("agent_shopping_01", "ELEC-SONY-WH1000XM5-BLK", 29990.0, "Sony Center", {"brand": "Bose", "model": "QuietComfort 45", "category": "electronics"}, {"anc": True}),
+        ("agent_shopping_01", "ELEC-BOSE-QC45-BLK", 26900.0, "Amazon", {"category": "electronics"}, {"brand": "Sony", "model": "WH-1000XM5", "anc": True}),
+        ("agent_shopping_01", "ELEC-SONY-WH1000XM5-BLK", 29990.0, "Sony Center", {"category": "electronics"}, {"brand": "Bose", "model": "QuietComfort 45", "anc": True}),
         # Requested Dell G15 4060, substituted with Dell G15 3050 (cap-compatible cold shopper or travel)
-        ("agent_shopping_cold", "ELEC-SONY-WHCH520-BLK", 4490.0, "Flipkart", {"brand": "Sony", "model": "WH-CH720N", "category": "electronics"}, {"anc": True}),
-        ("agent_shopping_cold", "ELEC-BOSE-QC45-BLK", 26900.0, "Amazon", {"brand": "Apple", "model": "AirPods Pro (2nd Gen)", "category": "electronics"}, {"anc": True}),
+        ("agent_shopping_cold", "ELEC-SONY-WHCH520-BLK", 4490.0, "Flipkart", {"brand": "Sony", "category": "electronics"}, {"model": "WH-CH720N", "anc": True}),
+        ("agent_shopping_cold", "ELEC-BOSE-QC45-BLK", 26900.0, "Amazon", {"category": "electronics"}, {"brand": "Apple", "model": "AirPods Pro (2nd Gen)", "anc": True}),
         # Travel substitutions: Taj Deluxe substituted with Marriott Exec Suite
-        ("agent_travel_01", "TRAV-MARRIOTT-BLR-EXEC", 16800.0, "Marriott", {"brand": "Taj Hotels", "model": "The Taj Mahal Palace - Deluxe Room", "category": "travel"}, {"breakfast": True}),
-        ("agent_travel_01", "TRAV-INDIGO-DEL-BLR-ECON", 5400.0, "MakeMyTrip", {"brand": "Air India", "model": "Flight DEL-BLR AI-505", "category": "travel"}, {"refundable": True}),
-        ("agent_travel_01", "TRAV-ZOSTEL-GOA-PVT", 3200.0, "Zostel", {"brand": "Taj Hotels", "category": "travel"}, {"ac": True}),
+        ("agent_travel_01", "TRAV-MARRIOTT-BLR-EXEC", 16800.0, "Marriott", {"category": "travel"}, {"brand": "Taj Hotels", "model": "The Taj Mahal Palace - Deluxe Room", "breakfast": True}),
+        ("agent_travel_01", "TRAV-INDIGO-DEL-BLR-ECON", 5400.0, "MakeMyTrip", {"category": "travel"}, {"brand": "Air India", "model": "Flight DEL-BLR AI-505", "refundable": True}),
+        ("agent_travel_01", "TRAV-ZOSTEL-GOA-PVT", 3200.0, "Zostel", {"category": "travel"}, {"brand": "Taj Hotels", "ac": True}),
         # Groceries substitutions: Nescafe Gold substituted with Tata Tea Gold
-        ("agent_grocery_01", "GROC-TATA-TEA-GOLD-1KG", 520.0, "Blinkit", {"brand": "Nescafe", "model": "Gold Blend Instant Coffee 200g", "category": "groceries"}, {"hot_beverage": True}),
-        ("agent_grocery_01", "GROC-ORGANIC-ALMONDS-1KG", 949.0, "Instamart", {"brand": "Ferrero Rocher", "category": "groceries"}, {"snack": True}),
+        ("agent_grocery_01", "GROC-TATA-TEA-GOLD-1KG", 520.0, "Blinkit", {"category": "groceries"}, {"brand": "Nescafe", "model": "Gold Blend Instant Coffee 200g", "hot_beverage": True}),
+        ("agent_grocery_01", "GROC-ORGANIC-ALMONDS-1KG", 949.0, "Instamart", {"category": "groceries"}, {"brand": "Ferrero Rocher", "snack": True}),
         # Software substitutions: GitHub Copilot substituted with JetBrains All Products or ChatGPT Plus
-        ("agent_software_01", "SOFT-OPENAI-CHATGPT-PLUS-1MO", 1999.0, "OpenAI", {"brand": "GitHub", "model": "GitHub Copilot Individual (1 Year)", "category": "software"}, {"ai_assist": True}),
-        ("agent_software_01", "SOFT-JETBRAINS-ALLPROD-1YR", 24900.0, "JetBrains", {"brand": "GitHub", "model": "GitHub Copilot Individual (1 Year)", "category": "software"}, {"coding": True}),
-        ("agent_software_01", "SOFT-1PASSWORD-INDIVIDUAL-1YR", 3200.0, "1Password", {"brand": "Notion", "model": "Notion Plus Plan (1 Year)", "category": "software"}, {"productivity": True}),
+        ("agent_software_01", "SOFT-OPENAI-CHATGPT-PLUS-1MO", 1999.0, "OpenAI", {"category": "software"}, {"brand": "GitHub", "model": "GitHub Copilot Individual (1 Year)", "ai_assist": True}),
+        ("agent_software_01", "SOFT-JETBRAINS-ALLPROD-1YR", 24900.0, "JetBrains", {"category": "software"}, {"brand": "GitHub", "model": "GitHub Copilot Individual (1 Year)", "coding": True}),
+        ("agent_software_01", "SOFT-1PASSWORD-INDIVIDUAL-1YR", 3200.0, "1Password", {"category": "software"}, {"brand": "Notion", "model": "Notion Plus Plan (1 Year)", "productivity": True}),
     ]
 
     for i, (ag_id, sku, amt, merch, hard_req, soft_pref) in enumerate(sub_cases):
@@ -281,52 +281,67 @@ def generate_scenarios():
     conflict_cases = [
         # ELEC-SONY-WH1000XM5-BLK (real: 30mm driver), claimed 50mm driver
         ("agent_shopping_01", "ELEC-SONY-WH1000XM5-BLK", 29990.0, "Sony Center",
-         {"sku": "ELEC-SONY-WH1000XM5-BLK", "brand": "Sony", "model": "WH-1000XM5", "specs": {"driver_mm": 50, "anc": True, "battery_hours": 30}}),
+         {"sku": "ELEC-SONY-WH1000XM5-BLK", "brand": "Sony", "model": "WH-1000XM5", "specs": {"driver_mm": 50, "anc": True, "battery_hours": 30}},
+         {"brand": "Sony", "model": "WH-1000XM5", "driver_mm": 30}),
         # ELEC-SONY-WHCH520-BLK (real: anc=False), claimed anc=True
         ("agent_shopping_01", "ELEC-SONY-WHCH520-BLK", 4490.0, "Amazon",
-         {"sku": "ELEC-SONY-WHCH520-BLK", "brand": "Sony", "model": "WH-CH520", "specs": {"anc": True, "battery_hours": 50, "color": "black"}}),
+         {"sku": "ELEC-SONY-WHCH520-BLK", "brand": "Sony", "model": "WH-CH520", "specs": {"anc": True, "battery_hours": 50, "color": "black"}},
+         {"brand": "Sony", "model": "WH-CH520", "anc": False}),
         # ELEC-KINDLE-PW-16GB (real: 16GB), claimed 64GB
         ("agent_shopping_01", "ELEC-KINDLE-PW-16GB", 14999.0, "Amazon",
-         {"sku": "ELEC-KINDLE-PW-16GB", "brand": "Amazon", "model": "Kindle Paperwhite", "specs": {"storage_gb": 64, "waterproof": True}}),
+         {"sku": "ELEC-KINDLE-PW-16GB", "brand": "Amazon", "model": "Kindle Paperwhite", "specs": {"storage_gb": 64, "waterproof": True}},
+         {"brand": "Amazon", "model": "Kindle Paperwhite", "storage_gb": 16}),
         # ELEC-APPLE-AIRPODSPRO2 (real: H2 chip), claimed H3 chip
         ("agent_shopping_01", "ELEC-APPLE-AIRPODSPRO2", 24900.0, "Apple Store",
-         {"sku": "ELEC-APPLE-AIRPODSPRO2", "brand": "Apple", "model": "AirPods Pro (2nd Gen)", "specs": {"chip": "H3 Ultra", "anc": True}}),
+         {"sku": "ELEC-APPLE-AIRPODSPRO2", "brand": "Apple", "model": "AirPods Pro (2nd Gen)", "specs": {"chip": "H3 Ultra", "anc": True}},
+         {"brand": "Apple", "model": "AirPods Pro (2nd Gen)", "chip": "H2"}),
         # ELEC-BOSE-QC45-BLK (real: 24hr battery), claimed 60hr battery
         ("agent_shopping_01", "ELEC-BOSE-QC45-BLK", 26900.0, "Croma",
-         {"sku": "ELEC-BOSE-QC45-BLK", "brand": "Bose", "model": "QuietComfort 45", "specs": {"battery_hours": 60, "anc": True}}),
+         {"sku": "ELEC-BOSE-QC45-BLK", "brand": "Bose", "model": "QuietComfort 45", "specs": {"battery_hours": 60, "anc": True}},
+         {"brand": "Bose", "model": "QuietComfort 45", "battery_hours": 24}),
         # Groceries: GROC-DAAWAT-BIR-5KG (real: 5kg), claimed 10kg
         ("agent_grocery_01", "GROC-DAAWAT-BIR-5KG", 950.0, "Blinkit",
-         {"sku": "GROC-DAAWAT-BIR-5KG", "brand": "Daawat", "model": "Ultima Extra Long Basmati Rice 10kg", "specs": {"weight_kg": 10}}),
+         {"sku": "GROC-DAAWAT-BIR-5KG", "brand": "Daawat", "model": "Ultima Extra Long Basmati Rice 10kg", "specs": {"weight_kg": 10}},
+         {"brand": "Daawat", "model": "Ultima Extra Long Basmati Rice 5kg", "weight_kg": 5}),
         # GROC-FORTUNE-SUN-5L (real: 5L), claimed 15L
         ("agent_grocery_01", "GROC-FORTUNE-SUN-5L", 725.0, "Instamart",
-         {"sku": "GROC-FORTUNE-SUN-5L", "brand": "Fortune", "model": "Sunlite Refined Sunflower Oil", "specs": {"volume_liters": 15}}),
+         {"sku": "GROC-FORTUNE-SUN-5L", "brand": "Fortune", "model": "Sunlite Refined Sunflower Oil", "specs": {"volume_liters": 15}},
+         {"brand": "Fortune", "model": "Sunlite Refined Sunflower Oil 5L Jar", "volume_liters": 5}),
         # GROC-AMUL-GOLD-1L-PK6 (real: 6L), claimed 12L
         ("agent_grocery_01", "GROC-AMUL-GOLD-1L-PK6", 396.0, "Zepto",
-         {"sku": "GROC-AMUL-GOLD-1L-PK6", "brand": "Amul", "model": "Gold Full Cream Milk", "specs": {"quantity_liters": 12}}),
+         {"sku": "GROC-AMUL-GOLD-1L-PK6", "brand": "Amul", "model": "Gold Full Cream Milk", "specs": {"quantity_liters": 12}},
+         {"brand": "Amul", "model": "Gold Full Cream Milk 1L (Pack of 6)", "quantity_liters": 6}),
         # GROC-ORGANIC-ALMONDS-1KG (real: 1kg), claimed 5kg
         ("agent_grocery_01", "GROC-ORGANIC-ALMONDS-1KG", 949.0, "BigBasket",
-         {"sku": "GROC-ORGANIC-ALMONDS-1KG", "brand": "Nutraj", "model": "Raw Almonds", "specs": {"weight_kg": 5}}),
+         {"sku": "GROC-ORGANIC-ALMONDS-1KG", "brand": "Nutraj", "model": "Raw Almonds", "specs": {"weight_kg": 5}},
+         {"brand": "Nutraj", "model": "California Raw Almonds 1kg", "weight_kg": 1}),
         # Travel: TRAV-INDIGO-DEL-BLR-ECON (real: non-refundable), claimed refundable
         ("agent_travel_01", "TRAV-INDIGO-DEL-BLR-ECON", 5400.0, "IndiGo",
-         {"sku": "TRAV-INDIGO-DEL-BLR-ECON", "brand": "IndiGo", "model": "Flight DEL-BLR 6E-2035", "specs": {"refundable": True, "baggage_kg": 35}}),
+         {"sku": "TRAV-INDIGO-DEL-BLR-ECON", "brand": "IndiGo", "model": "Flight DEL-BLR 6E-2035", "specs": {"refundable": True, "baggage_kg": 35}},
+         {"brand": "IndiGo", "model": "Flight DEL-BLR 6E-2035", "refundable": False}),
         # TRAV-TAJ-MUMBAI-DLX (real: Sea View), claimed Presidential Suite
         ("agent_travel_01", "TRAV-TAJ-MUMBAI-DLX", 22500.0, "Taj Hotels",
-         {"sku": "TRAV-TAJ-MUMBAI-DLX", "brand": "Taj Hotels", "model": "Presidential Suite", "specs": {"room_type": "Presidential Palace Suite"}}),
+         {"sku": "TRAV-TAJ-MUMBAI-DLX", "brand": "Taj Hotels", "model": "Presidential Suite", "specs": {"room_type": "Presidential Palace Suite"}},
+         {"brand": "Taj Hotels", "model": "The Taj Mahal Palace - Deluxe Room", "room_type": "Deluxe Sea View"}),
         # TRAV-UBER-RENTAL-8HR (real: Sedan), claimed Luxury SUV
         ("agent_travel_01", "TRAV-UBER-RENTAL-8HR", 2400.0, "Uber",
-         {"sku": "TRAV-UBER-RENTAL-8HR", "brand": "Uber", "model": "Uber Black XL", "specs": {"car_type": "Luxury SUV 7-Seater"}}),
+         {"sku": "TRAV-UBER-RENTAL-8HR", "brand": "Uber", "model": "Uber Black XL", "specs": {"car_type": "Luxury SUV 7-Seater"}},
+         {"brand": "Uber", "model": "Uber Premier Rental (8hr/80km)", "car_type": "Sedan"}),
         # Software: SOFT-NOTION-PLUS-1YR (real: Plus plan), claimed Enterprise
         ("agent_software_01", "SOFT-NOTION-PLUS-1YR", 9600.0, "Notion",
-         {"sku": "SOFT-NOTION-PLUS-1YR", "brand": "Notion", "model": "Notion Enterprise Plan", "specs": {"plan": "Enterprise", "saml_sso": True}}),
+         {"sku": "SOFT-NOTION-PLUS-1YR", "brand": "Notion", "model": "Notion Enterprise Plan", "specs": {"plan": "Enterprise", "saml_sso": True}},
+         {"brand": "Notion", "model": "Notion Plus Plan (1 Year)", "plan": "Plus"}),
         # SOFT-OPENAI-CHATGPT-PLUS-1MO (real: Monthly), claimed Lifetime
         ("agent_software_01", "SOFT-OPENAI-CHATGPT-PLUS-1MO", 1999.0, "OpenAI",
-         {"sku": "SOFT-OPENAI-CHATGPT-PLUS-1MO", "brand": "OpenAI", "model": "ChatGPT Lifetime Access", "specs": {"billing": "Lifetime"}}),
+         {"sku": "SOFT-OPENAI-CHATGPT-PLUS-1MO", "brand": "OpenAI", "model": "ChatGPT Lifetime Access", "specs": {"billing": "Lifetime"}},
+         {"brand": "OpenAI", "model": "ChatGPT Plus Subscription (1 Month)", "billing": "Monthly"}),
         # Cold shopper: ELEC-SONY-WHCH520-BLK (real: no ANC), claimed ANC
         ("agent_shopping_cold", "ELEC-SONY-WHCH520-BLK", 4490.0, "Amazon",
-         {"sku": "ELEC-SONY-WHCH520-BLK", "brand": "Sony", "model": "WH-CH520 ANC", "specs": {"anc": True}}),
+         {"sku": "ELEC-SONY-WHCH520-BLK", "brand": "Sony", "model": "WH-CH520 ANC", "specs": {"anc": True}},
+         {"brand": "Sony", "model": "WH-CH520", "anc": False}),
     ]
 
-    for i, (ag_id, sku, amt, merch, claimed) in enumerate(conflict_cases):
+    for i, (ag_id, sku, amt, merch, claimed, hard_req) in enumerate(conflict_cases):
         prod = cat_by_sku[sku]
         add_tx_and_intent(
             agent_id=ag_id,
@@ -338,7 +353,7 @@ def generate_scenarios():
             timestamp=base_time + timedelta(minutes=i * 20 + 6),
             scenario_type="evidence_conflict",
             expected_decision="BLOCK",
-            hard_reqs={"brand": prod.brand, "category": prod.category},
+            hard_reqs=hard_req,
             soft_prefs={"color": "black"},
             sub_allowed=False,
         )
@@ -368,8 +383,8 @@ def generate_scenarios():
     for i, (ag_id, sku, amt, merch) in enumerate(stale_cases):
         mand = mandates[ag_id]
         prod = cat_by_sku[sku]
-        # Set timestamp to 45 days after mandate issue (TTL is 30 days or 14 days)
-        stale_timestamp = mand.issued_at + timedelta(seconds=mand.ttl_seconds + 15 * 86400) + timedelta(minutes=i * 20)
+        # Timestamp is 45 days after mandate issued_at (well past 30d/14d TTL)
+        stale_timestamp = datetime(2026, 9, 15, 12, 0, 0, tzinfo=timezone.utc) + timedelta(minutes=i * 20)
         add_tx_and_intent(
             agent_id=ag_id,
             actual_sku=prod.sku,

@@ -141,8 +141,7 @@ def test_scenarios_dataset_fidelity():
             assert len(res.mismatched_fields) > 0
 
         elif tx.scenario_type == "substitution":
-            # Substitution cases have substitution_allowed=True, with a near-match on model/spec
+            # Substitution cases have substitution_allowed=True, hard requirements met, but soft score <= 0.5
             assert intent.substitution_allowed is True
-            # The model is substituted so exact hard model requirement differs
-            assert res.hard_match is False
-            assert "model" in res.mismatched_fields or "category" in res.mismatched_fields or len(res.mismatched_fields) > 0
+            assert res.hard_match is True
+            assert res.soft_score <= 0.5

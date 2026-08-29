@@ -42,9 +42,12 @@ def train_risk_model():
 
     # Step 5: Train XGBoost Classifier
     model = XGBClassifier(
-        n_estimators=50,
+        n_estimators=40,
         max_depth=3,
-        learning_rate=0.1,
+        learning_rate=0.15,
+        gamma=0.1,
+        subsample=0.9,
+        colsample_bytree=0.9,
         eval_metric="logloss",
         random_state=42,
     )

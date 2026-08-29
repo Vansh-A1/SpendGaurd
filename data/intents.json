@@ -408,10 +408,10 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Sony",
-      "model": "WH-CH720N",
       "category": "electronics"
     },
     "soft_preferences": {
+      "model": "WH-CH720N",
       "anc": true
     },
     "substitution_allowed": true,
@@ -422,10 +422,10 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Sony",
-      "model": "WH-CH720N",
       "category": "electronics"
     },
     "soft_preferences": {
+      "model": "WH-CH720N",
       "anc": true
     },
     "substitution_allowed": true,
@@ -436,10 +436,10 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Sony",
-      "model": "WH-CH520",
       "category": "electronics"
     },
     "soft_preferences": {
+      "model": "WH-CH520",
       "anc": false
     },
     "substitution_allowed": true,
@@ -449,11 +449,11 @@
     "id": "intent_0034",
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
-      "brand": "Sony",
-      "model": "WH-1000XM5",
       "category": "electronics"
     },
     "soft_preferences": {
+      "brand": "Sony",
+      "model": "WH-1000XM5",
       "anc": true
     },
     "substitution_allowed": true,
@@ -463,11 +463,11 @@
     "id": "intent_0035",
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
-      "brand": "Bose",
-      "model": "QuietComfort 45",
       "category": "electronics"
     },
     "soft_preferences": {
+      "brand": "Bose",
+      "model": "QuietComfort 45",
       "anc": true
     },
     "substitution_allowed": true,
@@ -478,10 +478,10 @@
     "agent_id": "agent_shopping_cold",
     "hard_requirements": {
       "brand": "Sony",
-      "model": "WH-CH720N",
       "category": "electronics"
     },
     "soft_preferences": {
+      "model": "WH-CH720N",
       "anc": true
     },
     "substitution_allowed": true,
@@ -491,11 +491,11 @@
     "id": "intent_0037",
     "agent_id": "agent_shopping_cold",
     "hard_requirements": {
-      "brand": "Apple",
-      "model": "AirPods Pro (2nd Gen)",
       "category": "electronics"
     },
     "soft_preferences": {
+      "brand": "Apple",
+      "model": "AirPods Pro (2nd Gen)",
       "anc": true
     },
     "substitution_allowed": true,
@@ -505,11 +505,11 @@
     "id": "intent_0038",
     "agent_id": "agent_travel_01",
     "hard_requirements": {
-      "brand": "Taj Hotels",
-      "model": "The Taj Mahal Palace - Deluxe Room",
       "category": "travel"
     },
     "soft_preferences": {
+      "brand": "Taj Hotels",
+      "model": "The Taj Mahal Palace - Deluxe Room",
       "breakfast": true
     },
     "substitution_allowed": true,
@@ -519,11 +519,11 @@
     "id": "intent_0039",
     "agent_id": "agent_travel_01",
     "hard_requirements": {
-      "brand": "Air India",
-      "model": "Flight DEL-BLR AI-505",
       "category": "travel"
     },
     "soft_preferences": {
+      "brand": "Air India",
+      "model": "Flight DEL-BLR AI-505",
       "refundable": true
     },
     "substitution_allowed": true,
@@ -533,10 +533,10 @@
     "id": "intent_0040",
     "agent_id": "agent_travel_01",
     "hard_requirements": {
-      "brand": "Taj Hotels",
       "category": "travel"
     },
     "soft_preferences": {
+      "brand": "Taj Hotels",
       "ac": true
     },
     "substitution_allowed": true,
@@ -546,11 +546,11 @@
     "id": "intent_0041",
     "agent_id": "agent_grocery_01",
     "hard_requirements": {
-      "brand": "Nescafe",
-      "model": "Gold Blend Instant Coffee 200g",
       "category": "groceries"
     },
     "soft_preferences": {
+      "brand": "Nescafe",
+      "model": "Gold Blend Instant Coffee 200g",
       "hot_beverage": true
     },
     "substitution_allowed": true,
@@ -560,10 +560,10 @@
     "id": "intent_0042",
     "agent_id": "agent_grocery_01",
     "hard_requirements": {
-      "brand": "Ferrero Rocher",
       "category": "groceries"
     },
     "soft_preferences": {
+      "brand": "Ferrero Rocher",
       "snack": true
     },
     "substitution_allowed": true,
@@ -573,11 +573,11 @@
     "id": "intent_0043",
     "agent_id": "agent_software_01",
     "hard_requirements": {
-      "brand": "GitHub",
-      "model": "GitHub Copilot Individual (1 Year)",
       "category": "software"
     },
     "soft_preferences": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
       "ai_assist": true
     },
     "substitution_allowed": true,
@@ -587,11 +587,11 @@
     "id": "intent_0044",
     "agent_id": "agent_software_01",
     "hard_requirements": {
-      "brand": "GitHub",
-      "model": "GitHub Copilot Individual (1 Year)",
       "category": "software"
     },
     "soft_preferences": {
+      "brand": "GitHub",
+      "model": "GitHub Copilot Individual (1 Year)",
       "coding": true
     },
     "substitution_allowed": true,
@@ -601,11 +601,11 @@
     "id": "intent_0045",
     "agent_id": "agent_software_01",
     "hard_requirements": {
-      "brand": "Notion",
-      "model": "Notion Plus Plan (1 Year)",
       "category": "software"
     },
     "soft_preferences": {
+      "brand": "Notion",
+      "model": "Notion Plus Plan (1 Year)",
       "productivity": true
     },
     "substitution_allowed": true,
@@ -896,7 +896,8 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Sony",
-      "category": "electronics"
+      "model": "WH-1000XM5",
+      "driver_mm": 30
     },
     "soft_preferences": {
       "color": "black"
@@ -909,7 +910,8 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Sony",
-      "category": "electronics"
+      "model": "WH-CH520",
+      "anc": false
     },
     "soft_preferences": {
       "color": "black"
@@ -922,7 +924,8 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Amazon",
-      "category": "electronics"
+      "model": "Kindle Paperwhite",
+      "storage_gb": 16
     },
     "soft_preferences": {
       "color": "black"
@@ -935,7 +938,8 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Apple",
-      "category": "electronics"
+      "model": "AirPods Pro (2nd Gen)",
+      "chip": "H2"
     },
     "soft_preferences": {
       "color": "black"
@@ -948,7 +952,8 @@
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
       "brand": "Bose",
-      "category": "electronics"
+      "model": "QuietComfort 45",
+      "battery_hours": 24
     },
     "soft_preferences": {
       "color": "black"
@@ -961,7 +966,8 @@
     "agent_id": "agent_grocery_01",
     "hard_requirements": {
       "brand": "Daawat",
-      "category": "groceries"
+      "model": "Ultima Extra Long Basmati Rice 5kg",
+      "weight_kg": 5
     },
     "soft_preferences": {
       "color": "black"
@@ -974,7 +980,8 @@
     "agent_id": "agent_grocery_01",
     "hard_requirements": {
       "brand": "Fortune",
-      "category": "groceries"
+      "model": "Sunlite Refined Sunflower Oil 5L Jar",
+      "volume_liters": 5
     },
     "soft_preferences": {
       "color": "black"
@@ -987,7 +994,8 @@
     "agent_id": "agent_grocery_01",
     "hard_requirements": {
       "brand": "Amul",
-      "category": "groceries"
+      "model": "Gold Full Cream Milk 1L (Pack of 6)",
+      "quantity_liters": 6
     },
     "soft_preferences": {
       "color": "black"
@@ -1000,7 +1008,8 @@
     "agent_id": "agent_grocery_01",
     "hard_requirements": {
       "brand": "Nutraj",
-      "category": "groceries"
+      "model": "California Raw Almonds 1kg",
+      "weight_kg": 1
     },
     "soft_preferences": {
       "color": "black"
@@ -1013,7 +1022,8 @@
     "agent_id": "agent_travel_01",
     "hard_requirements": {
       "brand": "IndiGo",
-      "category": "travel"
+      "model": "Flight DEL-BLR 6E-2035",
+      "refundable": false
     },
     "soft_preferences": {
       "color": "black"
@@ -1026,7 +1036,8 @@
     "agent_id": "agent_travel_01",
     "hard_requirements": {
       "brand": "Taj Hotels",
-      "category": "travel"
+      "model": "The Taj Mahal Palace - Deluxe Room",
+      "room_type": "Deluxe Sea View"
     },
     "soft_preferences": {
       "color": "black"
@@ -1039,7 +1050,8 @@
     "agent_id": "agent_travel_01",
     "hard_requirements": {
       "brand": "Uber",
-      "category": "travel"
+      "model": "Uber Premier Rental (8hr/80km)",
+      "car_type": "Sedan"
     },
     "soft_preferences": {
       "color": "black"
@@ -1052,7 +1064,8 @@
     "agent_id": "agent_software_01",
     "hard_requirements": {
       "brand": "Notion",
-      "category": "software"
+      "model": "Notion Plus Plan (1 Year)",
+      "plan": "Plus"
     },
     "soft_preferences": {
       "color": "black"
@@ -1065,7 +1078,8 @@
     "agent_id": "agent_software_01",
     "hard_requirements": {
       "brand": "OpenAI",
-      "category": "software"
+      "model": "ChatGPT Plus Subscription (1 Month)",
+      "billing": "Monthly"
     },
     "soft_preferences": {
       "color": "black"
@@ -1078,7 +1092,8 @@
     "agent_id": "agent_shopping_cold",
     "hard_requirements": {
       "brand": "Sony",
-      "category": "electronics"
+      "model": "WH-CH520",
+      "anc": false
     },
     "soft_preferences": {
       "color": "black"
@@ -1098,7 +1113,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T10:15:00Z"
+    "created_at": "2026-09-15T11:45:00Z"
   },
   "intent_0082": {
     "id": "intent_0082",
@@ -1112,7 +1127,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T10:35:00Z"
+    "created_at": "2026-09-15T12:05:00Z"
   },
   "intent_0083": {
     "id": "intent_0083",
@@ -1126,7 +1141,7 @@
       "color": "white"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T10:55:00Z"
+    "created_at": "2026-09-15T12:25:00Z"
   },
   "intent_0084": {
     "id": "intent_0084",
@@ -1140,7 +1155,7 @@
       "color": "triple black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T11:15:00Z"
+    "created_at": "2026-09-15T12:45:00Z"
   },
   "intent_0085": {
     "id": "intent_0085",
@@ -1154,7 +1169,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T11:35:00Z"
+    "created_at": "2026-09-15T13:05:00Z"
   },
   "intent_0086": {
     "id": "intent_0086",
@@ -1168,7 +1183,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T11:55:00Z"
+    "created_at": "2026-09-15T13:25:00Z"
   },
   "intent_0087": {
     "id": "intent_0087",
@@ -1182,7 +1197,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T12:15:00Z"
+    "created_at": "2026-09-15T13:45:00Z"
   },
   "intent_0088": {
     "id": "intent_0088",
@@ -1196,7 +1211,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T12:35:00Z"
+    "created_at": "2026-09-15T14:05:00Z"
   },
   "intent_0089": {
     "id": "intent_0089",
@@ -1210,7 +1225,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T12:55:00Z"
+    "created_at": "2026-09-15T14:25:00Z"
   },
   "intent_0090": {
     "id": "intent_0090",
@@ -1224,7 +1239,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T13:15:00Z"
+    "created_at": "2026-09-15T14:45:00Z"
   },
   "intent_0091": {
     "id": "intent_0091",
@@ -1238,7 +1253,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T13:35:00Z"
+    "created_at": "2026-09-15T15:05:00Z"
   },
   "intent_0092": {
     "id": "intent_0092",
@@ -1252,7 +1267,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T13:55:00Z"
+    "created_at": "2026-09-15T15:25:00Z"
   },
   "intent_0093": {
     "id": "intent_0093",
@@ -1266,7 +1281,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T14:15:00Z"
+    "created_at": "2026-09-15T15:45:00Z"
   },
   "intent_0094": {
     "id": "intent_0094",
@@ -1280,7 +1295,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-26T19:05:00Z"
+    "created_at": "2026-09-15T16:05:00Z"
   },
   "intent_0095": {
     "id": "intent_0095",
@@ -1294,7 +1309,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-26T19:25:00Z"
+    "created_at": "2026-09-15T16:25:00Z"
   },
   "intent_0096": {
     "id": "intent_0096",
