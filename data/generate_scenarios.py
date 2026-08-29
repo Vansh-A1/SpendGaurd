@@ -135,7 +135,7 @@ def generate_scenarios():
             amount=amt,
             category=prod.category,
             merchant=merch,
-            timestamp=base_time + timedelta(hours=i * 2),
+            timestamp=base_time + timedelta(minutes=i * 25),
             scenario_type="budget_violation",
             expected_decision="BLOCK",
             hard_reqs={"brand": prod.brand, "category": prod.category, "max_price": amt + 1000},
@@ -178,7 +178,7 @@ def generate_scenarios():
             amount=amt,
             category=prod.category,
             merchant=merch,
-            timestamp=base_time + timedelta(hours=i * 2 + 1),
+            timestamp=base_time + timedelta(minutes=i * 20 + 2),
             scenario_type="wrong_product",
             expected_decision="BLOCK",
             hard_reqs=hard_req,
@@ -223,7 +223,7 @@ def generate_scenarios():
             amount=amt,
             category=prod.category,
             merchant=merch,
-            timestamp=base_time + timedelta(hours=i * 2 + 2),
+            timestamp=base_time + timedelta(minutes=i * 20 + 4),
             scenario_type="substitution",
             expected_decision="VERIFY",
             hard_reqs=hard_req,
@@ -279,9 +279,9 @@ def generate_scenarios():
     # Claimed product specs contradict actual_sku's real specs in catalog
     # =========================================================================
     conflict_cases = [
-        # ELEC-DELL-G15-3050 (real: RTX 3050), claimed RTX 4060
-        ("agent_shopping_01", "ELEC-DELL-G15-3050", 74990.0, "Dell Official Store",
-         {"sku": "ELEC-DELL-G15-3050", "brand": "Dell", "model": "G15 5530 (RTX 4060)", "specs": {"gpu": "RTX 4060", "cpu": "Intel Core i7-13650HX", "ram_gb": 16}}),
+        # ELEC-SONY-WH1000XM5-BLK (real: 30mm driver), claimed 50mm driver
+        ("agent_shopping_01", "ELEC-SONY-WH1000XM5-BLK", 29990.0, "Sony Center",
+         {"sku": "ELEC-SONY-WH1000XM5-BLK", "brand": "Sony", "model": "WH-1000XM5", "specs": {"driver_mm": 50, "anc": True, "battery_hours": 30}}),
         # ELEC-SONY-WHCH520-BLK (real: anc=False), claimed anc=True
         ("agent_shopping_01", "ELEC-SONY-WHCH520-BLK", 4490.0, "Amazon",
          {"sku": "ELEC-SONY-WHCH520-BLK", "brand": "Sony", "model": "WH-CH520", "specs": {"anc": True, "battery_hours": 50, "color": "black"}}),
@@ -335,7 +335,7 @@ def generate_scenarios():
             amount=amt,
             category=prod.category,
             merchant=merch,
-            timestamp=base_time + timedelta(hours=i * 2 + 3),
+            timestamp=base_time + timedelta(minutes=i * 20 + 6),
             scenario_type="evidence_conflict",
             expected_decision="BLOCK",
             hard_reqs={"brand": prod.brand, "category": prod.category},
@@ -369,7 +369,7 @@ def generate_scenarios():
         mand = mandates[ag_id]
         prod = cat_by_sku[sku]
         # Set timestamp to 45 days after mandate issue (TTL is 30 days or 14 days)
-        stale_timestamp = mand.issued_at + timedelta(seconds=mand.ttl_seconds + 15 * 86400 + i * 3600)
+        stale_timestamp = mand.issued_at + timedelta(seconds=mand.ttl_seconds + 15 * 86400) + timedelta(minutes=i * 20)
         add_tx_and_intent(
             agent_id=ag_id,
             actual_sku=prod.sku,
@@ -422,7 +422,7 @@ def generate_scenarios():
             amount=amt,
             category=prod.category,
             merchant=merch,
-            timestamp=base_time + timedelta(days=2, hours=i * 2),
+            timestamp=base_time + timedelta(days=2, minutes=i * 20 + 8),
             scenario_type="legitimate_unusual",
             expected_decision="ALLOW",
             hard_reqs={"brand": prod.brand, "model": prod.model, "category": prod.category},

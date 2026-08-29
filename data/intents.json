@@ -25,7 +25,7 @@
       "color": "titanium black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T13:45:00Z"
+    "created_at": "2026-08-15T12:10:00Z"
   },
   "intent_0003": {
     "id": "intent_0003",
@@ -39,7 +39,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T15:45:00Z"
+    "created_at": "2026-08-15T12:35:00Z"
   },
   "intent_0004": {
     "id": "intent_0004",
@@ -53,7 +53,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T17:45:00Z"
+    "created_at": "2026-08-15T13:00:00Z"
   },
   "intent_0005": {
     "id": "intent_0005",
@@ -67,7 +67,7 @@
       "color": "midnight"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T19:45:00Z"
+    "created_at": "2026-08-15T13:25:00Z"
   },
   "intent_0006": {
     "id": "intent_0006",
@@ -81,7 +81,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T21:45:00Z"
+    "created_at": "2026-08-15T13:50:00Z"
   },
   "intent_0007": {
     "id": "intent_0007",
@@ -95,7 +95,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T23:45:00Z"
+    "created_at": "2026-08-15T14:15:00Z"
   },
   "intent_0008": {
     "id": "intent_0008",
@@ -109,7 +109,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T01:45:00Z"
+    "created_at": "2026-08-15T14:40:00Z"
   },
   "intent_0009": {
     "id": "intent_0009",
@@ -123,7 +123,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T03:45:00Z"
+    "created_at": "2026-08-15T15:05:00Z"
   },
   "intent_0010": {
     "id": "intent_0010",
@@ -137,7 +137,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T05:45:00Z"
+    "created_at": "2026-08-15T15:30:00Z"
   },
   "intent_0011": {
     "id": "intent_0011",
@@ -151,7 +151,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T07:45:00Z"
+    "created_at": "2026-08-15T15:55:00Z"
   },
   "intent_0012": {
     "id": "intent_0012",
@@ -165,7 +165,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T09:45:00Z"
+    "created_at": "2026-08-15T16:20:00Z"
   },
   "intent_0013": {
     "id": "intent_0013",
@@ -179,7 +179,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T11:45:00Z"
+    "created_at": "2026-08-15T16:45:00Z"
   },
   "intent_0014": {
     "id": "intent_0014",
@@ -193,7 +193,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T13:45:00Z"
+    "created_at": "2026-08-15T17:10:00Z"
   },
   "intent_0015": {
     "id": "intent_0015",
@@ -207,7 +207,7 @@
       "color": "midnight"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T15:45:00Z"
+    "created_at": "2026-08-15T17:35:00Z"
   },
   "intent_0016": {
     "id": "intent_0016",
@@ -220,7 +220,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T12:45:00Z"
+    "created_at": "2026-08-15T11:47:00Z"
   },
   "intent_0017": {
     "id": "intent_0017",
@@ -233,7 +233,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T14:45:00Z"
+    "created_at": "2026-08-15T12:07:00Z"
   },
   "intent_0018": {
     "id": "intent_0018",
@@ -246,7 +246,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T16:45:00Z"
+    "created_at": "2026-08-15T12:27:00Z"
   },
   "intent_0019": {
     "id": "intent_0019",
@@ -259,7 +259,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T18:45:00Z"
+    "created_at": "2026-08-15T12:47:00Z"
   },
   "intent_0020": {
     "id": "intent_0020",
@@ -272,7 +272,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T20:45:00Z"
+    "created_at": "2026-08-15T13:07:00Z"
   },
   "intent_0021": {
     "id": "intent_0021",
@@ -285,7 +285,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T22:45:00Z"
+    "created_at": "2026-08-15T13:27:00Z"
   },
   "intent_0022": {
     "id": "intent_0022",
@@ -298,7 +298,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T00:45:00Z"
+    "created_at": "2026-08-15T13:47:00Z"
   },
   "intent_0023": {
     "id": "intent_0023",
@@ -311,7 +311,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T02:45:00Z"
+    "created_at": "2026-08-15T14:07:00Z"
   },
   "intent_0024": {
     "id": "intent_0024",
@@ -324,7 +324,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T04:45:00Z"
+    "created_at": "2026-08-15T14:27:00Z"
   },
   "intent_0025": {
     "id": "intent_0025",
@@ -337,7 +337,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T06:45:00Z"
+    "created_at": "2026-08-15T14:47:00Z"
   },
   "intent_0026": {
     "id": "intent_0026",
@@ -350,7 +350,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T08:45:00Z"
+    "created_at": "2026-08-15T15:07:00Z"
   },
   "intent_0027": {
     "id": "intent_0027",
@@ -362,7 +362,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T10:45:00Z"
+    "created_at": "2026-08-15T15:27:00Z"
   },
   "intent_0028": {
     "id": "intent_0028",
@@ -375,7 +375,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T12:45:00Z"
+    "created_at": "2026-08-15T15:47:00Z"
   },
   "intent_0029": {
     "id": "intent_0029",
@@ -388,7 +388,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T14:45:00Z"
+    "created_at": "2026-08-15T16:07:00Z"
   },
   "intent_0030": {
     "id": "intent_0030",
@@ -401,7 +401,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T16:45:00Z"
+    "created_at": "2026-08-15T16:27:00Z"
   },
   "intent_0031": {
     "id": "intent_0031",
@@ -415,7 +415,7 @@
       "anc": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-15T13:45:00Z"
+    "created_at": "2026-08-15T11:49:00Z"
   },
   "intent_0032": {
     "id": "intent_0032",
@@ -429,7 +429,7 @@
       "anc": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-15T15:45:00Z"
+    "created_at": "2026-08-15T12:09:00Z"
   },
   "intent_0033": {
     "id": "intent_0033",
@@ -443,7 +443,7 @@
       "anc": false
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-15T17:45:00Z"
+    "created_at": "2026-08-15T12:29:00Z"
   },
   "intent_0034": {
     "id": "intent_0034",
@@ -457,7 +457,7 @@
       "anc": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-15T19:45:00Z"
+    "created_at": "2026-08-15T12:49:00Z"
   },
   "intent_0035": {
     "id": "intent_0035",
@@ -471,7 +471,7 @@
       "anc": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-15T21:45:00Z"
+    "created_at": "2026-08-15T13:09:00Z"
   },
   "intent_0036": {
     "id": "intent_0036",
@@ -485,7 +485,7 @@
       "anc": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-15T23:45:00Z"
+    "created_at": "2026-08-15T13:29:00Z"
   },
   "intent_0037": {
     "id": "intent_0037",
@@ -499,7 +499,7 @@
       "anc": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T01:45:00Z"
+    "created_at": "2026-08-15T13:49:00Z"
   },
   "intent_0038": {
     "id": "intent_0038",
@@ -513,7 +513,7 @@
       "breakfast": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T03:45:00Z"
+    "created_at": "2026-08-15T14:09:00Z"
   },
   "intent_0039": {
     "id": "intent_0039",
@@ -527,7 +527,7 @@
       "refundable": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T05:45:00Z"
+    "created_at": "2026-08-15T14:29:00Z"
   },
   "intent_0040": {
     "id": "intent_0040",
@@ -540,7 +540,7 @@
       "ac": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T07:45:00Z"
+    "created_at": "2026-08-15T14:49:00Z"
   },
   "intent_0041": {
     "id": "intent_0041",
@@ -554,7 +554,7 @@
       "hot_beverage": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T09:45:00Z"
+    "created_at": "2026-08-15T15:09:00Z"
   },
   "intent_0042": {
     "id": "intent_0042",
@@ -567,7 +567,7 @@
       "snack": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T11:45:00Z"
+    "created_at": "2026-08-15T15:29:00Z"
   },
   "intent_0043": {
     "id": "intent_0043",
@@ -581,7 +581,7 @@
       "ai_assist": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T13:45:00Z"
+    "created_at": "2026-08-15T15:49:00Z"
   },
   "intent_0044": {
     "id": "intent_0044",
@@ -595,7 +595,7 @@
       "coding": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T15:45:00Z"
+    "created_at": "2026-08-15T16:09:00Z"
   },
   "intent_0045": {
     "id": "intent_0045",
@@ -609,7 +609,7 @@
       "productivity": true
     },
     "substitution_allowed": true,
-    "created_at": "2026-08-16T17:45:00Z"
+    "created_at": "2026-08-15T16:29:00Z"
   },
   "intent_0046": {
     "id": "intent_0046",
@@ -895,14 +895,14 @@
     "id": "intent_0066",
     "agent_id": "agent_shopping_01",
     "hard_requirements": {
-      "brand": "Dell",
+      "brand": "Sony",
       "category": "electronics"
     },
     "soft_preferences": {
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T14:45:00Z"
+    "created_at": "2026-08-15T11:51:00Z"
   },
   "intent_0067": {
     "id": "intent_0067",
@@ -915,7 +915,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T16:45:00Z"
+    "created_at": "2026-08-15T12:11:00Z"
   },
   "intent_0068": {
     "id": "intent_0068",
@@ -928,7 +928,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T18:45:00Z"
+    "created_at": "2026-08-15T12:31:00Z"
   },
   "intent_0069": {
     "id": "intent_0069",
@@ -941,7 +941,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T20:45:00Z"
+    "created_at": "2026-08-15T12:51:00Z"
   },
   "intent_0070": {
     "id": "intent_0070",
@@ -954,7 +954,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-15T22:45:00Z"
+    "created_at": "2026-08-15T13:11:00Z"
   },
   "intent_0071": {
     "id": "intent_0071",
@@ -967,7 +967,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T00:45:00Z"
+    "created_at": "2026-08-15T13:31:00Z"
   },
   "intent_0072": {
     "id": "intent_0072",
@@ -980,7 +980,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T02:45:00Z"
+    "created_at": "2026-08-15T13:51:00Z"
   },
   "intent_0073": {
     "id": "intent_0073",
@@ -993,7 +993,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T04:45:00Z"
+    "created_at": "2026-08-15T14:11:00Z"
   },
   "intent_0074": {
     "id": "intent_0074",
@@ -1006,7 +1006,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T06:45:00Z"
+    "created_at": "2026-08-15T14:31:00Z"
   },
   "intent_0075": {
     "id": "intent_0075",
@@ -1019,7 +1019,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T08:45:00Z"
+    "created_at": "2026-08-15T14:51:00Z"
   },
   "intent_0076": {
     "id": "intent_0076",
@@ -1032,7 +1032,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T10:45:00Z"
+    "created_at": "2026-08-15T15:11:00Z"
   },
   "intent_0077": {
     "id": "intent_0077",
@@ -1045,7 +1045,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T12:45:00Z"
+    "created_at": "2026-08-15T15:31:00Z"
   },
   "intent_0078": {
     "id": "intent_0078",
@@ -1058,7 +1058,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T14:45:00Z"
+    "created_at": "2026-08-15T15:51:00Z"
   },
   "intent_0079": {
     "id": "intent_0079",
@@ -1071,7 +1071,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T16:45:00Z"
+    "created_at": "2026-08-15T16:11:00Z"
   },
   "intent_0080": {
     "id": "intent_0080",
@@ -1084,7 +1084,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-16T18:45:00Z"
+    "created_at": "2026-08-15T16:31:00Z"
   },
   "intent_0081": {
     "id": "intent_0081",
@@ -1112,7 +1112,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T11:15:00Z"
+    "created_at": "2026-09-15T10:35:00Z"
   },
   "intent_0083": {
     "id": "intent_0083",
@@ -1126,7 +1126,7 @@
       "color": "white"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T12:15:00Z"
+    "created_at": "2026-09-15T10:55:00Z"
   },
   "intent_0084": {
     "id": "intent_0084",
@@ -1140,7 +1140,7 @@
       "color": "triple black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T13:15:00Z"
+    "created_at": "2026-09-15T11:15:00Z"
   },
   "intent_0085": {
     "id": "intent_0085",
@@ -1154,7 +1154,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T14:15:00Z"
+    "created_at": "2026-09-15T11:35:00Z"
   },
   "intent_0086": {
     "id": "intent_0086",
@@ -1168,7 +1168,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T15:15:00Z"
+    "created_at": "2026-09-15T11:55:00Z"
   },
   "intent_0087": {
     "id": "intent_0087",
@@ -1182,7 +1182,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T16:15:00Z"
+    "created_at": "2026-09-15T12:15:00Z"
   },
   "intent_0088": {
     "id": "intent_0088",
@@ -1196,7 +1196,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T17:15:00Z"
+    "created_at": "2026-09-15T12:35:00Z"
   },
   "intent_0089": {
     "id": "intent_0089",
@@ -1210,7 +1210,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T18:15:00Z"
+    "created_at": "2026-09-15T12:55:00Z"
   },
   "intent_0090": {
     "id": "intent_0090",
@@ -1224,7 +1224,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T19:15:00Z"
+    "created_at": "2026-09-15T13:15:00Z"
   },
   "intent_0091": {
     "id": "intent_0091",
@@ -1238,7 +1238,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T20:15:00Z"
+    "created_at": "2026-09-15T13:35:00Z"
   },
   "intent_0092": {
     "id": "intent_0092",
@@ -1252,7 +1252,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T21:15:00Z"
+    "created_at": "2026-09-15T13:55:00Z"
   },
   "intent_0093": {
     "id": "intent_0093",
@@ -1266,7 +1266,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-15T22:15:00Z"
+    "created_at": "2026-09-15T14:15:00Z"
   },
   "intent_0094": {
     "id": "intent_0094",
@@ -1280,7 +1280,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-27T03:45:00Z"
+    "created_at": "2026-09-26T19:05:00Z"
   },
   "intent_0095": {
     "id": "intent_0095",
@@ -1294,7 +1294,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-09-27T04:45:00Z"
+    "created_at": "2026-09-26T19:25:00Z"
   },
   "intent_0096": {
     "id": "intent_0096",
@@ -1308,7 +1308,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-17T11:45:00Z"
+    "created_at": "2026-08-17T11:53:00Z"
   },
   "intent_0097": {
     "id": "intent_0097",
@@ -1322,7 +1322,7 @@
       "color": "white"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-17T13:45:00Z"
+    "created_at": "2026-08-17T12:13:00Z"
   },
   "intent_0098": {
     "id": "intent_0098",
@@ -1336,7 +1336,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-17T15:45:00Z"
+    "created_at": "2026-08-17T12:33:00Z"
   },
   "intent_0099": {
     "id": "intent_0099",
@@ -1350,7 +1350,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-17T17:45:00Z"
+    "created_at": "2026-08-17T12:53:00Z"
   },
   "intent_0100": {
     "id": "intent_0100",
@@ -1364,7 +1364,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-17T19:45:00Z"
+    "created_at": "2026-08-17T13:13:00Z"
   },
   "intent_0101": {
     "id": "intent_0101",
@@ -1378,7 +1378,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-17T21:45:00Z"
+    "created_at": "2026-08-17T13:33:00Z"
   },
   "intent_0102": {
     "id": "intent_0102",
@@ -1392,7 +1392,7 @@
       "color": "triple black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-17T23:45:00Z"
+    "created_at": "2026-08-17T13:53:00Z"
   },
   "intent_0103": {
     "id": "intent_0103",
@@ -1406,7 +1406,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T01:45:00Z"
+    "created_at": "2026-08-17T14:13:00Z"
   },
   "intent_0104": {
     "id": "intent_0104",
@@ -1420,7 +1420,7 @@
       "color": "black"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T03:45:00Z"
+    "created_at": "2026-08-17T14:33:00Z"
   },
   "intent_0105": {
     "id": "intent_0105",
@@ -1434,7 +1434,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T05:45:00Z"
+    "created_at": "2026-08-17T14:53:00Z"
   },
   "intent_0106": {
     "id": "intent_0106",
@@ -1448,7 +1448,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T07:45:00Z"
+    "created_at": "2026-08-17T15:13:00Z"
   },
   "intent_0107": {
     "id": "intent_0107",
@@ -1462,7 +1462,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T09:45:00Z"
+    "created_at": "2026-08-17T15:33:00Z"
   },
   "intent_0108": {
     "id": "intent_0108",
@@ -1476,7 +1476,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T11:45:00Z"
+    "created_at": "2026-08-17T15:53:00Z"
   },
   "intent_0109": {
     "id": "intent_0109",
@@ -1490,7 +1490,7 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T13:45:00Z"
+    "created_at": "2026-08-17T16:13:00Z"
   },
   "intent_0110": {
     "id": "intent_0110",
@@ -1504,6 +1504,6 @@
       "color": "standard"
     },
     "substitution_allowed": false,
-    "created_at": "2026-08-18T15:45:00Z"
+    "created_at": "2026-08-17T16:33:00Z"
   }
 }
