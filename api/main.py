@@ -227,3 +227,34 @@ def verify_transaction(id: str, body: VerifyRequest):
     if payment_error:
         updated_receipt["payment_error"] = payment_error
     return updated_receipt
+
+
+from fastapi.responses import FileResponse
+import csv
+
+@app.get("/")
+def serve_dashboard():
+    frontend_path = REPO_ROOT / "frontend" / "index.html"
+    if frontend_path.exists():
+        return FileResponse(str(frontend_path))
+    return {"message": "SpendGuard API is running. Access /docs for Swagger UI."}
+
+
+@app.post("/admin/seed_scenarios")
+def seed_scenarios():
+    """Batch-evaluates and persists all scenarios from data/scenarios.csv."""
+    scenarios_csv = REPO_ROOT / "data" / "scenarios.csv"
+    if not scenarios_csv.exists():
+        raise HTTPException(status_code=404, detail="scenarios.csv not found")
+
+    rows = []
+    with open(scenarios_csv, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            r["claimed_product"] = json.loads(r["claimed_product"])
+            r["amount"] = float(r["amount"])
+            tx = TransactionRequest(**r)
+            evaluate(tx)
+            rows.append(tx)
+
+    return {"status": "ok", "count": len(rows)}

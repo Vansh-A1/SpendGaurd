@@ -67,6 +67,10 @@ def init_db(db_path: Optional[Path] = None):
     conn.close()
 
 
+# Ensure tables are initialized on import
+init_db()
+
+
 def save_transaction_evaluation(
     tx_dict: Dict[str, Any],
     receipt_dict: Dict[str, Any],

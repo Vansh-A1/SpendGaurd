@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendGuard — AI Purchase Trust Layer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --allow: #10b981;
+      --allow-bg: rgba(16, 185, 129, 0.12);
+      --verify: #f59e0b;
+      --verify-bg: rgba(245, 158, 11, 0.12);
+      --block: #ef4444;
+      --block-bg: rgba(239, 68, 68, 0.12);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .shield-icon {
+      font-size: 28px;
+    }
+    .brand h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .brand span {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: block;
+    }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn {
+      background: #1f2937;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #374151; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--allow); color: #000; border-color: var(--allow); font-weight: 600; }
+    .btn-danger { background: var(--block); color: #fff; border-color: var(--block); font-weight: 600; }
+
+    /* Filters */
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      padding: 14px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    select, input {
+      background: #0b0f19;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .stats-bar {
+      margin-left: auto;
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .stat-allow { background: var(--allow-bg); color: var(--allow); }
+    .stat-verify { background: var(--verify-bg); color: var(--verify); }
+    .stat-block { background: var(--block-bg); color: var(--block); }
+
+    /* Table */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      background: #161f30;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    tr.clickable {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    tr.clickable:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .badge-allow { background: var(--allow-bg); color: var(--allow); border: 1px solid var(--allow); }
+    .badge-verify { background: var(--verify-bg); color: var(--verify); border: 1px solid var(--verify); }
+    .badge-block { background: var(--block-bg); color: var(--block); border: 1px solid var(--block); }
+    .badge-skipped { background: #1f2937; color: var(--text-muted); border: 1px solid #374151; }
+
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+    /* Modal / Detail Panel */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 24px;
+    }
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #161f30;
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .decision-banner {
+      padding: 16px 20px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .decision-banner.ALLOW { background: var(--allow-bg); border: 1px solid var(--allow); }
+    .decision-banner.VERIFY { background: var(--verify-bg); border: 1px solid var(--verify); }
+    .decision-banner.BLOCK { background: var(--block-bg); border: 1px solid var(--block); }
+
+    .decision-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .decision-reason {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .order-tag {
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 4px 8px;
+      background: #000;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .pillar-card {
+      background: #0b0f19;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .pillar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .pillar-name {
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pillar-details {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Provenance Trail */
+    .provenance-box {
+      background: #0b0f19;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .provenance-step {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+    .provenance-step:last-child { margin-bottom: 0; }
+    .provenance-step::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+    .provenance-step::after {
+      content: "";
+      position: absolute;
+      left: 9px;
+      top: 18px;
+      bottom: -10px;
+      width: 2px;
+      background: var(--border);
+    }
+    .provenance-step:last-child::after { display: none; }
+    .step-title { font-weight: 600; font-size: 13px; color: var(--text); }
+    .step-content { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Action bar */
+    .action-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .conflict-table {
+      width: 100%;
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      font-size: 11px;
+    }
+    .conflict-table th, .conflict-table td { padding: 6px 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand">
+      <div class="shield-icon">🛡️</div>
+      <div>
+        <h1>SpendGuard</h1>
+        <span>AI Agent Payment Trust & Decision Layer</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="fetchTransactions()">🔄 Refresh</button>
+      <button class="btn btn-primary" onclick="batchSeedScenarios()">⚡ Ingest 110 Scenarios</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="filter-group">
+      <label for="filter-decision">Decision:</label>
+      <select id="filter-decision" onchange="fetchTransactions()">
+        <option value="">All Decisions</option>
+        <option value="ALLOW">ALLOW</option>
+        <option value="VERIFY">VERIFY</option>
+        <option value="BLOCK">BLOCK</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="filter-agent">Agent ID:</label>
+      <select id="filter-agent" onchange="fetchTransactions()">
+        <option value="">All Agents</option>
+        <option value="agent_shopping_01">agent_shopping_01</option>
+        <option value="agent_travel_01">agent_travel_01</option>
+        <option value="agent_grocery_01">agent_grocery_01</option>
+        <option value="agent_software_01">agent_software_01</option>
+        <option value="agent_shopping_cold">agent_shopping_cold</option>
+      </select>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-pill stat-allow">ALLOW: <span id="count-allow">0</span></div>
+      <div class="stat-pill stat-verify">VERIFY: <span id="count-verify">0</span></div>
+      <div class="stat-pill stat-block">BLOCK: <span id="count-block">0</span></div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Time (UTC)</th>
+          <th>Tx ID</th>
+          <th>Agent ID</th>
+          <th>Category</th>
+          <th>Merchant</th>
+          <th>Actual SKU</th>
+          <th>Amount (₹)</th>
+          <th>Decision</th>
+        </tr>
+      </thead>
+      <tbody id="tx-table-body">
+        <tr>
+          <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">
+            Loading transactions...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 style="font-size: 16px; font-weight: 600;" id="modal-tx-id">Transaction Receipt</h2>
+          <span style="font-size: 12px; color: var(--text-muted);" id="modal-meta"></span>
+        </div>
+        <button class="btn" onclick="closeModal()">✕ Close</button>
+      </div>
+
+      <div class="modal-body" id="modal-body-content">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentReceipt = null;
+
+    async function fetchTransactions() {
+      const decision = document.getElementById('filter-decision').value;
+      const agentId = document.getElementById('filter-agent').value;
+
+      let url = '/transactions';
+      const params = new URLSearchParams();
+      if (decision) params.append('decision', decision);
+      if (agentId) params.append('agent_id', agentId);
+      if (params.toString()) url += '?' + params.toString();
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        renderTransactions(data);
+      } catch (err) {
+        console.error('Error fetching transactions:', err);
+      }
+    }
+
+    function renderTransactions(transactions) {
+      const tbody = document.getElementById('tx-table-body');
+      if (!transactions || transactions.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">
+              No transactions recorded yet. Click "⚡ Ingest 110 Scenarios" above to evaluate the full batch.
+            </td>
+          </tr>
+        `;
+        document.getElementById('count-allow').innerText = 0;
+        document.getElementById('count-verify').innerText = 0;
+        document.getElementById('count-block').innerText = 0;
+        return;
+      }
+
+      let allowCount = 0, verifyCount = 0, blockCount = 0;
+
+      tbody.innerHTML = transactions.map(tx => {
+        if (tx.decision === 'ALLOW') allowCount++;
+        else if (tx.decision === 'VERIFY') verifyCount++;
+        else if (tx.decision === 'BLOCK') blockCount++;
+
+        const badgeClass = `badge-${tx.decision.toLowerCase()}`;
+        const timeStr = tx.timestamp ? new Date(tx.timestamp).toISOString().replace('T', ' ').substring(0, 19) : '';
+        const amtStr = '₹' + Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+        return `
+          <tr class="clickable" onclick="openDetailModal('${tx.id}')">
+            <td class="mono" style="color: var(--text-muted);">${timeStr}</td>
+            <td class="mono" style="font-weight: 600;">${tx.id}</td>
+            <td>${tx.agent_id}</td>
+            <td><span style="text-transform: capitalize;">${tx.category}</span></td>
+            <td>${tx.merchant}</td>
+            <td class="mono" style="color: var(--text-muted);">${tx.actual_sku}</td>
+            <td style="font-weight: 600;">${amtStr}</td>
+            <td><span class="badge ${badgeClass}">${tx.decision}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('count-allow').innerText = allowCount;
+      document.getElementById('count-verify').innerText = verifyCount;
+      document.getElementById('count-block').innerText = blockCount;
+    }
+
+    async function openDetailModal(txId) {
+      try {
+        const res = await fetch(`/transactions/${txId}/receipt`);
+        if (!res.ok) throw new Error('Receipt not found');
+        const receipt = await res.json();
+        currentReceipt = receipt;
+        renderReceiptModal(receipt);
+        document.getElementById('detail-modal').style.display = 'flex';
+      } catch (err) {
+        alert('Error loading receipt: ' + err.message);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('detail-modal').style.display = 'none';
+      currentReceipt = null;
+    }
+
+    function closeModalOnOutsideClick(e) {
+      if (e.target.id === 'detail-modal') closeModal();
+    }
+
+    function renderReceiptModal(r) {
+      document.getElementById('modal-tx-id').innerText = `Decision Receipt: ${r.transaction_id}`;
+      
+      const badgeClass = `badge-${r.decision.toLowerCase()}`;
+      
+      let orderHtml = '';
+      if (r.razorpay_order_id) {
+        orderHtml = `<div class="order-tag">💳 Razorpay Order ID: <span style="color: var(--allow); font-weight: 600;">${r.razorpay_order_id}</span></div>`;
+      } else if (r.payment_error) {
+        orderHtml = `<div class="order-tag" style="color: var(--block);">⚠️ Payment Error: ${r.payment_error}</div>`;
+      }
+
+      // Pillar 1: Authorization
+      let authHtml = '';
+      if (r.authorization === 'skipped') {
+        authHtml = `<span class="badge badge-skipped">SKIPPED</span>`;
+      } else {
+        const passedBadge = r.authorization.passed ? '<span class="badge badge-allow">PASSED</span>' : '<span class="badge badge-block">FAILED</span>';
+        authHtml = `
+          ${passedBadge}
+          <div style="margin-top: 8px;">
+            <div>Failed Checks: <strong>${r.authorization.failed_checks.length ? r.authorization.failed_checks.join(', ') : 'None'}</strong></div>
+            <div>Stale Mandate: <strong>${r.authorization.is_stale ? 'Yes (Past TTL)' : 'No (Active)'}</strong></div>
+          </div>
+        `;
+      }
+
+      // Pillar 2: Intent Fidelity
+      let intentHtml = '';
+      if (r.intent_fidelity === 'skipped') {
+        intentHtml = `<span class="badge badge-skipped">SKIPPED</span>`;
+      } else {
+        const matchBadge = r.intent_fidelity.hard_match ? '<span class="badge badge-allow">HARD MATCH</span>' : '<span class="badge badge-block">MISMATCH</span>';
+        intentHtml = `
+          ${matchBadge}
+          <div style="margin-top: 8px;">
+            <div>Soft Score: <strong>${(r.intent_fidelity.soft_score * 100).toFixed(1)}%</strong></div>
+            <div>Mismatched Fields: <strong>${r.intent_fidelity.mismatched_fields.length ? r.intent_fidelity.mismatched_fields.join(', ') : 'None'}</strong></div>
+          </div>
+        `;
+      }
+
+      // Pillar 3: Behavioral Risk
+      let riskHtml = '';
+      if (r.behavioral_risk === 'skipped') {
+        riskHtml = `<span class="badge badge-skipped">SKIPPED</span>`;
+      } else {
+        const score = r.behavioral_risk.score;
+        let riskColor = 'var(--allow)';
+        if (score > 0.70) riskColor = 'var(--block)';
+        else if (score >= 0.30) riskColor = 'var(--verify)';
+
+        riskHtml = `
+          <span class="badge" style="background: rgba(255,255,255,0.05); color: ${riskColor}; border: 1px solid ${riskColor};">
+            RISK SCORE: ${(score * 100).toFixed(1)}%
+          </span>
+          <div style="margin-top: 8px;">
+            <div style="font-weight: 500; margin-bottom: 4px;">Top Model Reasons:</div>
+            <ul style="padding-left: 18px;">
+              ${r.behavioral_risk.top_reasons.map(reason => `<li>${reason}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      // Pillar 4: Evidence
+      let evidenceHtml = '';
+      if (r.evidence === 'skipped') {
+        evidenceHtml = `<span class="badge badge-skipped">SKIPPED</span>`;
+      } else {
+        const hasConflicts = r.evidence.conflicts && r.evidence.conflicts.length > 0;
+        const evBadge = hasConflicts ? '<span class="badge badge-block">CONFLICTS DETECTED</span>' : '<span class="badge badge-allow">CLEAN</span>';
+        
+        let conflictTable = '';
+        if (hasConflicts) {
+          conflictTable = `
+            <table class="conflict-table">
+              <thead><tr><th>Field</th><th>Claimed</th><th>Catalog Truth</th></tr></thead>
+              <tbody>
+                ${r.evidence.conflicts.map(c => `
+                  <tr>
+                    <td class="mono" style="color: #fbbf24;">${c.field}</td>
+                    <td>${JSON.stringify(c.claimed)}</td>
+                    <td style="color: var(--allow); font-weight: 600;">${JSON.stringify(c.actual)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+
+        evidenceHtml = `
+          ${evBadge}
+          <div style="margin-top: 8px;">
+            <div>Sources Checked: <strong>${r.evidence.sources_checked.join(', ')}</strong></div>
+            ${conflictTable}
+          </div>
+        `;
+      }
+
+      // Provenance Trail
+      let trailHtml = '<div style="color: var(--text-muted);">No provenance recorded.</div>';
+      if (r.provenance_trail && r.provenance_trail.length) {
+        trailHtml = r.provenance_trail.map(step => {
+          let content = '';
+          if (step.event_type === 'search') {
+            content = `Query: <code>${JSON.stringify(step.payload.query)}</code>`;
+          } else if (step.event_type === 'candidates_found') {
+            content = `Found ${step.payload.candidate_count} products in category <strong>${step.payload.category}</strong>`;
+          } else if (step.event_type === 'candidates_eliminated') {
+            content = `Eliminated ${step.payload.eliminated_count} options. Sample: ${step.payload.eliminations.slice(0, 2).map(e => `${e.brand} ${e.model} (${e.reasons.join(', ')})`).join('; ')}`;
+          } else if (step.event_type === 'selected') {
+            content = `<strong>${step.payload.brand} ${step.payload.model} (₹${step.payload.price.toLocaleString('en-IN')})</strong> — ${step.payload.reason}`;
+          }
+
+          return `
+            <div class="provenance-step">
+              <div class="step-title">Step ${step.seq}: ${step.event_type.toUpperCase().replace('_', ' ')}</div>
+              <div class="step-content">${content}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Action buttons for VERIFY
+      let actionButtons = '';
+      if (r.decision === 'VERIFY') {
+        actionButtons = `
+          <div class="action-bar">
+            <span style="margin-right: auto; font-size: 13px; color: var(--verify); display: flex; align-items: center; gap: 6px;">
+              ⚠️ Human-in-the-loop review required before payment can execute
+            </span>
+            <button class="btn btn-danger" onclick="submitVerification('${r.transaction_id}', false)">✖ Deny Purchase</button>
+            <button class="btn btn-success" onclick="submitVerification('${r.transaction_id}', true)">✔ Approve & Pay with Razorpay</button>
+          </div>
+        `;
+      }
+
+      document.getElementById('modal-body-content').innerHTML = `
+        <div class="decision-banner ${r.decision}">
+          <div>
+            <div class="decision-title">${r.decision}</div>
+            <div class="decision-reason">${r.decision_reason}</div>
+          </div>
+          ${orderHtml}
+        </div>
+
+        <div class="pillars-grid">
+          <div class="pillar-card">
+            <div class="pillar-header">
+              <div class="pillar-name">1. Authorization</div>
+            </div>
+            <div class="pillar-details">${authHtml}</div>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-header">
+              <div class="pillar-name">2. Intent Fidelity</div>
+            </div>
+            <div class="pillar-details">${intentHtml}</div>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-header">
+              <div class="pillar-name">3. Behavioral Risk (ML)</div>
+            </div>
+            <div class="pillar-details">${riskHtml}</div>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-header">
+              <div class="pillar-name">4. Evidence Check</div>
+            </div>
+            <div class="pillar-details">${evidenceHtml}</div>
+          </div>
+        </div>
+
+        <div class="provenance-box">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 12px;">Decision Provenance Trail</div>
+          ${trailHtml}
+        </div>
+
+        ${actionButtons}
+      `;
+    }
+
+    async function submitVerification(txId, approved) {
+      try {
+        const res = await fetch(`/transactions/${txId}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approved })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || 'Verification request failed');
+        }
+        const updated = await res.json();
+        renderReceiptModal(updated);
+        fetchTransactions();
+      } catch (err) {
+        alert('Verification error: ' + err.message);
+      }
+    }
+
+    async function batchSeedScenarios() {
+      const btn = event.target;
+      const origText = btn.innerText;
+      btn.innerText = '⏳ Ingesting...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/admin/seed_scenarios', { method: 'POST' });
+        const result = await res.json();
+        alert(`Successfully evaluated and persisted ${result.count} scenarios across all 7 types!`);
+        fetchTransactions();
+      } catch (err) {
+        alert('Error seeding scenarios: ' + err.message);
+      } finally {
+        btn.innerText = origText;
+        btn.disabled = false;
+      }
+    }
+
+    // Polling every 5 seconds
+    setInterval(fetchTransactions, 5000);
+    // Initial fetch
+    fetchTransactions();
+  </script>
+</body>
+</html>
