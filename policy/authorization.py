@@ -1,9 +1,9 @@
 from datetime import datetime, time, timedelta
-from typing import List
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
 from data.schema import TransactionRequest
-from policy.schema import Mandate
+from policy.schema import Mandate, TimeWindowRule
 
 
 class AuthorizationResult(BaseModel):
@@ -33,7 +33,37 @@ def _is_time_in_window(t: time, start_str: str, end_str: str) -> bool:
         return t >= start or t <= end
 
 
-def check_authorization(transaction: TransactionRequest, mandate: Mandate) -> AuthorizationResult:
+def _matches_time_windows(tx_dt: datetime, time_windows: List[TimeWindowRule]) -> bool:
+    """Check if timestamp matches any TimeWindowRule (day-of-week + start/end)."""
+    day_name = tx_dt.strftime("%A").lower()
+    tx_time = tx_dt.time()
+    for rule in time_windows:
+        if rule.days_of_week:
+            allowed_days = [d.strip().lower() for d in rule.days_of_week]
+            if day_name not in allowed_days:
+                continue
+        if _is_time_in_window(tx_time, rule.start, rule.end):
+            return True
+    return False
+
+
+def _get_period_timedelta(period_name: str) -> timedelta:
+    """Map period key to timedelta."""
+    p = period_name.lower().strip()
+    if p in ("daily", "day", "24h"):
+        return timedelta(days=1)
+    elif p in ("weekly", "week", "7d"):
+        return timedelta(days=7)
+    elif p in ("monthly", "month", "30d"):
+        return timedelta(days=30)
+    return timedelta(days=1)
+
+
+def check_authorization(
+    transaction: TransactionRequest,
+    mandate: Mandate,
+    prior_transactions: Optional[List[Dict[str, Any]]] = None,
+) -> AuthorizationResult:
     """
     Evaluates a transaction against a mandate under Pillar 1 (Authorization).
     
@@ -41,14 +71,15 @@ def check_authorization(transaction: TransactionRequest, mandate: Mandate) -> Au
     1. Budget: amount > per_transaction_cap -> "budget_exceeded"
     2. Category: category not in categories -> "category_not_allowed"
     3. Merchant: if merchants non-empty, merchant not in merchants -> "merchant_not_allowed"
-    4. Time window: timestamp's time outside window -> "outside_time_window"
+    4. Time window: evaluated against mandate.time_windows list if present, else legacy start/end
+    5. Cumulative Period Caps: checks daily/weekly/monthly cumulative spend against mandate.period_caps
     
-    Check 5 (Mandate Freshness):
+    Check 6 (Mandate Freshness):
     - If timestamp > issued_at + ttl_seconds -> is_stale=True (does not cause passed to fail here)
     """
     failed_checks: List[str] = []
 
-    # 1. Budget check
+    # 1. Budget check (per-transaction cap)
     if transaction.amount > mandate.per_transaction_cap:
         failed_checks.append("budget_exceeded")
 
@@ -60,12 +91,60 @@ def check_authorization(transaction: TransactionRequest, mandate: Mandate) -> Au
     if mandate.merchants and transaction.merchant not in mandate.merchants:
         failed_checks.append("merchant_not_allowed")
 
-    # 4. Time window check
-    tx_time = transaction.timestamp.time()
-    if not _is_time_in_window(tx_time, mandate.time_window_start, mandate.time_window_end):
-        failed_checks.append("outside_time_window")
+    # 4. Time window check (multi-window support with legacy fallback)
+    if mandate.time_windows and len(mandate.time_windows) > 0:
+        if not _matches_time_windows(transaction.timestamp, mandate.time_windows):
+            failed_checks.append("outside_time_window")
+    else:
+        tx_time = transaction.timestamp.time()
+        if not _is_time_in_window(tx_time, mandate.time_window_start, mandate.time_window_end):
+            failed_checks.append("outside_time_window")
 
-    # 5. Mandate freshness check (separate flag, does not fail passed)
+    # 5. Cumulative Period Caps check (if period_caps specified)
+    if mandate.period_caps and len(mandate.period_caps) > 0:
+        tx_ts = transaction.timestamp
+        # Query DB if prior transactions not explicitly supplied
+        if prior_transactions is None:
+            try:
+                from api.db import get_transactions
+                priors = get_transactions(agent_id=transaction.agent_id)
+            except Exception:
+                priors = []
+        else:
+            priors = prior_transactions
+
+        for period, cap in mandate.period_caps.items():
+            window_span = _get_period_timedelta(period)
+            cutoff = tx_ts - window_span
+            
+            period_sum = 0.0
+            for p in priors:
+                if p.get("decision") == "BLOCK":
+                    continue
+                p_ts_raw = p.get("timestamp")
+                if isinstance(p_ts_raw, str):
+                    try:
+                        p_ts = datetime.fromisoformat(p_ts_raw)
+                    except Exception:
+                        continue
+                elif isinstance(p_ts_raw, datetime):
+                    p_ts = p_ts_raw
+                else:
+                    continue
+
+                # Ensure timezone alignment
+                if p_ts.tzinfo is not None and tx_ts.tzinfo is None:
+                    p_ts = p_ts.replace(tzinfo=None)
+                elif p_ts.tzinfo is None and tx_ts.tzinfo is not None:
+                    p_ts = p_ts.replace(tzinfo=tx_ts.tzinfo)
+
+                if cutoff <= p_ts < tx_ts:
+                    period_sum += float(p.get("amount", 0.0))
+
+            if (period_sum + transaction.amount) > float(cap):
+                failed_checks.append(f"period_cap_exceeded_{period}")
+
+    # 6. Mandate freshness check (separate flag, does not fail passed)
     tx_ts = transaction.timestamp
     mandate_issued = mandate.issued_at
 

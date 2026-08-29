@@ -48,9 +48,19 @@ def init_db(db_path: Optional[Path] = None):
         seq INTEGER NOT NULL,
         event_type TEXT NOT NULL,
         payload_json TEXT NOT NULL,
+        prev_hash TEXT,
+        event_hash TEXT,
         FOREIGN KEY (transaction_id) REFERENCES transactions (id)
     );
     """)
+
+    # Migration check: ensure prev_hash and event_hash exist on existing tables
+    cursor.execute("PRAGMA table_info(provenance_events)")
+    existing_cols = [row[1] for row in cursor.fetchall()]
+    if "prev_hash" not in existing_cols:
+        cursor.execute("ALTER TABLE provenance_events ADD COLUMN prev_hash TEXT")
+    if "event_hash" not in existing_cols:
+        cursor.execute("ALTER TABLE provenance_events ADD COLUMN event_hash TEXT")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS audit_log (
@@ -135,9 +145,16 @@ def save_transaction_evaluation(
     for event in receipt_dict.get("provenance_trail", []):
         payload_str = json.dumps(event.get("payload", {})) if isinstance(event.get("payload"), dict) else str(event.get("payload", "{}"))
         cursor.execute("""
-        INSERT INTO provenance_events (transaction_id, seq, event_type, payload_json)
-        VALUES (?, ?, ?, ?)
-        """, (tx_dict["id"], event.get("seq", 1), event.get("event_type", "event"), payload_str))
+        INSERT INTO provenance_events (transaction_id, seq, event_type, payload_json, prev_hash, event_hash)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            tx_dict["id"],
+            event.get("seq", 1),
+            event.get("event_type", "event"),
+            payload_str,
+            event.get("prev_hash"),
+            event.get("event_hash"),
+        ))
 
     # Insert audit log
     cursor.execute("""
@@ -204,6 +221,8 @@ def get_transaction_receipt(transaction_id: str, db_path: Optional[Path] = None)
             "seq": er["seq"],
             "event_type": er["event_type"],
             "payload": json.loads(er["payload_json"]),
+            "prev_hash": er["prev_hash"] if "prev_hash" in er.keys() else None,
+            "event_hash": er["event_hash"] if "event_hash" in er.keys() else None,
         })
 
     # Parse pillar JSONs

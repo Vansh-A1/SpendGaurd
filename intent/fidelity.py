@@ -59,19 +59,30 @@ def check_intent_fidelity(intent: UserIntent, actual_product: Product) -> Intent
 
     hard_match = len(mismatched_fields) == 0
 
-    # 2. Evaluate Soft Preferences
-    scoreable_count = 0
-    matched_count = 0
+    # 2. Evaluate Soft Preferences with Weighted Scoring
+    total_weight = 0.0
+    matched_weight = 0.0
 
-    for key, pref_val in intent.soft_preferences.items():
+    for key, pref_item in intent.soft_preferences.items():
+        # Handle either raw value or structured {"val": ..., "weight": ...} / WeightedPreference
+        if isinstance(pref_item, dict) and "val" in pref_item:
+            pref_val = pref_item["val"]
+            weight = float(pref_item.get("weight", 1.0))
+        elif hasattr(pref_item, "val") and hasattr(pref_item, "weight"):
+            pref_val = pref_item.val
+            weight = float(pref_item.weight)
+        else:
+            pref_val = pref_item
+            weight = 1.0
+
         actual_val = _get_product_attribute(actual_product, key)
         if actual_val is not None:
-            scoreable_count += 1
+            total_weight += weight
             if _values_match(actual_val, pref_val):
-                matched_count += 1
+                matched_weight += weight
 
-    if scoreable_count > 0:
-        soft_score = matched_count / scoreable_count
+    if total_weight > 0:
+        soft_score = matched_weight / total_weight
     else:
         soft_score = 1.0
 

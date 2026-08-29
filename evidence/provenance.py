@@ -1,4 +1,6 @@
-from typing import List, Dict, Any, Optional
+import hashlib
+import json
+from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
 
 from data.schema import Product
@@ -7,17 +9,78 @@ from intent.schema import UserIntent
 PROVENANCE_LOG: List[Dict[str, Any]] = []
 
 
-def log_provenance_event(transaction_id: str, seq: int, event_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Appends a structured decision provenance event to the log."""
+def _compute_event_hash(prev_hash: str, seq: int, event_type: str, payload: Dict[str, Any]) -> str:
+    """Computes deterministic SHA-256 hash for a provenance event linked to prev_hash."""
+    canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    raw_str = f"{prev_hash}||{seq}||{event_type}||{canonical_payload}"
+    return hashlib.sha256(raw_str.encode("utf-8")).hexdigest()
+
+
+def log_provenance_event(
+    transaction_id: str,
+    seq: int,
+    event_type: str,
+    payload: Dict[str, Any],
+    prev_hash: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Appends a structured decision provenance event with SHA-256 hash chaining to the log.
+    """
+    if prev_hash is None:
+        if seq == 1:
+            prev_hash = "genesis"
+        else:
+            # Look up immediate predecessor in transaction history
+            tx_events = [e for e in PROVENANCE_LOG if e["transaction_id"] == transaction_id]
+            prev_hash = tx_events[-1]["event_hash"] if tx_events else "genesis"
+
+    event_hash = _compute_event_hash(prev_hash, seq, event_type, payload)
+
     event = {
         "transaction_id": transaction_id,
         "seq": seq,
         "event_type": event_type,
         "payload": payload,
+        "prev_hash": prev_hash,
+        "event_hash": event_hash,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     PROVENANCE_LOG.append(event)
     return event
+
+
+def verify_provenance_chain(events: List[Dict[str, Any]]) -> Tuple[bool, Optional[str]]:
+    """
+    Validates cryptographic integrity of a sequential provenance trail:
+    1. Verifies genesis hash linkage on seq 1.
+    2. Verifies prev_hash equals previous event_hash.
+    3. Recomputes SHA-256 hash over payload to guarantee tamper resistance.
+    """
+    if not events:
+        return True, None
+
+    sorted_events = sorted(events, key=lambda e: e.get("seq", 0))
+    for i, ev in enumerate(sorted_events):
+        seq = ev.get("seq", i + 1)
+        prev_hash = ev.get("prev_hash")
+        event_hash = ev.get("event_hash")
+        event_type = ev.get("event_type", "")
+        payload = ev.get("payload", {})
+
+        if i == 0:
+            expected_prev = "genesis"
+            if prev_hash != expected_prev:
+                return False, f"Invalid genesis prev_hash at seq {seq}: {prev_hash}"
+        else:
+            expected_prev = sorted_events[i - 1].get("event_hash")
+            if prev_hash != expected_prev:
+                return False, f"Broken chain linkage at seq {seq}: expected {expected_prev}, got {prev_hash}"
+
+        recomputed = _compute_event_hash(prev_hash, seq, event_type, payload)
+        if event_hash != recomputed:
+            return False, f"Tampered event payload or hash mismatch at seq {seq}"
+
+    return True, None
 
 
 def get_provenance_for_transaction(transaction_id: str) -> List[Dict[str, Any]]:

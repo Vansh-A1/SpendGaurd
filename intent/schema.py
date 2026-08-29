@@ -1,8 +1,13 @@
 import hashlib
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any, Union, Dict
 from pydantic import BaseModel, model_validator
+
+
+class WeightedPreference(BaseModel):
+    val: Any
+    weight: float = 1.0
 
 
 class UserIntent(BaseModel):
