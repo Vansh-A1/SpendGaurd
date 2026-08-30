@@ -1,0 +1,76 @@
+{
+  "app_type": "landing_page",
+  "design_context": "marketing_cinematic_fintech",
+  "emotional_tone": "cinematic_trust_authority_deep_tech",
+  "typography": {
+    "headline_font": "Playfair Display",
+    "body_font": "Plus Jakarta Sans",
+    "mono_font": "JetBrains Mono",
+    "rules": {
+      "H1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter font-serif font-bold text-white",
+      "H2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-serif text-white",
+      "H3": "text-xl sm:text-2xl font-medium text-slate-200",
+      "body": "text-base text-slate-300 leading-relaxed font-sans",
+      "overlines": "text-xs uppercase tracking-[0.25em] text-cyan-400 font-mono"
+    }
+  },
+  "colors": {
+    "background": "#07090E",
+    "surface": "#0C101A",
+    "surface_glass": "rgba(12, 16, 26, 0.75)",
+    "primary": "#38BDF8",
+    "primary_glow": "rgba(56, 189, 248, 0.25)",
+    "accent_blue": "#2563EB",
+    "accent_indigo": "#4F46E5",
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "danger": "#EF4444",
+    "text_main": "#F8FAFC",
+    "text_muted": "#94A3B8",
+    "border_subtle": "rgba(255, 255, 255, 0.08)",
+    "forbidden_color_check": "Checked. #7351B7 is NOT used."
+  },
+  "visual_enhancers": {
+    "grain": "CSS noise overlay with mix-blend-mode overlay and opacity 0.04",
+    "volumetric_lighting": "Radial gradients in indigo and cyan with blur-3xl",
+    "borders": "1px solid rgba(255, 255, 255, 0.08)",
+    "shadows": "0 20px 50px rgba(0, 0, 0, 0.7)"
+  },
+  "grids": {
+    "bento_mode": "Tetris Grid - asymmetric spans for trust checks and evidence preview",
+    "gap": "gap-8 lg:gap-12"
+  },
+  "motion": {
+    "smooth_scroll": "Lenis smooth scroll integration",
+    "animations": "Framer motion staggered reveals, floating gates, glowing trust beams",
+    "reduced_motion": "Respects prefers-reduced-motion media query"
+  },
+  "accessibility": {
+    "apca_contrast": "High contrast white text on dark obsidian and deep navy backgrounds",
+    "interactive_states": "Explicit hover:text-white hover:bg-sky-600/20 with focus-visible rings",
+    "data_testids": "Mandatory data-testid attributes on all interactive and informational elements"
+  },
+  "image_urls": [
+    {
+      "category": "hero_cinematic_portal",
+      "image_url": "https://images.unsplash.com/photo-1557264337-e8a93017fe92?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzF8MHwxfHNlYXJjaHwxfHxkYXJrJTIwYWJzdHJhY3QlMjBzcGFjZSUyMHBvcnRhbCUyMGxpZ2h0aW5nfGVufDB8fHx8MTc4MzE3Mzk0OXww&ixlib=rb-4.1.0&q=85",
+      "description": "Cinematic dark abstract space portal lighting for immersive background atmosphere"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Build ONLY the SpendGuard LANDING PAGE in React.js.",
+    "Ensure top-left SPENDGUARD logo and top-right nav: Product, Trust, Demo, Open Console CTA.",
+    "Include Hero section with headline TRUST BEFORE THE TAP and gateway visual metaphor.",
+    "Build interactive scroll story sections: Problem statement, Intent Mismatch example (Sony headphones vs generic), Four trust checks (Authority, Intent, Evidence, Behavior), Behavioral risk split-payment sequence, Evidence conflict RTX 4060 vs 3050, Trust Receipt object, Provenance vertical timeline, Future console preview, and Final CTA.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "Never use full transparent backgrounds in headers or dropdowns.",
+    "Strictly follow the dark cinematic fintech aesthetic specified in design guidelines."
+  ],
+  "universal_guidelines_for_main_agent": [
+    "Do not use generic centered layouts or simplistic gradients.",
+    "Create depth through layered z-index hierarchy and glassmorphism (12-24px blur).",
+    "Never use transition: all; apply specific property transitions.",
+    "Include micro-interactions, hover states, and entrance animations.",
+    "Use generous spacing (2-3x normal scale)."
+  ]
+}
