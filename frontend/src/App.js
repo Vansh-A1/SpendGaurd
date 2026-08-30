@@ -48,6 +48,51 @@ const receiptData = {
   checks: [["AUTHORITY", "PASS"], ["INTENT", "SUBSTITUTION"], ["EVIDENCE", "VERIFIED"], ["BEHAVIOR", "LOW RISK"]],
 };
 
+const scenarios = [
+  {
+    id: "allow",
+    label: "ALLOW",
+    kicker: "Exact match",
+    title: "Sony WH-1000XM6",
+    detail: "Black · ₹32,499",
+    summary: "Every signal agrees. The purchase proceeds without interruption.",
+    steps: [
+      ["AUTHORITY", "Purchase mandate within limit", "PASS"],
+      ["INTENT", "Exact model and color matched", "PASS"],
+      ["BEHAVIOR", "Session pattern remains normal", "PASS"],
+      ["EVIDENCE", "Merchant model verified", "VERIFIED"],
+    ],
+  },
+  {
+    id: "verify",
+    label: "VERIFY",
+    kicker: "Substitution",
+    title: "Sony WH-1000XM5",
+    detail: "Black · ₹28,000",
+    summary: "The requested XM6 is unavailable, so the substitution requires review.",
+    steps: [
+      ["AUTHORITY", "Purchase mandate within limit", "PASS"],
+      ["INTENT", "XM5 selected as substitution", "SUBSTITUTION"],
+      ["BEHAVIOR", "Session risk remains low", "PASS"],
+      ["EVIDENCE", "Merchant specification verified", "VERIFIED"],
+    ],
+  },
+  {
+    id: "block",
+    label: "BLOCK",
+    kicker: "Evidence conflict",
+    title: "Sony WH-1000XM6",
+    detail: "Black · under ₹35,000",
+    summary: "The merchant model cannot be verified, so money does not move.",
+    steps: [
+      ["AUTHORITY", "Purchase mandate within limit", "PASS"],
+      ["INTENT", "Product family matched", "PASS"],
+      ["BEHAVIOR", "Session pattern remains normal", "PASS"],
+      ["EVIDENCE", "Merchant model mismatch", "CONFLICT"],
+    ],
+  },
+];
+
 function Eyebrow({ children }) {
   return <span className="eyebrow" data-testid="section-eyebrow">{children}</span>;
 }
@@ -95,6 +140,81 @@ function CountUp({ value }) {
   }, [reduced, value]);
 
   return <strong ref={ref} data-testid="metric-value">{display}</strong>;
+}
+
+function ScenarioLibrary() {
+  const reduced = useReducedMotion();
+  const [scenarioId, setScenarioId] = useState("allow");
+  const [step, setStep] = useState(scenarios[0].steps.length - 1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const scenario = scenarios.find((item) => item.id === scenarioId) || scenarios[0];
+
+  useEffect(() => {
+    if (!isPlaying) return undefined;
+    if (step === scenario.steps.length - 1) {
+      setIsPlaying(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setStep((current) => current + 1), 950);
+    return () => clearTimeout(timer);
+  }, [isPlaying, scenario.steps.length, step]);
+
+  const playScenario = (id = scenarioId) => {
+    const next = scenarios.find((item) => item.id === id) || scenarios[0];
+    setScenarioId(next.id);
+    if (reduced) {
+      setStep(next.steps.length - 1);
+      setIsPlaying(false);
+      return;
+    }
+    setStep(0);
+    setIsPlaying(true);
+  };
+
+  return (
+    <section className="section scenarios" data-testid="scenario-library-section">
+      <div className="section-wrap scenario-layout">
+        <Reveal className="scenario-intro">
+          <span className="chapter">07 / SCENARIO LIBRARY</span>
+          <h2>THREE OUTCOMES.<br /><span>ONE TRUST MODEL.</span></h2>
+          <p>Compare how the same four checks produce allow, verify, and block decisions.</p>
+          <div className="scenario-list" role="tablist" aria-label="SpendGuard decision scenarios">
+            {scenarios.map((item, index) => (
+              <button className={`scenario-tab ${item.id === scenarioId ? "active" : ""}`} key={item.id} onClick={() => playScenario(item.id)} role="tab" aria-selected={item.id === scenarioId} data-testid={`scenario-tab-${item.id}`}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{item.label}</strong>
+                <small>{item.kicker}</small>
+              </button>
+            ))}
+          </div>
+        </Reveal>
+        <Reveal className="scenario-stage" data-testid="scenario-stage">
+          <div className="scenario-heading">
+            <span>{scenario.kicker}</span>
+            <h3 data-testid="scenario-title">{scenario.title}</h3>
+            <p>{scenario.detail}</p>
+          </div>
+          <div className="scenario-steps">
+            {scenario.steps.map(([name, copy, state], index) => (
+              <div className={`scenario-step ${index <= step ? "active" : ""}${isPlaying && index === step ? " current" : ""}`} key={name} data-testid={`scenario-step-${name.toLowerCase()}`}>
+                <span>{name}</span>
+                <p>{copy}</p>
+                <b>{state}</b>
+              </div>
+            ))}
+          </div>
+          <div className="scenario-footer">
+            <div>
+              <span aria-live="polite" data-testid="scenario-status">{isPlaying ? scenario.steps[step][0] : "FINAL DECISION"}</span>
+              <strong className={`scenario-result ${scenario.id}`} data-testid="scenario-result">{scenario.label}</strong>
+            </div>
+            <button className="text-button" onClick={() => playScenario()} disabled={isPlaying} data-testid="scenario-replay-button">{isPlaying ? "Replaying…" : "Replay story ↻"}</button>
+          </div>
+          <p className="scenario-summary" data-testid="scenario-summary">{scenario.summary}</p>
+        </Reveal>
+      </div>
+    </section>
+  );
 }
 
 function downloadTrustReceipt() {
@@ -407,6 +527,8 @@ function App() {
         </div>
       </section>
 
+      <ScenarioLibrary />
+
       <section className="metrics" data-testid="metrics-section">
         <div className="metrics-wrap">
           {metrics.map((metric) => <Reveal className="metric" key={metric.label}><CountUp value={metric.value} /><span>{metric.label}</span></Reveal>)}
@@ -416,7 +538,7 @@ function App() {
       <section className="section product" id="product" data-testid="product-section">
         <div className="section-wrap product-wrap">
           <Reveal className="product-intro">
-            <span className="chapter">07 / PRODUCT</span>
+            <span className="chapter">08 / PRODUCT</span>
             <h2>CONTROL, WITHOUT<br /><span>THE COMPLEXITY.</span></h2>
           </Reveal>
           <Reveal className="console" data-testid="console-preview">
@@ -425,6 +547,17 @@ function App() {
             <div className="console-lines">{["INTENT — XM6 requested", "AUTHORITY — limit passed", "EVIDENCE — merchant verified", "BEHAVIOR — low risk"].map((line) => <p key={line}>{line}</p>)}</div>
           </Reveal>
           <button className="button-primary open-product" onClick={() => scrollTo("top")} data-testid="open-spendguard-button">Open SpendGuard →</button>
+        </div>
+      </section>
+
+      <section className="section founder" data-testid="founder-note-section">
+        <div className="section-wrap founder-wrap">
+          <Reveal>
+            <span className="chapter">09 / FOUNDER NOTE</span>
+            <blockquote data-testid="founder-note-quote">“Autonomy should never require blind faith.”</blockquote>
+            <p data-testid="founder-note-copy">AI agents will compare, choose, and pay at machine speed. SpendGuard exists to make every action observable before money moves — authority first, intent always, evidence before trust, behavior over time.</p>
+            <footer>— SPENDGUARD</footer>
+          </Reveal>
         </div>
       </section>
 

@@ -27,13 +27,16 @@ Build ONLY the SpendGuard landing page first, then refine it into a premium, min
 - 2026-07: Premium minimal redesign with fewer panels, stronger whitespace, editorial hierarchy, restrained violet accents, trust-orbit hero, chaptered storytelling, editorial marquee, count-up metrics, and calmer product preview.
 - 2026-07: Interactive Sony purchase replay from Purchase Request through Authority, Intent, Behavior, and Evidence, ending in the evidence-conflict BLOCKED decision.
 - 2026-07: Downloadable polished sample Trust Receipt PDF with intent, selected product, transaction details, four trust checks, final VERIFY decision, reason, and observable decision trail.
+- 2026-07: Scenario Library comparing ALLOW, VERIFY, and BLOCK outcomes through the same four-check evaluation model.
+- 2026-07: Concise founder note explaining evidence-backed autonomy before the final CTA.
 - 2026-07: Reveal component forwards test IDs and other props correctly.
 
 ## Verification
-- Production frontend build passes after the replay and receipt-download additions.
+- Production frontend build passes after Scenario Library and Founder Note additions.
 - Desktop and mobile screenshots checked; no horizontal overflow.
-- Replay verified through Purchase Request, Authority, Intent, Behavior, Evidence, and final BLOCKED state; reduced-motion mode jumps directly to the final state.
-- Receipt PDF download verified as spendguard-trust-receipt-000184.pdf; PDF content analysis confirmed all required fields and the eight-event decision trail.
+- Sony replay verified through Purchase Request, Authority, Intent, Behavior, Evidence, and final BLOCKED state.
+- Scenario Library verified for ALLOW, VERIFY, and BLOCK; reduced-motion mode jumps directly to each final state.
+- Receipt PDF download still works as spendguard-trust-receipt-000184.pdf; PDF content analysis previously confirmed all required fields and the eight-event decision trail.
 - Open Console still reaches the existing in-page console preview; Gemini remains unimplemented by user choice.
 - Standalone ESLint was not run because the starter project has no ESLint v9 configuration file.
 
@@ -41,7 +44,7 @@ Build ONLY the SpendGuard landing page first, then refine it into a premium, min
 - P0: None for the current landing-page scope.
 - P1: Connect Open Console to a real console experience only when that product scope is requested.
 - P1: Gemini decision explanations remain explicitly out of scope unless the user reverses the current decision.
-- P2: Add richer receipt export options without increasing landing-page visual density.
+- P2: Receipt Image export remains intentionally deferred by the user.
 
 ## Next tasks
 - Keep the landing page frontend-only unless the user asks for a live demo API.
