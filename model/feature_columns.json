@@ -7,5 +7,10 @@
   "rolling_sum_ratio",
   "time_deviation",
   "amount_zscore",
-  "is_new_agent"
+  "is_new_agent",
+  "cap_proximity",
+  "velocity_saturation",
+  "rolling_cap_overflow",
+  "session_cum_spend_ratio",
+  "session_cap_overflow"
 ]

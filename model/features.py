@@ -15,6 +15,11 @@ FEATURE_COLUMNS = [
     "time_deviation",
     "amount_zscore",
     "is_new_agent",
+    "cap_proximity",
+    "velocity_saturation",
+    "rolling_cap_overflow",
+    "session_cum_spend_ratio",
+    "session_cap_overflow",
 ]
 
 
@@ -73,6 +78,7 @@ def engineer_features(
 
     # Process per agent history sequentially
     agent_histories: Dict[str, List[Dict[str, Any]]] = {}
+    session_spends: Dict[str, float] = {}
 
     for _, row in df.iterrows():
         agent_id = row["agent_id"]
@@ -157,6 +163,33 @@ def engineer_features(
         # 9. is_new_agent
         is_new_agent = 1 if len(all_priors) < 5 else 0
 
+        # 10. cap_proximity (continuous measure of proximity to mandate per-transaction cap)
+        cap_proximity = round(float(np.clip((amount_ratio - 0.70) / 0.30, 0.0, 1.0)), 4)
+
+        # 11. velocity_saturation (non-linear saturating velocity indicator: min(1.0, count / 3.0))
+        velocity_saturation = round(float(min(1.0, trailing_1h_count / 3.0)), 4)
+
+        # 12. rolling_cap_overflow (how far rolling 1h spend exceeds the per-transaction cap: max(0.0, rolling_sum_ratio - 1.0))
+        rolling_cap_overflow = round(float(max(0.0, rolling_sum_ratio - 1.0)), 4)
+
+        # 13. session_cum_spend_ratio (cumulative session spend / declared budget, degrading to 0.0 if session_id is None)
+        # 14. session_cap_overflow (how far declared session budget exceeds per-transaction cap: max(0.0, (budget / cap) - 1.0))
+        session_id = row.get("session_id") if "session_id" in row and pd.notna(row.get("session_id")) else None
+        session_cum_spend_ratio = 0.0
+        session_cap_overflow = 0.0
+        if session_id:
+            try:
+                from session.manager import get_session
+                sess = get_session(str(session_id))
+                if sess and sess.declared_total_budget and sess.declared_total_budget > 0:
+                    accum_spend = session_spends.get(str(session_id), 0.0)
+                    session_cum_spend_ratio = round(float((accum_spend + amt) / float(sess.declared_total_budget)), 4)
+                    session_spends[str(session_id)] = accum_spend + amt
+                    session_cap_overflow = round(float(max(0.0, (float(sess.declared_total_budget) / cap) - 1.0)), 4)
+            except Exception:
+                session_cum_spend_ratio = 0.0
+                session_cap_overflow = 0.0
+
         feat_dict = {
             "index": row["index"],
             "amount_ratio": round(amount_ratio, 4),
@@ -168,6 +201,11 @@ def engineer_features(
             "time_deviation": round(time_deviation, 4),
             "amount_zscore": round(amount_zscore, 4),
             "is_new_agent": is_new_agent,
+            "cap_proximity": cap_proximity,
+            "velocity_saturation": velocity_saturation,
+            "rolling_cap_overflow": rolling_cap_overflow,
+            "session_cum_spend_ratio": session_cum_spend_ratio,
+            "session_cap_overflow": session_cap_overflow,
         }
         feature_rows.append(feat_dict)
 

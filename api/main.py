@@ -17,6 +17,7 @@ from api.db import (
     save_transaction_evaluation,
     get_transactions,
     get_transaction_receipt,
+    get_trust_snapshot,
     update_transaction_decision,
     get_audit_logs,
 )
@@ -77,8 +78,31 @@ class VerifyRequest(BaseModel):
     approved: bool
 
 
-from payments.razorpay_client import create_test_order
+from payments.razorpay_client import (
+    create_test_order,
+    create_payment_hold,
+    capture_payment_hold,
+    void_payment_hold,
+)
+from api.escalations import (
+    create_escalation,
+    get_pending_escalations,
+    resolve_escalation,
+    process_escalation_timeouts,
+    dispatch_escalation_webhook,
+    register_webhook,
+    get_webhook_url,
+)
+from session.manager import (
+    list_sessions,
+    get_session,
+    get_session_transactions,
+)
 from api.db import get_db_connection
+
+
+class WebhookConfigRequest(BaseModel):
+    url: str
 
 
 @app.post("/transactions/evaluate", response_model=DecisionReceipt)
@@ -86,6 +110,7 @@ def evaluate(transaction: TransactionRequest):
     """
     Evaluates an agent purchase request across the 4 Trust Gate pillars,
     triggers real Razorpay test-mode orders on ALLOW decisions,
+    places funds on authorization hold and registers escalations on VERIFY decisions,
     persists the DecisionReceipt and provenance trail to SQLite, and logs an audit event.
     """
     mandates_map, intents_map, catalog, risk_model = get_resources()
@@ -128,7 +153,7 @@ def evaluate(transaction: TransactionRequest):
         history_df=history_df,
     )
 
-    # 5. Execute Razorpay test-mode payment on ALLOW only
+    # 5. Two-Phase Payment Execution
     if receipt.decision == "ALLOW":
         try:
             order = create_test_order(
@@ -137,6 +162,31 @@ def evaluate(transaction: TransactionRequest):
                 receipt_id=transaction.id,
             )
             receipt.razorpay_order_id = order.get("id")
+        except Exception as e:
+            receipt.payment_error = str(e)
+    elif receipt.decision == "VERIFY":
+        try:
+            hold = create_payment_hold(
+                amount=transaction.amount,
+                currency="INR",
+                transaction_id=transaction.id,
+            )
+            receipt.payment_hold_id = hold.get("hold_id")
+            receipt.payment_hold_status = hold.get("status")
+
+            # Register in escalation queue
+            create_escalation(
+                transaction_id=transaction.id,
+                agent_id=transaction.agent_id,
+                amount=transaction.amount,
+                payment_hold_id=hold.get("hold_id"),
+            )
+
+            # Dispatch non-blocking webhook
+            dispatch_escalation_webhook(
+                transaction.model_dump(mode="json"),
+                receipt.model_dump(mode="json"),
+            )
         except Exception as e:
             receipt.payment_error = str(e)
 
@@ -152,9 +202,10 @@ def evaluate(transaction: TransactionRequest):
 def list_transactions(
     decision: Optional[Literal["ALLOW", "VERIFY", "BLOCK"]] = None,
     agent_id: Optional[str] = None,
+    session_id: Optional[str] = None,
 ):
     """Returns a list of evaluated transactions with optional filters, newest first."""
-    return get_transactions(decision=decision, agent_id=agent_id)
+    return get_transactions(decision=decision, agent_id=agent_id, session_id=session_id)
 
 
 @app.get("/transactions/{id}/receipt")
@@ -166,11 +217,20 @@ def get_receipt(id: str):
     return receipt
 
 
+@app.get("/transactions/{id}/snapshot")
+def get_snapshot(id: str):
+    """Returns the exported TrustSnapshot audit artifact for a single transaction."""
+    snapshot = get_trust_snapshot(id)
+    if not snapshot:
+        raise HTTPException(status_code=404, detail=f"Trust snapshot for transaction {id} not found")
+    return snapshot
+
+
 @app.post("/transactions/{id}/verify")
 def verify_transaction(id: str, body: VerifyRequest):
     """
     Human-in-the-loop review endpoint for transactions in VERIFY state.
-    Updates decision to ALLOW or BLOCK, executes Razorpay payment on ALLOW, and logs an audit record.
+    Updates decision to ALLOW or BLOCK, captures or voids two-phase payment hold, and logs audit record.
     """
     receipt = get_transaction_receipt(id)
     if not receipt:
@@ -193,15 +253,17 @@ def verify_transaction(id: str, body: VerifyRequest):
     razorpay_order_id = None
     payment_error = None
 
-    # Trigger Razorpay order creation on human ALLOW
-    if body.approved:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT amount FROM transactions WHERE id = ?", (id,))
-        row = cursor.fetchone()
-        conn.close()
-        amt = float(row["amount"]) if row else 0.0
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT amount, payment_hold_id FROM transactions WHERE id = ?", (id,))
+    row = cursor.fetchone()
+    conn.close()
 
+    amt = float(row["amount"]) if row else 0.0
+    hold_id = row["payment_hold_id"] if row and "payment_hold_id" in row.keys() else receipt.get("payment_hold_id")
+
+    # 1. Capture hold on approval
+    if body.approved:
         try:
             order = create_test_order(
                 amount=amt,
@@ -209,8 +271,19 @@ def verify_transaction(id: str, body: VerifyRequest):
                 receipt_id=id,
             )
             razorpay_order_id = order.get("id")
+            if hold_id:
+                capture_payment_hold(hold_id=hold_id, amount=amt, transaction_id=id)
         except Exception as e:
             payment_error = str(e)
+        resolve_escalation(id, action="approved")
+    else:
+        # 2. Void hold on denial
+        if hold_id:
+            try:
+                void_payment_hold(hold_id=hold_id, reason="human_denied")
+            except Exception as e:
+                payment_error = str(e)
+        resolve_escalation(id, action="denied")
 
     success = update_transaction_decision(
         transaction_id=id,
@@ -227,6 +300,72 @@ def verify_transaction(id: str, body: VerifyRequest):
     if payment_error:
         updated_receipt["payment_error"] = payment_error
     return updated_receipt
+
+
+# -----------------------------------------------------------------------------
+# Sessions Endpoints
+# -----------------------------------------------------------------------------
+@app.get("/sessions")
+def list_all_sessions(agent_id: Optional[str] = None):
+    """Lists all registered PurchaseSessions and their associated transaction history."""
+    sessions = list_sessions(agent_id=agent_id)
+    result = []
+    for s in sessions:
+        tx_rows = get_transactions(session_id=s.session_id)
+        s_dict = s.model_dump(mode="json")
+        s_dict["transactions"] = tx_rows
+        s_dict["transaction_count"] = len(tx_rows)
+        s_dict["total_spent"] = sum(
+            float(t["amount"]) for t in tx_rows if t.get("decision") in ("ALLOW", "VERIFY")
+        )
+        result.append(s_dict)
+    return result
+
+
+@app.get("/sessions/{session_id}")
+def get_session_details(session_id: str):
+    """Returns detailed session metadata, declared budget/items, and transaction logs."""
+    session = get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"PurchaseSession {session_id} not found")
+
+    tx_rows = get_transactions(session_id=session_id)
+    s_dict = session.model_dump(mode="json")
+    s_dict["transactions"] = tx_rows
+    s_dict["transaction_count"] = len(tx_rows)
+    s_dict["total_spent"] = sum(
+        float(t["amount"]) for t in tx_rows if t.get("decision") in ("ALLOW", "VERIFY")
+    )
+    return s_dict
+
+
+# -----------------------------------------------------------------------------
+# Escalations & SLA Management Endpoints
+# -----------------------------------------------------------------------------
+@app.get("/escalations")
+def list_escalations():
+    """Lists all active pending VERIFY items in the human review queue with remaining SLA time."""
+    return get_pending_escalations()
+
+
+@app.post("/escalations/process_timeouts")
+def trigger_timeout_processing():
+    """Scans and automatically denies escalations that have exceeded their SLA timeout."""
+    timed_out = process_escalation_timeouts()
+    return {"status": "ok", "timed_out_count": len(timed_out), "items": timed_out}
+
+
+@app.post("/admin/webhook")
+def set_webhook(body: WebhookConfigRequest):
+    """Registers a webhook URL for real-time escalation notifications."""
+    register_webhook(body.url)
+    return {"status": "ok", "webhook_url": body.url}
+
+
+@app.get("/admin/webhook")
+def get_current_webhook():
+    """Retrieves the active escalation webhook configuration."""
+    return {"webhook_url": get_webhook_url()}
 
 
 from fastapi.responses import FileResponse

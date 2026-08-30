@@ -116,3 +116,76 @@ def test_provenance_trail_synthesis(catalog):
     selected_payload = trail[3]["payload"]
     assert selected_payload["sku"] == "ELEC-SONY-WHCH520-BLK"
     assert "substitute" in selected_payload["reason"]
+
+
+def test_unverifiable_evidence_handling(catalog):
+    # Claimed spec attribute 'connector' does not exist in AirPods Pro 2 catalog specs (which uses 'charging')
+    claimed = {
+        "sku": "ELEC-APPLE-AIRPODSPRO2",
+        "brand": "Apple",
+        "model": "AirPods Pro (2nd Gen)",
+        "specs": {"connector": "Lightning", "anc": True},
+    }
+    result = check_evidence(claimed, "ELEC-APPLE-AIRPODSPRO2", catalog)
+    assert isinstance(result, EvidenceResult)
+    assert result.verification_status == "unverifiable"
+    assert result.unverifiable_attributes is not None
+    assert len(result.unverifiable_attributes) == 1
+    assert result.unverifiable_attributes[0]["field"] == "connector"
+    assert result.unverifiable_attributes[0]["claimed"] == "Lightning"
+    assert result.conflicts == []
+
+
+def test_provenance_chain_tamper_resistance_and_distinct_hashes(catalog):
+    from evidence.provenance import verify_provenance_chain, build_provenance_trail
+    from datetime import datetime, timezone
+
+    intent = UserIntent(
+        id="intent_hash_test",
+        agent_id="agent_shopping_01",
+        hard_requirements={"brand": "Sony", "model": "WH-1000XM5"},
+        soft_preferences={"color": "black"},
+        substitution_allowed=False,
+        created_at=datetime(2026, 8, 15, 10, 0, 0, tzinfo=timezone.utc),
+    )
+
+    trail = build_provenance_trail(
+        transaction_id="tx_chain_4events_test",
+        intent=intent,
+        catalog=catalog,
+        selected_sku="ELEC-SONY-WH1000XM5-BLK",
+    )
+
+    assert len(trail) == 4
+    # Confirm every event has a strictly unique hash and correct linkage
+    hashes = [e["event_hash"] for e in trail]
+    assert len(set(hashes)) == 4, f"Duplicate hashes found: {hashes}"
+
+    # Confirm correct sequential linkage
+    assert trail[0]["prev_hash"] == "genesis"
+    assert trail[1]["prev_hash"] == trail[0]["event_hash"]
+    assert trail[2]["prev_hash"] == trail[1]["event_hash"]
+    assert trail[3]["prev_hash"] == trail[2]["event_hash"]
+
+    # Verify clean chain passes
+    valid, err = verify_provenance_chain(trail)
+    assert valid is True
+    assert err is None
+
+    # Test 1: Tampered payload
+    corrupted_trail_payload = [dict(e) for e in trail]
+    corrupted_trail_payload[1] = dict(corrupted_trail_payload[1])
+    corrupted_trail_payload[1]["payload"] = {"tampered": True}
+    val_payload, err_payload = verify_provenance_chain(corrupted_trail_payload)
+    assert val_payload is False
+    assert "Tampered event payload" in err_payload
+
+    # Test 2: Broken linkage
+    corrupted_trail_linkage = [dict(e) for e in trail]
+    corrupted_trail_linkage[2] = dict(corrupted_trail_linkage[2])
+    corrupted_trail_linkage[2]["prev_hash"] = "fake_hash_123"
+    val_link, err_link = verify_provenance_chain(corrupted_trail_linkage)
+    assert val_link is False
+    assert "Broken chain linkage" in err_link
+
+

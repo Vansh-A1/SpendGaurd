@@ -11,3 +11,6 @@ build/
 htmlcov/
 *.sqlite3
 *.db
+scratch/
+graphify-out/
+.DS_Store

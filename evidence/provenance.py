@@ -106,10 +106,11 @@ def build_provenance_trail(
     3. Candidate elimination reasons
     4. Final product selection rationale
     
-    All steps derived directly from existing intent and catalog data.
+    Explicitly threads running_hash from genesis to guarantee cryptographic SHA-256 chain integrity.
     """
     trail: List[Dict[str, Any]] = []
     seq = 1
+    running_hash = "genesis"
 
     # Find the target category from hard requirements or selected SKU
     selected_product: Optional[Product] = next((p for p in catalog if p.sku == selected_sku), None)
@@ -127,8 +128,10 @@ def build_provenance_trail(
             "preferences": intent.soft_preferences,
             "substitution_allowed": intent.substitution_allowed,
         },
+        prev_hash=running_hash,
     )
     trail.append(search_event)
+    running_hash = search_event["event_hash"]
     seq += 1
 
     # 2. Candidates Found Event
@@ -142,8 +145,10 @@ def build_provenance_trail(
             "candidate_count": len(candidates),
             "candidate_skus": [p.sku for p in candidates],
         },
+        prev_hash=running_hash,
     )
     trail.append(candidates_event)
+    running_hash = candidates_event["event_hash"]
     seq += 1
 
     # 3. Candidates Eliminated Events
@@ -186,8 +191,10 @@ def build_provenance_trail(
             "eliminated_count": len(eliminated_reasons),
             "eliminations": eliminated_reasons,
         },
+        prev_hash=running_hash,
     )
     trail.append(eliminated_event)
+    running_hash = eliminated_event["event_hash"]
     seq += 1
 
     # 4. Selection Event
@@ -214,7 +221,9 @@ def build_provenance_trail(
                 "price": selected_product.price,
                 "reason": selection_reason,
             },
+            prev_hash=running_hash,
         )
         trail.append(selected_event)
+        running_hash = selected_event["event_hash"]
 
     return trail

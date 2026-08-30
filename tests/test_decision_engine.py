@@ -183,6 +183,8 @@ def test_split_payment_blocks_from_risk(repo_data):
         timestamp=datetime.fromisoformat(row["timestamp"]),
         scenario_type=row["scenario_type"],
         expected_decision=row["expected_decision"],
+        session_id=row.get("session_id") if "session_id" in row and pd.notna(row.get("session_id")) else None,
+        intent_version=int(row.get("intent_version", 1)) if "intent_version" in row and pd.notna(row.get("intent_version")) else 1,
     )
     mandate = repo_data["mandates"][tx.mandate_id]
     intent = repo_data["intents"][tx.user_intent_id]
@@ -252,6 +254,8 @@ def test_full_scenarios_batch_match_rate(repo_data):
             timestamp=datetime.fromisoformat(row["timestamp"]),
             scenario_type=row["scenario_type"],
             expected_decision=row["expected_decision"],
+            session_id=row.get("session_id") if "session_id" in row and pd.notna(row.get("session_id")) else None,
+            intent_version=int(row.get("intent_version", 1)) if "intent_version" in row and pd.notna(row.get("intent_version")) else 1,
         )
         mandate = mandates[tx.mandate_id]
         intent = intents[tx.user_intent_id]

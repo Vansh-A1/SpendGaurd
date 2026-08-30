@@ -24,6 +24,16 @@ def _format_feature_explanation(feature_name: str, value: float) -> str:
         return f"execution time deviates by {value:.1f} hours from agent historical average"
     elif feature_name == "is_new_agent":
         return "new agent with fewer than 5 historical transactions" if value == 1 else "established agent"
+    elif feature_name == "cap_proximity":
+        return f"transaction amount sits at {value*100:.0f}% proximity to per-transaction cap (sub-cap split indicator)"
+    elif feature_name == "velocity_saturation":
+        return f"burst velocity saturation reached {value*100:.0f}% of safety threshold within 1 hour"
+    elif feature_name == "rolling_cap_overflow":
+        return f"rolling 1-hour spend exceeds per-transaction cap by {value:.2f}x"
+    elif feature_name == "session_cum_spend_ratio":
+        return f"cumulative session spend reached {value*100:.0f}% of declared budget"
+    elif feature_name == "session_cap_overflow":
+        return f"declared session budget exceeds per-transaction cap by {value:.2f}x"
     return f"{feature_name} = {value}"
 
 

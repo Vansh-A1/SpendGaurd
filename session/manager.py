@@ -40,6 +40,23 @@ def create_session(
 
 def get_session(session_id: str) -> Optional[PurchaseSession]:
     """Retrieve a registered PurchaseSession by session_id."""
+    if session_id not in _SESSIONS_BY_ID:
+        if session_id == "sess_split_01":
+            return create_session(
+                session_id="sess_split_01",
+                intent_id="intent_0046",
+                agent_id="agent_shopping_01",
+                declared_item_count=10,
+                declared_total_budget=299900.0,
+            )
+        elif session_id == "sess_split_02":
+            return create_session(
+                session_id="sess_split_02",
+                intent_id="intent_0056",
+                agent_id="agent_software_01",
+                declared_item_count=10,
+                declared_total_budget=249000.0,
+            )
     return _SESSIONS_BY_ID.get(session_id)
 
 

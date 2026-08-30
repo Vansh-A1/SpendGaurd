@@ -4,7 +4,7 @@ import random
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -66,6 +66,8 @@ def generate_scenarios():
         hard_reqs: dict = None,
         soft_prefs: dict = None,
         sub_allowed: bool = False,
+        session_id: str = None,
+        intent_version: int = 1,
     ):
         nonlocal req_idx, intent_idx
         mandate = mandates[agent_id]
@@ -80,6 +82,7 @@ def generate_scenarios():
             soft_preferences=soft_prefs or {},
             substitution_allowed=sub_allowed,
             created_at=timestamp - timedelta(minutes=15),
+            intent_version=intent_version,
         )
         intents.append(user_intent)
 
@@ -96,7 +99,21 @@ def generate_scenarios():
             timestamp=timestamp,
             scenario_type=scenario_type,
             expected_decision=expected_decision,
+            session_id=session_id,
+            intent_version=intent_version,
         )
+
+        if scenario_type == "legitimate_unusual":
+            from policy.authorization import check_authorization
+            from intent.fidelity import check_intent_fidelity
+            auth_val = check_authorization(tx_req, mandate)
+            if not auth_val.passed or auth_val.is_stale:
+                raise ValueError(f"Generation error: {tx_req.id} marked legitimate_unusual failed auth ({auth_val.failed_checks})")
+            prod_val = cat_by_sku[actual_sku]
+            fid_val = check_intent_fidelity(user_intent, prod_val)
+            if not fid_val.hard_match:
+                raise ValueError(f"Generation error: {tx_req.id} marked legitimate_unusual failed hard match ({fid_val.mismatched_fields})")
+
         requests.append(tx_req)
         req_idx += 1
 
@@ -249,10 +266,11 @@ def generate_scenarios():
             merchant="Amazon",
             timestamp=burst_time_1 + timedelta(minutes=j * 3),
             scenario_type="split_payment",
-            expected_decision="BLOCK",
+            expected_decision="VERIFY" if j == 0 else "BLOCK",
             hard_reqs={"brand": "Sony", "model": "WH-1000XM5", "category": "electronics"},
             soft_prefs={"color": "black"},
             sub_allowed=False,
+            session_id="sess_split_01",
         )
 
     # Pattern 2: agent_software_01 (cap 50,000), 10 x ₹24,900 transactions in 20 mins (Total ₹249,000)
@@ -268,10 +286,11 @@ def generate_scenarios():
             merchant="JetBrains",
             timestamp=burst_time_2 + timedelta(minutes=j * 2),
             scenario_type="split_payment",
-            expected_decision="BLOCK",
+            expected_decision="VERIFY" if j == 0 else "BLOCK",
             hard_reqs={"brand": "JetBrains", "model": "All Products Pack (1 Year)", "category": "software"},
             soft_prefs={"billing": "Annual"},
             sub_allowed=False,
+            session_id="sess_split_02",
         )
 
     # =========================================================================
@@ -437,7 +456,7 @@ def generate_scenarios():
             amount=amt,
             category=prod.category,
             merchant=merch,
-            timestamp=base_time + timedelta(days=2, minutes=i * 20 + 8),
+            timestamp=base_time + timedelta(days=2 + i // 4, hours=(i % 4) * 3 + 1),
             scenario_type="legitimate_unusual",
             expected_decision="ALLOW",
             hard_reqs={"brand": prod.brand, "model": prod.model, "category": prod.category},
@@ -448,17 +467,162 @@ def generate_scenarios():
     return requests, intents
 
 
-def save_scenarios_and_intents(requests: List[TransactionRequest], intents: List[UserIntent]):
+def generate_expanded_training_data(base_requests: List[TransactionRequest], base_intents: List[UserIntent]):
+    """
+    Generates diverse split-payment training bursts across:
+    - Burst lengths: {3, 5, 8, 12, 20}
+    - Amount-to-cap percentages: {30%, 50%, 75%, 95%}
+    - Session configurations: with session_id (cumulative tracking) and without session_id (pure velocity)
+    - Complementary diverse benign transactions across categories and time windows
+    """
+    catalog = get_catalog()
+    cat_by_sku = {p.sku: p for p in catalog}
+
+    mandates_file = Path(__file__).resolve().parent / "mandates.json"
+    with open(mandates_file, "r", encoding="utf-8") as f:
+        mandates_data = json.load(f)
+    mandates = {m["agent_id"]: Mandate(**m) for m in mandates_data}
+
+    expanded_requests = list(base_requests)
+    expanded_intents = list(base_intents)
+
+    req_idx = len(base_requests) + 1
+    intent_idx = len(base_intents) + 1
+
+    train_anchor_time = datetime(2026, 8, 24, 8, 0, 0, tzinfo=timezone.utc)
+
+    # Agents and sample SKUs per category
+    agent_configs = [
+        ("agent_shopping_01", "electronics", "Amazon", "ELEC-SONY-WH1000XM5-BLK"),
+        ("agent_software_01", "software", "JetBrains", "SOFT-JETBRAINS-ALLPROD-1YR"),
+        ("agent_travel_01", "travel", "Taj Hotels", "TRAV-TAJ-MUMBAI-DLX"),
+        ("agent_grocery_01", "groceries", "Blinkit", "GROC-ORGANIC-ALMONDS-1KG"),
+    ]
+
+    burst_lengths = [3, 5, 8, 12, 20]
+    cap_percentages = [0.30, 0.50, 0.75, 0.95]
+    session_options = [True, False]
+
+    pattern_idx = 0
+    for burst_len in burst_lengths:
+        for cap_pct in cap_percentages:
+            for with_session in session_options:
+                pattern_idx += 1
+                agent_id, category, merchant, sku = agent_configs[pattern_idx % len(agent_configs)]
+                mandate = mandates[agent_id]
+                prod = cat_by_sku[sku]
+                cap = mandate.per_transaction_cap
+                amount = round(cap * cap_pct, 2)
+                total_declared_budget = round(amount * burst_len, 2)
+
+                burst_time = train_anchor_time + timedelta(days=pattern_idx // 4, hours=(pattern_idx % 4) * 3)
+
+                session_id = None
+                if with_session:
+                    session_id = f"sess_train_burst_{pattern_idx:03d}"
+                    from session.manager import create_session
+                    create_session(
+                        session_id=session_id,
+                        intent_id=f"intent_train_{intent_idx:04d}",
+                        agent_id=agent_id,
+                        declared_item_count=burst_len,
+                        declared_total_budget=total_declared_budget,
+                    )
+
+                # Generate rapid burst transactions (spaced 2 minutes apart within 1 hour)
+                for step in range(burst_len):
+                    intent_id = f"intent_train_{intent_idx:04d}"
+                    intent_idx += 1
+                    user_intent = UserIntent(
+                        id=intent_id,
+                        agent_id=agent_id,
+                        hard_requirements={"category": category},
+                        soft_preferences={},
+                        substitution_allowed=False,
+                        created_at=burst_time - timedelta(minutes=15),
+                    )
+                    expanded_intents.append(user_intent)
+
+                    tx_req = TransactionRequest(
+                        id=f"tx_train_{req_idx:04d}",
+                        agent_id=agent_id,
+                        mandate_id=mandate.id,
+                        user_intent_id=intent_id,
+                        claimed_product={"sku": prod.sku, "brand": prod.brand, "model": prod.model, "specs": prod.specs},
+                        actual_sku=prod.sku,
+                        amount=amount,
+                        category=category,
+                        merchant=merchant,
+                        timestamp=burst_time + timedelta(minutes=step * 2),
+                        scenario_type="split_payment",
+                        expected_decision="BLOCK",
+                        session_id=session_id,
+                    )
+                    expanded_requests.append(tx_req)
+                    req_idx += 1
+
+    # Also add diverse benign legitimate single transactions across amounts
+    benign_anchor_time = datetime(2026, 8, 25, 9, 0, 0, tzinfo=timezone.utc)
+    for b_idx in range(80):
+        agent_id, category, merchant, sku = agent_configs[b_idx % len(agent_configs)]
+        mandate = mandates[agent_id]
+        prod = cat_by_sku[sku]
+        amt_pct = 0.20 + (b_idx % 8) * 0.10 # 20% to 90% of cap
+        amount = round(mandate.per_transaction_cap * amt_pct, 2)
+        tx_time = benign_anchor_time + timedelta(hours=b_idx * 4)
+
+        intent_id = f"intent_train_{intent_idx:04d}"
+        intent_idx += 1
+        user_intent = UserIntent(
+            id=intent_id,
+            agent_id=agent_id,
+            hard_requirements={"brand": prod.brand, "model": prod.model},
+            soft_preferences={},
+            substitution_allowed=False,
+            created_at=tx_time - timedelta(minutes=20),
+        )
+        expanded_intents.append(user_intent)
+
+        tx_req = TransactionRequest(
+            id=f"tx_train_{req_idx:04d}",
+            agent_id=agent_id,
+            mandate_id=mandate.id,
+            user_intent_id=intent_id,
+            claimed_product={"sku": prod.sku, "brand": prod.brand, "model": prod.model, "specs": prod.specs},
+            actual_sku=prod.sku,
+            amount=amount,
+            category=category,
+            merchant=merchant,
+            timestamp=tx_time,
+            scenario_type="legitimate_unusual",
+            expected_decision="ALLOW",
+        )
+        expanded_requests.append(tx_req)
+        req_idx += 1
+
+    return expanded_requests, expanded_intents
+
+
+def save_scenarios_and_intents(
+    requests: List[TransactionRequest],
+    intents: List[UserIntent],
+    train_requests: Optional[List[TransactionRequest]] = None,
+    train_intents: Optional[List[UserIntent]] = None,
+):
     data_dir = Path(__file__).resolve().parent
     csv_file = data_dir / "scenarios.csv"
+    train_csv_file = data_dir / "train_scenarios.csv"
     intents_file = data_dir / "intents.json"
 
-    # Write intents to JSON
-    intents_dict = {intent.id: intent.model_dump(mode="json") for intent in intents}
+    # All intents dictionary (base + training intents)
+    all_intents = list(intents)
+    if train_intents:
+        all_intents.extend([i for i in train_intents if i.id not in {x.id for x in all_intents}])
+
+    intents_dict = {intent.id: intent.model_dump(mode="json") for intent in all_intents}
     with open(intents_file, "w", encoding="utf-8") as f:
         json.dump(intents_dict, f, indent=2)
 
-    # Write scenarios to CSV
     fieldnames = [
         "id",
         "agent_id",
@@ -472,28 +636,42 @@ def save_scenarios_and_intents(requests: List[TransactionRequest], intents: List
         "timestamp",
         "scenario_type",
         "expected_decision",
+        "session_id",
+        "intent_version",
     ]
 
+    # Write canonical benchmark 110 scenarios to scenarios.csv
     with open(csv_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for req in requests:
             row = req.model_dump(mode="json")
-            # Serialize claimed_product dict as JSON string for CSV storage
+            row["claimed_product"] = json.dumps(row["claimed_product"])
+            writer.writerow(row)
+
+    # Write expanded training dataset to train_scenarios.csv
+    target_train_reqs = train_requests or requests
+    with open(train_csv_file, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for req in target_train_reqs:
+            row = req.model_dump(mode="json")
             row["claimed_product"] = json.dumps(row["claimed_product"])
             writer.writerow(row)
 
     print(f"Saved {len(requests)} TransactionRequests to {csv_file}")
-    print(f"Saved {len(intents)} UserIntents to {intents_file}")
+    print(f"Saved {len(target_train_reqs)} TransactionRequests to {train_csv_file}")
+    print(f"Saved {len(all_intents)} UserIntents to {intents_file}")
 
-    # Summary by scenario type
+    # Summary by scenario type for training set
     from collections import Counter
-    counts = Counter(r.scenario_type for r in requests)
-    print("\nScenario Breakdown:")
+    counts = Counter(r.scenario_type for r in target_train_reqs)
+    print("\nTraining Dataset Breakdown:")
     for st, count in sorted(counts.items()):
         print(f"  - {st:20s}: {count:2d} rows")
 
 
 if __name__ == "__main__":
     reqs, ints = generate_scenarios()
-    save_scenarios_and_intents(reqs, ints)
+    train_reqs, train_ints = generate_expanded_training_data(reqs, ints)
+    save_scenarios_and_intents(reqs, ints, train_reqs, train_ints)

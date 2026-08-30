@@ -21,3 +21,4 @@ class Mandate(BaseModel):
     ttl_seconds: int
     time_windows: Optional[List[TimeWindowRule]] = None
     period_caps: Optional[Dict[str, float]] = None
+    version: int = 1

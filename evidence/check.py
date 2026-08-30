@@ -17,6 +17,8 @@ class EvidenceDetail(BaseModel):
 class EvidenceResult(BaseModel):
     conflicts: List[Dict[str, Any]]
     sources_checked: List[str]
+    unverifiable_attributes: Optional[List[Dict[str, Any]]] = None
+    verification_status: str = "verified" # "verified", "conflict", "unverifiable"
     evidence_details: Optional[List[EvidenceDetail]] = None
 
 
@@ -50,10 +52,11 @@ def check_evidence(
 ) -> EvidenceResult:
     """
     Verifies agent claims about a product against trusted merchant/catalog ground truth.
-    Supports multi-source evidence resolution and TTL freshness checks.
+    Supports multi-source evidence resolution, TTL freshness checks, and unverifiable attribute detection.
     """
     sources_checked: List[str] = ["catalog_spec"]
     conflicts: List[Dict[str, Any]] = []
+    unverifiable_attributes: List[Dict[str, Any]] = []
     evidence_details: List[EvidenceDetail] = []
     now = current_time or datetime.now(timezone.utc)
 
@@ -105,6 +108,8 @@ def check_evidence(
         return EvidenceResult(
             conflicts=conflicts,
             sources_checked=sources_checked,
+            unverifiable_attributes=None,
+            verification_status="conflict",
             evidence_details=evidence_details or None,
         )
 
@@ -130,6 +135,12 @@ def check_evidence(
                             "claimed": spec_v,
                             "actual": actual_v,
                         })
+                else:
+                    unverifiable_attributes.append({
+                        "field": spec_k,
+                        "claimed": spec_v,
+                        "reason": "attribute_not_found_in_catalog_specs",
+                    })
         elif key in top_level_keys:
             actual_v = _get_truth_val(key, getattr(matched_product, key, None))
             if actual_v is not None and not _match_val(claimed_val, actual_v, key):
@@ -146,9 +157,24 @@ def check_evidence(
                     "claimed": claimed_val,
                     "actual": actual_v,
                 })
+        else:
+            unverifiable_attributes.append({
+                "field": key,
+                "claimed": claimed_val,
+                "reason": "attribute_not_found_in_catalog_specs",
+            })
+
+    if len(conflicts) > 0:
+        v_status = "conflict"
+    elif len(unverifiable_attributes) > 0:
+        v_status = "unverifiable"
+    else:
+        v_status = "verified"
 
     return EvidenceResult(
         conflicts=conflicts,
         sources_checked=sources_checked,
+        unverifiable_attributes=unverifiable_attributes or None,
+        verification_status=v_status,
         evidence_details=evidence_details or None,
     )

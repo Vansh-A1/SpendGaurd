@@ -37,6 +37,12 @@ def init_db(db_path: Optional[Path] = None):
         decision TEXT NOT NULL,
         decision_reason TEXT NOT NULL,
         razorpay_order_id TEXT,
+        payment_hold_id TEXT,
+        payment_hold_status TEXT,
+        session_id TEXT,
+        intent_version INTEGER DEFAULT 1,
+        goal_drift_json TEXT,
+        trust_snapshot_json TEXT,
         created_at TEXT NOT NULL
     );
     """)
@@ -54,7 +60,72 @@ def init_db(db_path: Optional[Path] = None):
     );
     """)
 
-    # Migration check: ensure prev_hash and event_hash exist on existing tables
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS trust_snapshots (
+        trust_snapshot_id TEXT PRIMARY KEY,
+        transaction_id TEXT NOT NULL,
+        agent_id TEXT NOT NULL,
+        mandate_id TEXT NOT NULL,
+        mandate_version INTEGER NOT NULL DEFAULT 1,
+        intent_id TEXT NOT NULL,
+        intent_version INTEGER NOT NULL DEFAULT 1,
+        purchase_session_id TEXT,
+        selected_sku TEXT NOT NULL,
+        amount REAL NOT NULL,
+        decision TEXT NOT NULL,
+        decision_reason TEXT NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (transaction_id) REFERENCES transactions (id)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS escalations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id TEXT NOT NULL UNIQUE,
+        agent_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        sla_minutes INTEGER NOT NULL DEFAULT 15,
+        status TEXT NOT NULL,
+        payment_hold_id TEXT,
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        resolved_at TEXT,
+        FOREIGN KEY (transaction_id) REFERENCES transactions (id)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS payment_holds (
+        hold_id TEXT PRIMARY KEY,
+        transaction_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT NOT NULL,
+        status TEXT NOT NULL,
+        razorpay_order_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (transaction_id) REFERENCES transactions (id)
+    );
+    """)
+
+    # Migration checks for existing databases
+    cursor.execute("PRAGMA table_info(transactions)")
+    tx_cols = [row[1] for row in cursor.fetchall()]
+    if "session_id" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN session_id TEXT")
+    if "intent_version" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN intent_version INTEGER DEFAULT 1")
+    if "goal_drift_json" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN goal_drift_json TEXT")
+    if "trust_snapshot_json" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN trust_snapshot_json TEXT")
+    if "payment_hold_id" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN payment_hold_id TEXT")
+    if "payment_hold_status" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN payment_hold_status TEXT")
+
     cursor.execute("PRAGMA table_info(provenance_events)")
     existing_cols = [row[1] for row in cursor.fetchall()]
     if "prev_hash" not in existing_cols:
@@ -92,6 +163,8 @@ def save_transaction_evaluation(
     now_iso = datetime.now(timezone.utc).isoformat()
 
     def _serialize_pillar(val: Any) -> str:
+        if val is None or val == "skipped":
+            return "skipped"
         if isinstance(val, str):
             return val
         if hasattr(val, "model_dump"):
@@ -104,6 +177,17 @@ def save_transaction_evaluation(
     intent_json = _serialize_pillar(receipt_dict.get("intent_fidelity", "skipped"))
     risk_json = _serialize_pillar(receipt_dict.get("behavioral_risk", "skipped"))
     evidence_json = _serialize_pillar(receipt_dict.get("evidence", "skipped"))
+    drift_json = _serialize_pillar(receipt_dict.get("goal_drift", "skipped"))
+
+    snap_obj = receipt_dict.get("trust_snapshot")
+    snap_json = None
+    if snap_obj is not None:
+        if hasattr(snap_obj, "model_dump"):
+            snap_json = json.dumps(snap_obj.model_dump(mode="json"))
+        elif isinstance(snap_obj, dict):
+            snap_json = json.dumps(snap_obj)
+        else:
+            snap_json = str(snap_obj)
 
     claimed_product_json = (
         json.dumps(tx_dict.get("claimed_product", {}))
@@ -111,12 +195,19 @@ def save_transaction_evaluation(
         else str(tx_dict.get("claimed_product", "{}"))
     )
 
+    session_id = tx_dict.get("session_id")
+    intent_version = tx_dict.get("intent_version", 1)
+    payment_hold_id = receipt_dict.get("payment_hold_id")
+    payment_hold_status = receipt_dict.get("payment_hold_status")
+
     cursor.execute("""
     INSERT OR REPLACE INTO transactions (
         id, agent_id, mandate_id, user_intent_id, amount, category, merchant, timestamp,
         claimed_product_json, actual_sku, authorization_json, intent_fidelity_json,
-        behavioral_risk_json, evidence_json, decision, decision_reason, razorpay_order_id, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        behavioral_risk_json, evidence_json, decision, decision_reason, razorpay_order_id,
+        payment_hold_id, payment_hold_status, session_id, intent_version, goal_drift_json,
+        trust_snapshot_json, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         tx_dict["id"],
         tx_dict["agent_id"],
@@ -135,8 +226,42 @@ def save_transaction_evaluation(
         receipt_dict["decision"],
         receipt_dict["decision_reason"],
         receipt_dict.get("razorpay_order_id"),
+        payment_hold_id,
+        payment_hold_status,
+        session_id,
+        intent_version,
+        drift_json,
+        snap_json,
         now_iso,
     ))
+
+    # Clear and insert TrustSnapshot if present
+    if snap_obj is not None:
+        snap_dict = snap_obj.model_dump(mode="json") if hasattr(snap_obj, "model_dump") else (snap_obj if isinstance(snap_obj, dict) else {})
+        snap_id = snap_dict.get("trust_snapshot_id", f"snap_{tx_dict['id']}")
+        cursor.execute("DELETE FROM trust_snapshots WHERE transaction_id = ?", (tx_dict["id"],))
+        cursor.execute("""
+        INSERT INTO trust_snapshots (
+            trust_snapshot_id, transaction_id, agent_id, mandate_id, mandate_version,
+            intent_id, intent_version, purchase_session_id, selected_sku, amount,
+            decision, decision_reason, snapshot_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            snap_id,
+            tx_dict["id"],
+            tx_dict["agent_id"],
+            tx_dict["mandate_id"],
+            snap_dict.get("mandate_version", 1),
+            tx_dict["user_intent_id"],
+            intent_version,
+            session_id,
+            tx_dict["actual_sku"],
+            float(tx_dict["amount"]),
+            receipt_dict["decision"],
+            receipt_dict["decision_reason"],
+            snap_json,
+            now_iso,
+        ))
 
     # Clear prior provenance events if replacing
     cursor.execute("DELETE FROM provenance_events WHERE transaction_id = ?", (tx_dict["id"],))
@@ -169,6 +294,7 @@ def save_transaction_evaluation(
 def get_transactions(
     decision: Optional[str] = None,
     agent_id: Optional[str] = None,
+    session_id: Optional[str] = None,
     db_path: Optional[Path] = None,
 ) -> List[Dict[str, Any]]:
     conn = get_db_connection(db_path)
@@ -184,6 +310,9 @@ def get_transactions(
     if agent_id:
         conditions.append("agent_id = ?")
         params.append(agent_id)
+    if session_id:
+        conditions.append("session_id = ?")
+        params.append(session_id)
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
@@ -226,8 +355,8 @@ def get_transaction_receipt(transaction_id: str, db_path: Optional[Path] = None)
         })
 
     # Parse pillar JSONs
-    def _parse_pillar(json_val: str):
-        if json_val == "skipped":
+    def _parse_pillar(json_val: Optional[str]):
+        if not json_val or json_val == "skipped":
             return "skipped"
         try:
             return json.loads(json_val)
@@ -240,13 +369,31 @@ def get_transaction_receipt(transaction_id: str, db_path: Optional[Path] = None)
         "intent_fidelity": _parse_pillar(tx["intent_fidelity_json"]),
         "behavioral_risk": _parse_pillar(tx["behavioral_risk_json"]),
         "evidence": _parse_pillar(tx["evidence_json"]),
+        "goal_drift": _parse_pillar(tx.get("goal_drift_json")),
         "provenance_trail": provenance_trail,
         "decision": tx["decision"],
         "decision_reason": tx["decision_reason"],
+        "trust_snapshot": _parse_pillar(tx.get("trust_snapshot_json")),
+        "session_id": tx.get("session_id"),
+        "intent_version": tx.get("intent_version", 1),
+        "payment_hold_id": tx.get("payment_hold_id"),
+        "payment_hold_status": tx.get("payment_hold_status"),
         "razorpay_order_id": tx.get("razorpay_order_id"),
     }
     conn.close()
     return receipt
+
+
+def get_trust_snapshot(transaction_id: str, db_path: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM trust_snapshots WHERE transaction_id = ?", (transaction_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        r_dict = dict(row)
+        return json.loads(r_dict["snapshot_json"])
+    return None
 
 
 def update_transaction_decision(

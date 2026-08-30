@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpendGuard — AI Purchase Trust Layer</title>
+  <title>SpendGuard — AI Purchase Trust & Observability Layer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,6 +22,8 @@
       --block-bg: rgba(239, 68, 68, 0.12);
       --primary: #3b82f6;
       --primary-hover: #2563eb;
+      --purple: #8b5cf6;
+      --purple-bg: rgba(139, 92, 246, 0.12);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -35,7 +37,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border);
     }
@@ -44,9 +46,7 @@
       align-items: center;
       gap: 12px;
     }
-    .shield-icon {
-      font-size: 28px;
-    }
+    .shield-icon { font-size: 28px; }
     .brand h1 {
       font-size: 22px;
       font-weight: 700;
@@ -82,7 +82,29 @@
     .btn-success { background: var(--allow); color: #000; border-color: var(--allow); font-weight: 600; }
     .btn-danger { background: var(--block); color: #fff; border-color: var(--block); font-weight: 600; }
 
-    /* Filters */
+    /* Nav Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+    .nav-tab.active { color: var(--primary); background: rgba(59, 130, 246, 0.12); }
+
+    /* Controls & Filters */
     .controls {
       display: flex;
       gap: 16px;
@@ -93,11 +115,7 @@
       border-radius: 8px;
       border: 1px solid var(--border);
     }
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .filter-group { display: flex; align-items: center; gap: 8px; }
     label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
     select, input {
       background: #0b0f19;
@@ -110,7 +128,7 @@
     .stats-bar {
       margin-left: auto;
       display: flex;
-      gap: 16px;
+      gap: 12px;
       font-size: 13px;
     }
     .stat-pill {
@@ -125,12 +143,13 @@
     .stat-verify { background: var(--verify-bg); color: var(--verify); }
     .stat-block { background: var(--block-bg); color: var(--block); }
 
-    /* Table */
+    /* Tables */
     .table-container {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
+      margin-bottom: 20px;
     }
     table {
       width: 100%;
@@ -152,13 +171,9 @@
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
     }
-    tr.clickable {
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    tr.clickable:hover {
-      background: rgba(255, 255, 255, 0.03);
-    }
+    tr.clickable { cursor: pointer; transition: background 0.15s; }
+    tr.clickable:hover { background: rgba(255, 255, 255, 0.03); }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -171,6 +186,7 @@
     .badge-allow { background: var(--allow-bg); color: var(--allow); border: 1px solid var(--allow); }
     .badge-verify { background: var(--verify-bg); color: var(--verify); border: 1px solid var(--verify); }
     .badge-block { background: var(--block-bg); color: var(--block); border: 1px solid var(--block); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple); }
     .badge-skipped { background: #1f2937; color: var(--text-muted); border: 1px solid #374151; }
 
     .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
@@ -191,7 +207,7 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       width: 100%;
-      max-width: 900px;
+      max-width: 950px;
       max-height: 90vh;
       border-radius: 12px;
       display: flex;
@@ -225,15 +241,8 @@
     .decision-banner.VERIFY { background: var(--verify-bg); border: 1px solid var(--verify); }
     .decision-banner.BLOCK { background: var(--block-bg); border: 1px solid var(--block); }
 
-    .decision-title {
-      font-size: 18px;
-      font-weight: 700;
-    }
-    .decision-reason {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+    .decision-title { font-size: 18px; font-weight: 700; }
+    .decision-reason { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
     .order-tag {
       font-size: 12px;
       font-family: 'JetBrains Mono', monospace;
@@ -274,7 +283,7 @@
     }
 
     /* Provenance Trail */
-    .provenance-box {
+    .provenance-box, .snapshot-box {
       background: #0b0f19;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -309,7 +318,6 @@
     .step-title { font-weight: 600; font-size: 13px; color: var(--text); }
     .step-content { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
-    /* Action bar */
     .action-bar {
       display: flex;
       justify-content: flex-end;
@@ -325,6 +333,31 @@
       font-size: 11px;
     }
     .conflict-table th, .conflict-table td { padding: 6px 8px; }
+
+    /* Session card */
+    .session-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .session-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: #0b0f19;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
   </style>
 </head>
 <body>
@@ -338,61 +371,111 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn" onclick="fetchTransactions()">🔄 Refresh</button>
+      <button class="btn" onclick="refreshCurrentTab()">🔄 Refresh</button>
       <button class="btn btn-primary" onclick="batchSeedScenarios()">⚡ Ingest 110 Scenarios</button>
     </div>
   </div>
 
-  <div class="controls">
-    <div class="filter-group">
-      <label for="filter-decision">Decision:</label>
-      <select id="filter-decision" onchange="fetchTransactions()">
-        <option value="">All Decisions</option>
-        <option value="ALLOW">ALLOW</option>
-        <option value="VERIFY">VERIFY</option>
-        <option value="BLOCK">BLOCK</option>
-      </select>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tab-btn-txs" onclick="switchTab('txs')">Transactions Feed</button>
+    <button class="nav-tab" id="tab-btn-sessions" onclick="switchTab('sessions')">Purchase Sessions</button>
+    <button class="nav-tab" id="tab-btn-escalations" onclick="switchTab('escalations')">Escalations Queue (SLA)</button>
+  </div>
+
+  <!-- VIEW 1: TRANSACTIONS FEED -->
+  <div id="view-txs">
+    <div class="controls">
+      <div class="filter-group">
+        <label for="filter-decision">Decision:</label>
+        <select id="filter-decision" onchange="fetchTransactions()">
+          <option value="">All Decisions</option>
+          <option value="ALLOW">ALLOW</option>
+          <option value="VERIFY">VERIFY</option>
+          <option value="BLOCK">BLOCK</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-agent">Agent ID:</label>
+        <select id="filter-agent" onchange="fetchTransactions()">
+          <option value="">All Agents</option>
+          <option value="agent_shopping_01">agent_shopping_01</option>
+          <option value="agent_travel_01">agent_travel_01</option>
+          <option value="agent_grocery_01">agent_grocery_01</option>
+          <option value="agent_software_01">agent_software_01</option>
+          <option value="agent_shopping_cold">agent_shopping_cold</option>
+        </select>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-pill stat-allow">ALLOW: <span id="count-allow">0</span></div>
+        <div class="stat-pill stat-verify">VERIFY: <span id="count-verify">0</span></div>
+        <div class="stat-pill stat-block">BLOCK: <span id="count-block">0</span></div>
+      </div>
     </div>
-    <div class="filter-group">
-      <label for="filter-agent">Agent ID:</label>
-      <select id="filter-agent" onchange="fetchTransactions()">
-        <option value="">All Agents</option>
-        <option value="agent_shopping_01">agent_shopping_01</option>
-        <option value="agent_travel_01">agent_travel_01</option>
-        <option value="agent_grocery_01">agent_grocery_01</option>
-        <option value="agent_software_01">agent_software_01</option>
-        <option value="agent_shopping_cold">agent_shopping_cold</option>
-      </select>
-    </div>
-    <div class="stats-bar">
-      <div class="stat-pill stat-allow">ALLOW: <span id="count-allow">0</span></div>
-      <div class="stat-pill stat-verify">VERIFY: <span id="count-verify">0</span></div>
-      <div class="stat-pill stat-block">BLOCK: <span id="count-block">0</span></div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Time (UTC)</th>
+            <th>Tx ID</th>
+            <th>Agent ID</th>
+            <th>Session</th>
+            <th>Category</th>
+            <th>Merchant</th>
+            <th>Actual SKU</th>
+            <th>Amount (₹)</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody id="tx-table-body">
+          <tr>
+            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 32px;">
+              Loading transactions...
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Time (UTC)</th>
-          <th>Tx ID</th>
-          <th>Agent ID</th>
-          <th>Category</th>
-          <th>Merchant</th>
-          <th>Actual SKU</th>
-          <th>Amount (₹)</th>
-          <th>Decision</th>
-        </tr>
-      </thead>
-      <tbody id="tx-table-body">
-        <tr>
-          <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">
-            Loading transactions...
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- VIEW 2: PURCHASE SESSIONS -->
+  <div id="view-sessions" style="display: none;">
+    <div id="sessions-container">
+      <div style="text-align: center; color: var(--text-muted); padding: 40px;">Loading sessions...</div>
+    </div>
+  </div>
+
+  <!-- VIEW 3: ESCALATIONS QUEUE -->
+  <div id="view-escalations" style="display: none;">
+    <div class="controls">
+      <div style="font-size: 13px; font-weight: 600;">Active Verification Queue (15-min SLA)</div>
+      <div style="margin-left: auto;">
+        <button class="btn btn-primary" onclick="triggerTimeouts()">⏱️ Run SLA Timeout Check</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Tx ID</th>
+            <th>Agent ID</th>
+            <th>Amount (₹)</th>
+            <th>Payment Hold ID</th>
+            <th>Created (UTC)</th>
+            <th>SLA Expiry</th>
+            <th>Time Remaining</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="escalations-table-body">
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">
+              No pending escalations.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Detail Modal -->
@@ -403,7 +486,10 @@
           <h2 style="font-size: 16px; font-weight: 600;" id="modal-tx-id">Transaction Receipt</h2>
           <span style="font-size: 12px; color: var(--text-muted);" id="modal-meta"></span>
         </div>
-        <button class="btn" onclick="closeModal()">✕ Close</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" onclick="downloadSnapshotJson()">📥 Export TrustSnapshot</button>
+          <button class="btn" onclick="closeModal()">✕ Close</button>
+        </div>
       </div>
 
       <div class="modal-body" id="modal-body-content">
@@ -414,7 +500,30 @@
 
   <script>
     let currentReceipt = null;
+    let activeTab = 'txs';
 
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById('tab-btn-txs').classList.toggle('active', tab === 'txs');
+      document.getElementById('tab-btn-sessions').classList.toggle('active', tab === 'sessions');
+      document.getElementById('tab-btn-escalations').classList.toggle('active', tab === 'escalations');
+
+      document.getElementById('view-txs').style.display = tab === 'txs' ? 'block' : 'none';
+      document.getElementById('view-sessions').style.display = tab === 'sessions' ? 'block' : 'none';
+      document.getElementById('view-escalations').style.display = tab === 'escalations' ? 'block' : 'none';
+
+      refreshCurrentTab();
+    }
+
+    function refreshCurrentTab() {
+      if (activeTab === 'txs') fetchTransactions();
+      else if (activeTab === 'sessions') fetchSessions();
+      else if (activeTab === 'escalations') fetchEscalations();
+    }
+
+    // -------------------------------------------------------------------------
+    // 1. Transactions Feed
+    // -------------------------------------------------------------------------
     async function fetchTransactions() {
       const decision = document.getElementById('filter-decision').value;
       const agentId = document.getElementById('filter-agent').value;
@@ -439,7 +548,7 @@
       if (!transactions || transactions.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">
+            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px;">
               No transactions recorded yet. Click "⚡ Ingest 110 Scenarios" above to evaluate the full batch.
             </td>
           </tr>
@@ -460,12 +569,14 @@
         const badgeClass = `badge-${tx.decision.toLowerCase()}`;
         const timeStr = tx.timestamp ? new Date(tx.timestamp).toISOString().replace('T', ' ').substring(0, 19) : '';
         const amtStr = '₹' + Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        const sessStr = tx.session_id ? `<span class="badge badge-purple">${tx.session_id}</span>` : '<span style="color: var(--text-muted);">-</span>';
 
         return `
           <tr class="clickable" onclick="openDetailModal('${tx.id}')">
             <td class="mono" style="color: var(--text-muted);">${timeStr}</td>
             <td class="mono" style="font-weight: 600;">${tx.id}</td>
             <td>${tx.agent_id}</td>
+            <td>${sessStr}</td>
             <td><span style="text-transform: capitalize;">${tx.category}</span></td>
             <td>${tx.merchant}</td>
             <td class="mono" style="color: var(--text-muted);">${tx.actual_sku}</td>
@@ -480,6 +591,122 @@
       document.getElementById('count-block').innerText = blockCount;
     }
 
+    // -------------------------------------------------------------------------
+    // 2. Purchase Sessions View
+    // -------------------------------------------------------------------------
+    async function fetchSessions() {
+      try {
+        const res = await fetch('/sessions');
+        const sessions = await res.json();
+        renderSessions(sessions);
+      } catch (err) {
+        console.error('Error fetching sessions:', err);
+      }
+    }
+
+    function renderSessions(sessions) {
+      const container = document.getElementById('sessions-container');
+      if (!sessions || sessions.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">No registered PurchaseSessions found.</div>`;
+        return;
+      }
+
+      container.innerHTML = sessions.map(s => {
+        const budgetStr = s.declared_total_budget ? `₹${s.declared_total_budget.toLocaleString('en-IN')}` : 'Uncapped';
+        const countStr = s.declared_item_count ? `${s.declared_item_count} items` : 'Uncapped';
+        const spentStr = `₹${s.total_spent.toLocaleString('en-IN')}`;
+
+        const txList = s.transactions && s.transactions.length ? s.transactions.map(t => `
+          <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px;">
+            <span class="mono">${t.id} — ${t.actual_sku}</span>
+            <span>₹${Number(t.amount).toLocaleString('en-IN')}</span>
+            <span class="badge badge-${t.decision.toLowerCase()}">${t.decision}</span>
+          </div>
+        `).join('') : '<div style="color: var(--text-muted); font-size: 12px;">No transactions executed yet in this session.</div>';
+
+        return `
+          <div class="session-card">
+            <div class="session-header">
+              <div>
+                <span class="badge badge-purple" style="font-size: 12px;">${s.session_id}</span>
+                <span style="margin-left: 8px; font-weight: 600;">${s.agent_id}</span>
+              </div>
+              <span class="mono" style="font-size: 12px; color: var(--text-muted);">Intent: ${s.intent_id}</span>
+            </div>
+            <div class="session-meta-grid">
+              <div>Declared Budget: <strong>${budgetStr}</strong></div>
+              <div>Declared Limit: <strong>${countStr}</strong></div>
+              <div>Current Spend: <strong>${spentStr}</strong></div>
+              <div>Executed Txs: <strong>${s.transaction_count}</strong></div>
+            </div>
+            <div style="background: #0b0f19; padding: 12px; border-radius: 6px;">
+              <div style="font-weight: 600; font-size: 12px; margin-bottom: 8px; color: var(--text-muted);">Session Transactions:</div>
+              ${txList}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. Escalations Queue View
+    // -------------------------------------------------------------------------
+    async function fetchEscalations() {
+      try {
+        const res = await fetch('/escalations');
+        const items = await res.json();
+        renderEscalations(items);
+      } catch (err) {
+        console.error('Error fetching escalations:', err);
+      }
+    }
+
+    function renderEscalations(items) {
+      const tbody = document.getElementById('escalations-table-body');
+      if (!items || items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">No pending verification escalations.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(esc => {
+        const createdStr = new Date(esc.created_at).toISOString().replace('T', ' ').substring(11, 19);
+        const expStr = new Date(esc.expires_at).toISOString().replace('T', ' ').substring(11, 19);
+        const mins = Math.floor(esc.remaining_seconds / 60);
+        const secs = Math.floor(esc.remaining_seconds % 60);
+        const timeClass = esc.remaining_seconds < 180 ? 'color: var(--block); font-weight: 700;' : 'color: var(--verify); font-weight: 600;';
+
+        return `
+          <tr>
+            <td class="mono" style="font-weight: 600;">${esc.transaction_id}</td>
+            <td>${esc.agent_id}</td>
+            <td style="font-weight: 600;">₹${Number(esc.amount).toLocaleString('en-IN')}</td>
+            <td class="mono" style="color: var(--purple);">${esc.payment_hold_id || '-'}</td>
+            <td class="mono">${createdStr}</td>
+            <td class="mono">${expStr}</td>
+            <td class="mono" style="${timeClass}">${mins}m ${secs}s</td>
+            <td>
+              <button class="btn btn-success" style="padding: 4px 8px; font-size: 11px;" onclick="submitVerification('${esc.transaction_id}', true)">✔ Capture</button>
+              <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="submitVerification('${esc.transaction_id}', false)">✖ Void</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function triggerTimeouts() {
+      try {
+        const res = await fetch('/escalations/process_timeouts', { method: 'POST' });
+        const data = await res.json();
+        alert(`SLA Watchdog executed: ${data.timed_out_count} expired escalations auto-denied and holds voided.`);
+        refreshCurrentTab();
+      } catch (err) {
+        alert('Error processing timeouts: ' + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. Detail Modal & TrustSnapshot Inspection
+    // -------------------------------------------------------------------------
     async function openDetailModal(txId) {
       try {
         const res = await fetch(`/transactions/${txId}/receipt`);
@@ -502,14 +729,27 @@
       if (e.target.id === 'detail-modal') closeModal();
     }
 
+    function downloadSnapshotJson() {
+      if (!currentReceipt) return;
+      const snap = currentReceipt.trust_snapshot || currentReceipt;
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(snap, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `trust_snapshot_${currentReceipt.transaction_id}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
     function renderReceiptModal(r) {
       document.getElementById('modal-tx-id').innerText = `Decision Receipt: ${r.transaction_id}`;
-      
-      const badgeClass = `badge-${r.decision.toLowerCase()}`;
       
       let orderHtml = '';
       if (r.razorpay_order_id) {
         orderHtml = `<div class="order-tag">💳 Razorpay Order ID: <span style="color: var(--allow); font-weight: 600;">${r.razorpay_order_id}</span></div>`;
+      } else if (r.payment_hold_id) {
+        const holdStatus = r.payment_hold_status || 'authorized';
+        orderHtml = `<div class="order-tag" style="color: var(--verify);">🔒 Two-Phase Hold: <strong>${r.payment_hold_id}</strong> (${holdStatus.toUpperCase()})</div>`;
       } else if (r.payment_error) {
         orderHtml = `<div class="order-tag" style="color: var(--block);">⚠️ Payment Error: ${r.payment_error}</div>`;
       }
@@ -529,7 +769,7 @@
         `;
       }
 
-      // Pillar 2: Intent Fidelity
+      // Pillar 2: Intent Fidelity (Weighted Breakdown)
       let intentHtml = '';
       if (r.intent_fidelity === 'skipped') {
         intentHtml = `<span class="badge badge-skipped">SKIPPED</span>`;
@@ -538,7 +778,7 @@
         intentHtml = `
           ${matchBadge}
           <div style="margin-top: 8px;">
-            <div>Soft Score: <strong>${(r.intent_fidelity.soft_score * 100).toFixed(1)}%</strong></div>
+            <div>Weighted Soft Score: <strong>${(r.intent_fidelity.soft_score * 100).toFixed(1)}%</strong></div>
             <div>Mismatched Fields: <strong>${r.intent_fidelity.mismatched_fields.length ? r.intent_fidelity.mismatched_fields.join(', ') : 'None'}</strong></div>
           </div>
         `;
@@ -551,7 +791,7 @@
       } else {
         const score = r.behavioral_risk.score;
         let riskColor = 'var(--allow)';
-        if (score > 0.70) riskColor = 'var(--block)';
+        if (score >= 0.75) riskColor = 'var(--block)';
         else if (score >= 0.30) riskColor = 'var(--verify)';
 
         riskHtml = `
@@ -573,31 +813,31 @@
         evidenceHtml = `<span class="badge badge-skipped">SKIPPED</span>`;
       } else {
         const hasConflicts = r.evidence.conflicts && r.evidence.conflicts.length > 0;
-        const evBadge = hasConflicts ? '<span class="badge badge-block">CONFLICTS DETECTED</span>' : '<span class="badge badge-allow">CLEAN</span>';
+        const isUnverifiable = r.evidence.verification_status === 'unverifiable';
+        let evBadge = '<span class="badge badge-allow">CLEAN</span>';
+        if (hasConflicts) evBadge = '<span class="badge badge-block">CONFLICTS DETECTED</span>';
+        else if (isUnverifiable) evBadge = '<span class="badge badge-verify">UNVERIFIABLE SPEC</span>';
         
-        let conflictTable = '';
-        if (hasConflicts) {
-          conflictTable = `
-            <table class="conflict-table">
-              <thead><tr><th>Field</th><th>Claimed</th><th>Catalog Truth</th></tr></thead>
-              <tbody>
-                ${r.evidence.conflicts.map(c => `
-                  <tr>
-                    <td class="mono" style="color: #fbbf24;">${c.field}</td>
-                    <td>${JSON.stringify(c.claimed)}</td>
-                    <td style="color: var(--allow); font-weight: 600;">${JSON.stringify(c.actual)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          `;
-        }
-
         evidenceHtml = `
           ${evBadge}
           <div style="margin-top: 8px;">
             <div>Sources Checked: <strong>${r.evidence.sources_checked.join(', ')}</strong></div>
-            ${conflictTable}
+            <div>Status: <strong>${r.evidence.verification_status || 'verified'}</strong></div>
+          </div>
+        `;
+      }
+
+      // Goal Drift (Session)
+      let driftHtml = '';
+      if (r.goal_drift && r.goal_drift !== 'skipped') {
+        const driftBadge = r.goal_drift.has_drift ? '<span class="badge badge-verify">DRIFT DETECTED</span>' : '<span class="badge badge-allow">STABLE</span>';
+        driftHtml = `
+          <div style="background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 600;">🎯 Session Goal Drift:</span>
+              ${driftBadge}
+            </div>
+            ${r.goal_drift.reason ? `<div style="font-size: 12px; color: var(--verify); margin-top: 4px;">Reason: ${r.goal_drift.reason}</div>` : ''}
           </div>
         `;
       }
@@ -612,15 +852,17 @@
           } else if (step.event_type === 'candidates_found') {
             content = `Found ${step.payload.candidate_count} products in category <strong>${step.payload.category}</strong>`;
           } else if (step.event_type === 'candidates_eliminated') {
-            content = `Eliminated ${step.payload.eliminated_count} options. Sample: ${step.payload.eliminations.slice(0, 2).map(e => `${e.brand} ${e.model} (${e.reasons.join(', ')})`).join('; ')}`;
+            content = `Eliminated ${step.payload.eliminated_count} options.`;
           } else if (step.event_type === 'selected') {
             content = `<strong>${step.payload.brand} ${step.payload.model} (₹${step.payload.price.toLocaleString('en-IN')})</strong> — ${step.payload.reason}`;
           }
 
+          const hashPreview = step.event_hash ? `<span class="mono" style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 4px;">SHA256: ${step.event_hash}</span>` : '';
+
           return `
             <div class="provenance-step">
               <div class="step-title">Step ${step.seq}: ${step.event_type.toUpperCase().replace('_', ' ')}</div>
-              <div class="step-content">${content}</div>
+              <div class="step-content">${content} ${hashPreview}</div>
             </div>
           `;
         }).join('');
@@ -632,10 +874,10 @@
         actionButtons = `
           <div class="action-bar">
             <span style="margin-right: auto; font-size: 13px; color: var(--verify); display: flex; align-items: center; gap: 6px;">
-              ⚠️ Human-in-the-loop review required before payment can execute
+              ⚠️ Human-in-the-loop review required — Pre-auth hold active
             </span>
-            <button class="btn btn-danger" onclick="submitVerification('${r.transaction_id}', false)">✖ Deny Purchase</button>
-            <button class="btn btn-success" onclick="submitVerification('${r.transaction_id}', true)">✔ Approve & Pay with Razorpay</button>
+            <button class="btn btn-danger" onclick="submitVerification('${r.transaction_id}', false)">✖ Deny & Void Hold</button>
+            <button class="btn btn-success" onclick="submitVerification('${r.transaction_id}', true)">✔ Approve & Capture Payment</button>
           </div>
         `;
       }
@@ -679,8 +921,10 @@
           </div>
         </div>
 
+        ${driftHtml}
+
         <div class="provenance-box">
-          <div style="font-weight: 600; font-size: 14px; margin-bottom: 12px;">Decision Provenance Trail</div>
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 12px;">Cryptographic Provenance Trail (SHA-256 Chained)</div>
           ${trailHtml}
         </div>
 
@@ -701,7 +945,7 @@
         }
         const updated = await res.json();
         renderReceiptModal(updated);
-        fetchTransactions();
+        refreshCurrentTab();
       } catch (err) {
         alert('Verification error: ' + err.message);
       }
@@ -717,7 +961,7 @@
         const res = await fetch('/admin/seed_scenarios', { method: 'POST' });
         const result = await res.json();
         alert(`Successfully evaluated and persisted ${result.count} scenarios across all 7 types!`);
-        fetchTransactions();
+        refreshCurrentTab();
       } catch (err) {
         alert('Error seeding scenarios: ' + err.message);
       } finally {
@@ -727,7 +971,7 @@
     }
 
     // Polling every 5 seconds
-    setInterval(fetchTransactions, 5000);
+    setInterval(refreshCurrentTab, 5000);
     // Initial fetch
     fetchTransactions();
   </script>
