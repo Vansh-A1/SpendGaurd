@@ -88,14 +88,23 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
+JWT_SECRET = os.environ.get("JWT_SECRET", "spendguard-dev-secret-key-32-bytes-long")
+
+DEFAULT_USERS = [
+    ("ADMIN", "admin", "SpendGuard Admin", "admin@spendguard.ai", "admin123"),
+    ("OPERATOR", "operator", "SpendGuard Operator", "operator@spendguard.ai", "operator123"),
+    ("VIEWER", "viewer", "SpendGuard Viewer", "viewer@spendguard.ai", "viewer123"),
+]
+
+
 def create_access_token(user: Dict[str, Any]) -> str:
     payload = {"sub": user["id"], "email": user["email"], "role": user["role"], "exp": datetime.now(timezone.utc) + timedelta(minutes=15), "type": "access"}
-    return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 def create_refresh_token(user: Dict[str, Any]) -> str:
     payload = {"sub": user["id"], "exp": datetime.now(timezone.utc) + timedelta(days=7), "type": "refresh"}
-    return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 def public_user(user: Dict[str, Any]) -> Dict[str, Any]:
@@ -103,8 +112,8 @@ def public_user(user: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def set_auth_cookies(response: Response, user: Dict[str, Any]) -> None:
-    response.set_cookie("access_token", create_access_token(user), httponly=True, secure=True, samesite="none", max_age=900, path="/")
-    response.set_cookie("refresh_token", create_refresh_token(user), httponly=True, secure=True, samesite="none", max_age=604800, path="/")
+    response.set_cookie("access_token", create_access_token(user), httponly=True, secure=False, samesite="lax", max_age=900, path="/")
+    response.set_cookie("refresh_token", create_refresh_token(user), httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
 
 
 def find_user_by_email(email: str):
@@ -127,7 +136,7 @@ def authenticate_request(request: Request):
     if not token:
         return None
     try:
-        payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
             return None
         user = find_user_by_id(payload["sub"])
@@ -147,9 +156,9 @@ def init_auth_db():
     with auth_connection() as connection:
         connection.execute("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT)")
         connection.execute("CREATE TABLE IF NOT EXISTS login_attempts (identifier TEXT PRIMARY KEY, count INTEGER NOT NULL, locked_until TEXT, updated_at TEXT NOT NULL)")
-        for prefix, role, name in [("ADMIN", "admin", "SpendGuard Admin"), ("OPERATOR", "operator", "SpendGuard Operator"), ("VIEWER", "viewer", "SpendGuard Viewer")]:
-            email = os.environ[f"{prefix}_EMAIL"].strip().lower()
-            password = os.environ[f"{prefix}_PASSWORD"]
+        for prefix, role, name, def_email, def_pass in DEFAULT_USERS:
+            email = os.environ.get(f"{prefix}_EMAIL", def_email).strip().lower()
+            password = os.environ.get(f"{prefix}_PASSWORD", def_pass)
             existing = connection.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
             if not existing:
                 connection.execute("INSERT INTO users (id, email, name, role, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)", (str(uuid.uuid4()), email, name, role, hash_password(password), datetime.now(timezone.utc).isoformat()))
@@ -171,10 +180,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="SpendGuard Trust Layer API", version="1.0.0", lifespan=lifespan)
 
-frontend_url = os.environ["FRONTEND_URL"]
+frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000"],
+    allow_origins=[frontend_url, "http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -224,7 +233,8 @@ def login(request: Request, response: Response, body: LoginRequest):
         connection.execute("DELETE FROM login_attempts WHERE identifier = ?", (identifier,))
         connection.commit()
     set_auth_cookies(response, user)
-    return public_user(user)
+    token = create_access_token(user)
+    return {**public_user(user), "access_token": token}
 
 
 @app.post("/auth/logout")
@@ -245,14 +255,15 @@ def refresh(request: Request, response: Response):
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid token")
         user = find_user_by_id(payload["sub"])
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
-        response.set_cookie("access_token", create_access_token(user), httponly=True, secure=True, samesite="none", max_age=900, path="/")
-        return public_user(user)
+        response.set_cookie("access_token", create_access_token(user), httponly=True, secure=False, samesite="lax", max_age=900, path="/")
+        new_token = create_access_token(user)
+        return {**public_user(user), "access_token": new_token}
     except jwt.InvalidTokenError as exc:
         raise HTTPException(status_code=401, detail="Invalid token") from exc
 

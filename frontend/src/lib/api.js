@@ -3,16 +3,43 @@
  * Connects the Emergent React frontend to the FastAPI backend.
  */
 
-const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const RAW_URL =
+  process.env.REACT_APP_API_BASE_URL ||
+  process.env.REACT_APP_BACKEND_URL ||
+  process.env.VITE_API_BASE_URL ||
+  "http://localhost:8000";
+
+const API_BASE = RAW_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+
+function getToken() {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("spendguard_access_token");
+  }
+  return null;
+}
+
+function setToken(token) {
+  if (typeof window !== "undefined") {
+    if (token) {
+      localStorage.setItem("spendguard_access_token", token);
+    } else {
+      localStorage.removeItem("spendguard_access_token");
+    }
+  }
+}
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
+  const token = getToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
   const config = {
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
     ...options,
   };
 
@@ -25,19 +52,43 @@ async function request(endpoint, options = {}) {
     }
     return await res.json();
   } catch (err) {
-    if (!options.silent) console.error(`[API Error] ${options.method || "GET"} ${endpoint}:`, err.message);
+    if (!options.silent) {
+      console.error(`[API Error] ${options.method || "GET"} ${endpoint}:`, err.message);
+    }
     throw err;
   }
 }
 
 export const api = {
-  // System
+  // System & Auth
   getHealth: () => request("/health"),
   seedScenarios: () => request("/admin/seed_scenarios", { method: "POST" }),
-  login: (email, password) => request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
-  logout: () => request("/auth/logout", { method: "POST" }),
+  login: async (email, password) => {
+    const res = await request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    if (res?.access_token) {
+      setToken(res.access_token);
+    }
+    return res;
+  },
+  logout: async () => {
+    try {
+      await request("/auth/logout", { method: "POST" });
+    } finally {
+      setToken(null);
+    }
+    return { status: "ok" };
+  },
   getCurrentUser: () => request("/auth/me", { silent: true }),
-  refreshSession: () => request("/auth/refresh", { method: "POST" }),
+  refreshSession: async () => {
+    const res = await request("/auth/refresh", { method: "POST" });
+    if (res?.access_token) {
+      setToken(res.access_token);
+    }
+    return res;
+  },
 
   // Transactions & Decision Engine
   evaluateTransaction: (transactionRequest) =>
