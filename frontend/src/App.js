@@ -12,6 +12,7 @@ import { ConsoleTransactionDetail } from "@/components/console/ConsoleTransactio
 import { ConsoleVerificationQueue } from "@/components/console/ConsoleVerificationQueue";
 import { ConsoleSessions } from "@/components/console/ConsoleSessions";
 import { ConsoleAuth } from "@/components/console/ConsoleAuth";
+import { ConsoleSimulationLab } from "@/components/console/ConsoleSimulationLab";
 
 const checks = [
   { key: "01", name: "AUTHORITY", copy: "Can the agent make this purchase?", detail: "Verified spending limit and mandate.", plain: "The agent can spend only within the permissions and limits you set." },
@@ -572,6 +573,8 @@ function App() {
             onSelectTransaction={(id) => setSelectedTxId(id)}
             setTab={(tab) => setConsoleTab(tab)}
           />
+        ) : consoleTab === "simulation" ? (
+          <ConsoleSimulationLab />
         ) : consoleTab === "transactions" ? (
           <ConsoleTransactions
             onSelectTransaction={(id) => setSelectedTxId(id)}

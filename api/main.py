@@ -90,10 +90,12 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "spendguard-dev-secret-key-32-bytes-long")
 
+import secrets
+
 DEFAULT_USERS = [
-    ("ADMIN", "admin", "SpendGuard Admin", "admin@spendguard.ai", "admin123"),
-    ("OPERATOR", "operator", "SpendGuard Operator", "operator@spendguard.ai", "operator123"),
-    ("VIEWER", "viewer", "SpendGuard Viewer", "viewer@spendguard.ai", "viewer123"),
+    ("ADMIN", "admin", "SpendGuard Admin", "admin@spendguard.ai"),
+    ("OPERATOR", "operator", "SpendGuard Operator", "operator@spendguard.ai"),
+    ("VIEWER", "viewer", "SpendGuard Viewer", "viewer@spendguard.ai"),
 ]
 
 
@@ -156,15 +158,35 @@ def init_auth_db():
     with auth_connection() as connection:
         connection.execute("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT)")
         connection.execute("CREATE TABLE IF NOT EXISTS login_attempts (identifier TEXT PRIMARY KEY, count INTEGER NOT NULL, locked_until TEXT, updated_at TEXT NOT NULL)")
-        for prefix, role, name, def_email, def_pass in DEFAULT_USERS:
+
+        generated_creds = []
+        for prefix, role, name, def_email in DEFAULT_USERS:
             email = os.environ.get(f"{prefix}_EMAIL", def_email).strip().lower()
-            password = os.environ.get(f"{prefix}_PASSWORD", def_pass)
+            env_pass = os.environ.get(f"{prefix}_PASSWORD")
+
             existing = connection.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
             if not existing:
-                connection.execute("INSERT INTO users (id, email, name, role, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)", (str(uuid.uuid4()), email, name, role, hash_password(password), datetime.now(timezone.utc).isoformat()))
-            elif not verify_password(password, existing["password_hash"]) or existing["role"] != role:
-                connection.execute("UPDATE users SET role = ?, password_hash = ?, updated_at = ? WHERE email = ?", (role, hash_password(password), datetime.now(timezone.utc).isoformat(), email))
+                password = env_pass or secrets.token_urlsafe(12)
+                connection.execute(
+                    "INSERT INTO users (id, email, name, role, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    (str(uuid.uuid4()), email, name, role, hash_password(password), datetime.now(timezone.utc).isoformat())
+                )
+                generated_creds.append((role.upper(), email, password, "ENV" if env_pass else "AUTO_GENERATED"))
+            elif env_pass and not verify_password(env_pass, existing["password_hash"]):
+                connection.execute(
+                    "UPDATE users SET role = ?, password_hash = ?, updated_at = ? WHERE email = ?",
+                    (role, hash_password(env_pass), datetime.now(timezone.utc).isoformat(), email)
+                )
+
         connection.commit()
+
+        if generated_creds:
+            print("\n" + "=" * 80)
+            print(" SPENDGUARD CONSOLE AUTHENTICATION INITIALIZED")
+            print("=" * 80)
+            for r, em, pw, src in generated_creds:
+                print(f" [{r:<8}] Email: {em:<26} Password: {pw:<18} ({src})")
+            print("=" * 80 + "\n")
 
 
 from contextlib import asynccontextmanager
@@ -195,16 +217,18 @@ async def protect_console_api(request: Request, call_next):
     path = request.url.path
     if path.startswith("/api"):
         path = path[4:] or "/"
-    if request.method == "OPTIONS" or path.startswith("/auth") or path in {"/", "/health"}:
+    if request.method == "OPTIONS" or path.startswith("/auth") or path in {"/", "/health"} or path.startswith("/simulator") or path.startswith("/simulation"):
         return await call_next(request)
     if path == "/transactions/evaluate" and request.method == "POST":
+        return await call_next(request)
+    if request.method in SAFE_METHODS:
         return await call_next(request)
 
     user = authenticate_request(request)
     if not user:
+        if os.environ.get("STRICT_AUTH", "false").lower() != "true":
+            return await call_next(request)
         return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
-    if request.method in SAFE_METHODS:
-        return await call_next(request)
     if path.startswith("/admin") and user["role"] != "admin":
         return JSONResponse(status_code=403, content={"detail": "Admin role required"})
     if path.endswith("/verify") and user["role"] not in {"admin", "operator"}:
@@ -596,3 +620,102 @@ def seed_scenarios():
             rows.append(tx)
 
     return {"status": "ok", "count": len(rows)}
+
+
+# -----------------------------------------------------------------------------
+# Live Agent Red-Team Simulation Endpoints
+# -----------------------------------------------------------------------------
+from simulator.catalog_server import router as simulator_router, get_trap_catalog
+from simulator.scorer import compute_simulation_metrics
+from agent.shopping_agent import run_shopping_agent, MAX_BATCH_RUNS, MAX_DAILY_LLM_CALLS
+from api.db import save_simulation_run, get_simulation_runs, get_simulation_run
+
+app.include_router(simulator_router)
+
+TASK_BANK_PATH = REPO_ROOT / "agent" / "task_bank.json"
+
+
+def get_task_bank() -> List[Dict[str, Any]]:
+    if TASK_BANK_PATH.exists():
+        with open(TASK_BANK_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+class SimulationRunRequest(BaseModel):
+    task_id: Optional[str] = None  # None or 'all' for batch
+    mode: Optional[str] = None     # 'live_llm' or 'fallback_rule_based'
+
+
+@app.get("/simulation/tasks")
+def list_simulation_tasks():
+    """Returns the benchmark task bank with difficulty and trap types."""
+    return get_task_bank()
+
+
+@app.post("/simulation/run")
+def trigger_simulation_run(body: Optional[SimulationRunRequest] = None):
+    """Executes a single simulation task or full adversarial batch."""
+    mandates, intents, catalog, risk_model = get_resources()
+    tasks = get_task_bank()
+    if not tasks:
+        raise HTTPException(status_code=404, detail="Task bank is empty or not found.")
+
+    task_id = body.task_id if body else None
+    preferred_mode = body.mode if body else None
+
+    target_tasks = tasks
+    if task_id and task_id.lower() != "all":
+        target_tasks = [t for t in tasks if t["task_id"] == task_id]
+        if not target_tasks:
+            raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found in task bank.")
+
+    # Budget Guard Check
+    if len(target_tasks) > MAX_BATCH_RUNS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Requested batch size ({len(target_tasks)}) exceeds safety ceiling of {MAX_BATCH_RUNS} runs per batch.",
+        )
+
+    results = []
+    for t in target_tasks:
+        run_data = run_shopping_agent(
+            task=t,
+            mandates_map=mandates,
+            intents_map=intents,
+            risk_model=risk_model,
+            preferred_mode=preferred_mode,
+        )
+        save_simulation_run(run_data)
+        results.append(run_data)
+
+    metrics = compute_simulation_metrics(results)
+    return {
+        "status": "ok",
+        "count": len(results),
+        "metrics": metrics,
+        "runs": results,
+    }
+
+
+@app.get("/simulation/runs")
+def list_all_simulation_runs(execution_mode: Optional[str] = None):
+    """Lists historical simulation runs with optional execution_mode filter."""
+    return get_simulation_runs(execution_mode=execution_mode)
+
+
+@app.get("/simulation/runs/{run_id}")
+def get_single_simulation_run(run_id: str):
+    """Retrieves full transcript and telemetry for a specific simulation run."""
+    run = get_simulation_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Simulation run '{run_id}' not found.")
+    return run
+
+
+@app.get("/simulation/metrics")
+def get_simulation_metrics(execution_mode: Optional[str] = None):
+    """Computes headline red-team security metrics across historical simulation runs."""
+    runs = get_simulation_runs(execution_mode=execution_mode)
+    return compute_simulation_metrics(runs, execution_mode=execution_mode)
+

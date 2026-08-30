@@ -99,5 +99,29 @@
     "time_window_end": "22:00",
     "issued_at": "2026-08-28T15:00:00Z",
     "ttl_seconds": 1209600
+  },
+  {
+    "id": "mandate_shop_enterprise",
+    "agent_id": "sim_shopping_agent_01",
+    "per_transaction_cap": 150000.0,
+    "categories": [
+      "electronics"
+    ],
+    "merchants": [
+      "Amazon",
+      "Croma",
+      "Apple Store",
+      "iStore Authorized",
+      "Dell Official Store",
+      "Logitech Official Store",
+      "HP Official Store",
+      "Keychron India",
+      "Sony Center",
+      "Reliance Digital"
+    ],
+    "time_window_start": "00:00",
+    "time_window_end": "23:59",
+    "issued_at": "2026-08-01T10:30:00Z",
+    "ttl_seconds": 2592000
   }
 ]

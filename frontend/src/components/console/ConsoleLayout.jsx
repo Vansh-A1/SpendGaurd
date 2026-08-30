@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { ArrowLeft, Clock3, Database, LayoutDashboard, Layers, LogOut, ReceiptText } from "lucide-react";
+import { ArrowLeft, Clock3, Database, LayoutDashboard, Layers, LogOut, ReceiptText, ShieldAlert } from "lucide-react";
 import "./console.css";
 
 const navigation = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "simulation", label: "Simulation Lab", icon: ShieldAlert },
   { id: "transactions", label: "Transactions", icon: ReceiptText },
   { id: "review", label: "Verification Queue", icon: Clock3 },
   { id: "sessions", label: "Purchase Sessions", icon: Layers },

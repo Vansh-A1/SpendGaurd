@@ -134,6 +134,23 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ url }),
     }),
+
+  // Red-Team Simulation Lab
+  getSimulationTasks: () => request("/simulation/tasks"),
+  runSimulation: (taskId = null, mode = null) =>
+    request("/simulation/run", {
+      method: "POST",
+      body: JSON.stringify({ task_id: taskId, mode }),
+    }),
+  getSimulationRuns: (executionMode = null) => {
+    const query = executionMode && executionMode !== "all" ? `?execution_mode=${executionMode}` : "";
+    return request(`/simulation/runs${query}`);
+  },
+  getSimulationRunDetail: (runId) => request(`/simulation/runs/${runId}`),
+  getSimulationMetrics: (executionMode = null) => {
+    const query = executionMode && executionMode !== "all" ? `?execution_mode=${executionMode}` : "";
+    return request(`/simulation/metrics${query}`);
+  },
 };
 
 export default api;

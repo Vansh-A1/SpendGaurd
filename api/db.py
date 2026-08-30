@@ -144,6 +144,28 @@ def init_db(db_path: Optional[Path] = None):
     );
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS simulation_runs (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        task_prompt TEXT NOT NULL,
+        difficulty TEXT,
+        trap_type TEXT NOT NULL,
+        selected_sku TEXT,
+        selected_product_name TEXT,
+        amount REAL,
+        execution_mode TEXT NOT NULL,
+        agent_fooled INTEGER NOT NULL,
+        initial_decision TEXT NOT NULL,
+        resolved_decision TEXT NOT NULL,
+        is_true_leakage INTEGER NOT NULL,
+        reviewer_action TEXT,
+        decision_reason TEXT,
+        transcript_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    );
+    """)
+
     conn.commit()
     conn.close()
 
@@ -446,3 +468,76 @@ def get_audit_logs(transaction_id: Optional[str] = None, db_path: Optional[Path]
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return rows
+
+
+def save_simulation_run(run_dict: Dict[str, Any], db_path: Optional[Path] = None):
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT OR REPLACE INTO simulation_runs (
+        id, task_id, task_prompt, difficulty, trap_type, selected_sku, selected_product_name,
+        amount, execution_mode, agent_fooled, initial_decision, resolved_decision,
+        is_true_leakage, reviewer_action, decision_reason, transcript_json, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        run_dict["id"],
+        run_dict["task_id"],
+        run_dict["task_prompt"],
+        run_dict.get("difficulty", "medium"),
+        run_dict["trap_type"],
+        run_dict.get("selected_sku"),
+        run_dict.get("selected_product_name"),
+        float(run_dict.get("amount", 0)),
+        run_dict.get("execution_mode", "fallback_rule_based"),
+        1 if run_dict.get("agent_fooled") else 0,
+        run_dict["initial_decision"],
+        run_dict["resolved_decision"],
+        1 if run_dict.get("is_true_leakage") else 0,
+        run_dict.get("reviewer_action"),
+        run_dict.get("decision_reason"),
+        json.dumps(run_dict.get("transcript", [])),
+        run_dict.get("created_at", datetime.now(timezone.utc).isoformat()),
+    ))
+    conn.commit()
+    conn.close()
+
+
+def get_simulation_runs(execution_mode: Optional[str] = None, db_path: Optional[Path] = None) -> List[Dict[str, Any]]:
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+    if execution_mode and execution_mode.lower() != "all":
+        cursor.execute("SELECT * FROM simulation_runs WHERE execution_mode = ? ORDER BY created_at DESC", (execution_mode,))
+    else:
+        cursor.execute("SELECT * FROM simulation_runs ORDER BY created_at DESC")
+    rows = cursor.fetchall()
+    results = []
+    for r in rows:
+        d = dict(r)
+        d["agent_fooled"] = bool(d["agent_fooled"])
+        d["is_true_leakage"] = bool(d["is_true_leakage"])
+        try:
+            d["transcript"] = json.loads(d["transcript_json"])
+        except Exception:
+            d["transcript"] = []
+        results.append(d)
+    conn.close()
+    return results
+
+
+def get_simulation_run(run_id: str, db_path: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM simulation_runs WHERE id = ?", (run_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    d = dict(row)
+    d["agent_fooled"] = bool(d["agent_fooled"])
+    d["is_true_leakage"] = bool(d["is_true_leakage"])
+    try:
+        d["transcript"] = json.loads(d["transcript_json"])
+    except Exception:
+        d["transcript"] = []
+    return d
+

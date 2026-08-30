@@ -14,3 +14,6 @@ htmlcov/
 scratch/
 graphify-out/
 .DS_Store
+.env
+.env.local
+.env.*.local
