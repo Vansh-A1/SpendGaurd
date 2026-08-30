@@ -4,13 +4,14 @@ import { StatusBadge } from "./StatusBadge";
 import { ArrowLeft, Clock, Check, X, Shield, Download, AlertTriangle, RefreshCw } from "lucide-react";
 import { jsPDF } from "jspdf";
 
-export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySuccess }) {
+export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySuccess, user }) {
   const [loading, setLoading] = useState(true);
   const [receipt, setReceipt] = useState(null);
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState(null);
   const [verifying, setVerifying] = useState(false);
   const [verifyOutcome, setVerifyOutcome] = useState(null);
+  const canVerify = ["admin", "operator"].includes(user?.role);
 
   const loadDetail = async () => {
     try {
@@ -54,71 +55,139 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
     const width = doc.internal.pageSize.getWidth();
     const height = doc.internal.pageSize.getHeight();
     const margin = 56;
+    const ink = [24, 26, 34];
+    const muted = [102, 105, 116];
+    const accent = [95, 80, 173];
+    const rule = [190, 185, 177];
+    const decisionId = receipt.transaction_id || transactionId;
 
+    doc.setProperties({ title: `SpendGuard Trust Receipt ${decisionId}` });
     doc.setFillColor(243, 241, 236);
     doc.rect(0, 0, width, height, "F");
-    doc.setDrawColor(190, 185, 177);
+    doc.setDrawColor(...rule);
     doc.setLineWidth(0.8);
     doc.rect(24, 24, width - 48, height - 48);
 
-    doc.setTextColor(24, 26, 34);
+    doc.setTextColor(...ink);
     doc.setFont("courier", "bold");
     doc.setFontSize(10);
     doc.text("SPENDGUARD", margin, 66);
     doc.setFont("courier", "normal");
-    doc.text(`TRUST RECEIPT / ${receipt.transaction_id || transactionId}`, width - margin, 66, { align: "right" });
+    doc.text(`TRUST RECEIPT / ${decisionId}`, width - margin, 66, { align: "right" });
     doc.line(margin, 82, width - margin, 82);
 
     doc.setFont("times", "normal");
-    doc.setFontSize(28);
-    doc.text("Trust Receipt", margin, 124);
-
+    doc.setFontSize(34);
+    doc.text("Trust Receipt", margin, 128);
     doc.setFont("courier", "normal");
     doc.setFontSize(8);
-    doc.setTextColor(102, 105, 116);
-    doc.text("DECISION RATIONALE", margin, 160);
+    doc.setTextColor(...muted);
+    doc.text("AUTONOMOUS PURCHASE DECISION · LIVE RECORD", margin, 148);
+
+    doc.text("USER INTENT", margin, 192);
+    doc.setTextColor(...ink);
+    doc.setFont("times", "normal");
+    doc.setFontSize(23);
+    doc.text(doc.splitTextToSize(promptDescription, 430), margin, 220);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.setTextColor(24, 26, 34);
-    doc.text(doc.splitTextToSize(receipt.decision_reason || "Evaluated by SpendGuard.", 480), margin, 178);
+    doc.setTextColor(...muted);
+    doc.text(`Agent ${receipt.agent_id || "unknown"} · ${categoryName}`, margin, 248);
 
-    doc.line(margin, 210, width - margin, 210);
+    doc.line(margin, 274, width - margin, 274);
     doc.setFont("courier", "normal");
     doc.setFontSize(8);
-    doc.setTextColor(102, 105, 116);
-    doc.text("AMOUNT", margin, 236);
-    doc.text("DECISION", width / 2, 236);
-
+    doc.text("SELECTED", margin, 304);
+    doc.text("TRANSACTION", width / 2 + 16, 304);
+    doc.setTextColor(...ink);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(24, 26, 34);
-    doc.text(`INR ${parseFloat(receipt.amount || 0).toLocaleString()}`, margin, 256);
-    doc.text(receipt.decision || "UNKNOWN", width / 2, 256);
+    doc.setFontSize(12);
+    doc.text(doc.splitTextToSize(productName, 210), margin, 326);
+    doc.text(`INR ${parseFloat(receipt.amount || 0).toLocaleString()}`, width / 2 + 16, 326);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    doc.text(merchantName, margin, 344);
+    doc.text(`Receipt ID ${decisionId}`, width / 2 + 16, 344);
 
-    doc.save(`spendguard-receipt-${transactionId}.pdf`);
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.text("TRUST EVALUATION", margin, 382);
+    doc.text("AUTHORITY · INTENT · EVIDENCE · BEHAVIOR", width - margin, 382, { align: "right" });
+
+    const checkRows = [
+      ["AUTHORITY", authority.passed !== false ? "PASS" : "FAIL"],
+      ["INTENT", intent.substitution ? "SUBSTITUTION" : intent.passed !== false ? "PASS" : "FAIL"],
+      ["EVIDENCE", evidence.conflict ? "CONFLICT" : "VERIFIED"],
+      ["BEHAVIOR", behavior.risk_score > 0.7 ? "HIGH RISK" : behavior.risk_score > 0.35 ? "MEDIUM RISK" : "LOW RISK"],
+    ];
+    let y = 412;
+    checkRows.forEach(([label, value], index) => {
+      doc.setDrawColor(...rule);
+      doc.line(margin, y - 19, width - margin, y - 19);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...muted);
+      doc.text(label, margin, y);
+      doc.setTextColor(...ink);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(value, width - margin, y, { align: "right" });
+      y += index === checkRows.length - 1 ? 0 : 31;
+    });
+
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text("FINAL DECISION", margin, 532);
+    doc.setTextColor(...accent);
+    doc.setFont("times", "normal");
+    doc.setFontSize(40);
+    doc.text(receipt.decision || "UNKNOWN", margin, 572);
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text("WHY", width / 2 + 16, 532);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...ink);
+    doc.text(doc.splitTextToSize(receipt.decision_reason || "Evaluated by SpendGuard.", 205), width / 2 + 16, 550);
+
+    doc.setDrawColor(...rule);
+    doc.line(margin, 624, width - margin, 624);
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text("OBSERVABLE DECISION TRAIL", margin, 648);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    provenance.slice(0, 6).forEach((event, index) => {
+      const rowY = 674 + index * 22;
+      doc.setTextColor(...accent);
+      doc.text(String(event.seq || index + 1).padStart(2, "0"), margin, rowY);
+      doc.setTextColor(...ink);
+      doc.text(`${event.event_type || "audit event"} — ${formatEventPayload(event)}`, margin + 30, rowY);
+    });
+
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text("SPENDGUARD · TRUST BEFORE THE TAP.", margin, height - 54);
+    doc.text("EVIDENCE-BACKED AUTONOMY", width - margin, height - 54, { align: "right" });
+    doc.save(`spendguard-receipt-${decisionId}.pdf`);
   };
 
   if (loading) {
-    return (
-      <div className="py-20 text-center space-y-3">
-        <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#a99df2]" />
-        <p className="text-sm font-mono text-[#8d94a1]">Loading investigation audit records...</p>
-      </div>
-    );
+    return <div className="console-loading"><RefreshCw size={14} /><span>Loading investigation audit records...</span></div>;
   }
 
   if (error || !receipt) {
     return (
-      <div className="p-8 border border-rose-500/20 bg-rose-950/20 rounded-sm text-center space-y-4">
-        <AlertTriangle className="w-6 h-6 text-rose-400 mx-auto" />
-        <h3 className="font-serif text-lg text-[#f0eef5]">Failed to load transaction</h3>
-        <p className="text-xs font-mono text-[#8d94a1]">{error || "Transaction not found"}</p>
-        <button
-          onClick={onBack}
-          className="px-4 py-1.5 bg-[#10141e] border border-[#dddee8]/20 text-xs font-mono hover:text-[#a99df2]"
-        >
-          Back to List
-        </button>
+      <div className="console-empty" data-testid="transaction-detail-error">
+        <AlertTriangle size={18} />
+        <h3>Failed to load transaction</h3>
+        <p>{error || "Transaction not found"}</p>
+        <button className="console-button" onClick={onBack}>Back to List</button>
       </div>
     );
   }
@@ -137,75 +206,53 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
   const merchantName = receipt.merchant || "Authorized Merchant";
   const promptDescription = claimed.description || (brandName ? `Purchase ${brandName} ${productName}` : `Procure ${productName}`);
 
+  const formatEventPayload = (evt) => {
+    const payload = evt.payload || evt.detail;
+    if (typeof payload === "string") return payload;
+    if (!payload || typeof payload !== "object") return "";
+    if (payload.reason) return payload.reason;
+    if (payload.query) return [payload.query.brand, payload.query.model, payload.query.category].filter(Boolean).join(" · ");
+    if (payload.eliminated_count !== undefined) return `${payload.eliminated_count} candidates eliminated by mandate and product requirements.`;
+    if (payload.sku) return `Selected ${[payload.brand, payload.model].filter(Boolean).join(" ") || payload.sku}${payload.price ? ` at ₹${parseFloat(payload.price).toLocaleString()}` : ""}.`;
+    return Object.entries(payload).slice(0, 3).map(([key, value]) => `${key.replace(/_/g, " ")}: ${typeof value === "object" ? "recorded" : value}`).join(" · ");
+  };
+
   return (
-    <div className="space-y-10 pb-24">
-      {/* 1. Header & Actions */}
-      <div className="space-y-4 border-b border-[#dddee8]/10 pb-6">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-mono text-[#8d94a1] hover:text-[#a99df2] transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Transactions</span>
-        </button>
-
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="font-serif text-3xl sm:text-4xl text-[#f0eef5]">
-                Transaction <span className="font-mono text-[#a99df2]">{receipt.transaction_id || transactionId}</span>
-              </h1>
-              <StatusBadge status={receipt.decision} />
-            </div>
-            <p className="text-[#8d94a1] text-xs sm:text-sm mt-1 font-mono">
-              Evaluated on {receipt.timestamp ? new Date(receipt.timestamp).toLocaleString() : "Live"} • Agent: {receipt.agent_id}
-            </p>
-          </div>
-
-          {receipt.decision === "VERIFY" && !verifyOutcome && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleVerify(false)}
-                disabled={verifying}
-                className="px-4 py-2 border border-rose-500/40 text-rose-400 hover:bg-rose-950/40 rounded-sm text-xs font-mono font-semibold tracking-wide transition-colors flex items-center gap-1.5 disabled:opacity-50"
-              >
-                <X className="w-3.5 h-3.5" />
+    <div className="console-page" data-testid="transaction-detail-page">
+      <header className="console-page-header">
+        <div>
+          <button className="console-back" onClick={onBack} data-testid="transaction-back-button">
+            <ArrowLeft size={14} />
+            <span>Back to Transactions</span>
+          </button>
+          <span className="console-kicker">Investigation Record</span>
+          <h1 className="console-title">Transaction <span className="tx-id">{receipt.transaction_id || transactionId}</span></h1>
+          <p className="console-subtitle">Evaluated on {receipt.timestamp ? new Date(receipt.timestamp).toLocaleString() : "Live"} · Agent: {receipt.agent_id}</p>
+        </div>
+        <div className="console-topbar-actions">
+          <StatusBadge status={receipt.decision} />
+          {receipt.decision === "VERIFY" && !verifyOutcome && canVerify && (
+            <>
+              <button className="console-button-danger" onClick={() => handleVerify(false)} disabled={verifying} data-testid="detail-reject-button">
+                <X size={13} />
                 <span>Reject &amp; Void</span>
               </button>
-              <button
-                onClick={() => handleVerify(true)}
-                disabled={verifying}
-                className="px-5 py-2 bg-[#f0eef5] text-[#07090d] hover:bg-white rounded-sm text-xs font-mono font-bold tracking-wide transition-all hover:-translate-y-0.5 flex items-center gap-1.5 shadow-lg disabled:opacity-50"
-              >
-                <Check className="w-3.5 h-3.5" />
+              <button className="console-button-primary" onClick={() => handleVerify(true)} disabled={verifying} data-testid="detail-approve-button">
+                <Check size={13} />
                 <span>Approve &amp; Capture</span>
               </button>
-            </div>
+            </>
           )}
-
-          {verifyOutcome && (
-            <div
-              className={`px-4 py-2 rounded-sm text-xs font-mono font-bold flex items-center gap-2 ${
-                verifyOutcome === "APPROVED"
-                  ? "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400"
-                  : "bg-rose-950/60 border border-rose-500/30 text-rose-400"
-              }`}
-            >
-              <Shield className="w-4 h-4" />
-              <span>OPERATOR DECISION RECORDED: {verifyOutcome}</span>
-            </div>
-          )}
+          {receipt.decision === "VERIFY" && !canVerify && <span className="status-badge">Read-only viewer</span>}
+          {verifyOutcome && <span className={`status-badge status-${verifyOutcome.toLowerCase()}`} data-testid="operator-decision-status">OPERATOR DECISION RECORDED: {verifyOutcome}</span>}
         </div>
-      </div>
+      </header>
 
-      {/* 2. Intent Investigation: Request vs Selected */}
-      <div className="space-y-4">
-        <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#a99df2]">
-          INTENT FIDELITY INVESTIGATION
-        </div>
+      <section className="console-page" data-testid="intent-investigation">
+        <div className="console-kicker">Intent Fidelity Investigation</div>
 
-        <div className="bg-[#0b0e14] border border-[#dddee8]/15 rounded-sm grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#dddee8]/10 overflow-hidden">
-          <div className="p-6 sm:p-8 space-y-4">
+        <div className="detail-grid">
+          <div className="detail-cell">
             <div className="text-[10px] font-mono font-bold tracking-widest text-[#8d94a1] uppercase">
               USER MANDATE REQUIREMENT
             </div>
@@ -220,7 +267,7 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
             </div>
           </div>
 
-          <div className="p-6 sm:p-8 space-y-4 flex flex-col justify-between">
+          <div className="detail-cell">
             <div>
               <div className="text-[10px] font-mono font-bold tracking-widest text-[#8d94a1] uppercase mb-2">
                 SELECTED ITEM &amp; AMOUNT
@@ -246,17 +293,14 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 3. The 4-Pillar Evaluation Matrix */}
-      <div className="space-y-4">
-        <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#a99df2]">
-          THE 4-PILLAR EVALUATION MATRIX
-        </div>
+      <section className="console-page" data-testid="pillar-evaluation-matrix">
+        <div className="console-kicker">The 4-Pillar Evaluation Matrix</div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="pillar-grid">
           {/* Authority */}
-          <div className="bg-[#0b0e14] border border-[#dddee8]/15 rounded-sm p-5 space-y-3">
+          <div className="pillar-card">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-mono text-[#8d94a1]">01 / AUTHORITY</span>
               <StatusBadge status={authority.passed !== false ? "PASS" : "FAIL"} size="sm" />
@@ -268,7 +312,7 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
           </div>
 
           {/* Intent */}
-          <div className="bg-[#0b0e14] border border-[#dddee8]/15 rounded-sm p-5 space-y-3">
+          <div className="pillar-card">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-mono text-[#8d94a1]">02 / INTENT</span>
               <StatusBadge status={intent.substitution ? "SUBSTITUTION" : intent.passed !== false ? "PASS" : "FAIL"} size="sm" />
@@ -285,7 +329,7 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
           </div>
 
           {/* Evidence */}
-          <div className="bg-[#0b0e14] border border-[#dddee8]/15 rounded-sm p-5 space-y-3">
+          <div className="pillar-card">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-mono text-[#8d94a1]">03 / EVIDENCE</span>
               <StatusBadge status={evidence.conflict ? "CONFLICT" : "VERIFIED"} size="sm" />
@@ -297,7 +341,7 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
           </div>
 
           {/* Behavior */}
-          <div className="bg-[#0b0e14] border border-[#dddee8]/15 rounded-sm p-5 space-y-3">
+          <div className="pillar-card">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-mono text-[#8d94a1]">04 / BEHAVIOR</span>
               <StatusBadge status={behavior.risk_score > 0.7 ? "HIGH RISK" : behavior.risk_score > 0.35 ? "MEDIUM RISK" : "LOW RISK"} size="sm" />
@@ -313,16 +357,14 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 4. Cryptographic Provenance Timeline */}
       {provenance.length > 0 && (
-        <div className="space-y-4">
-          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#a99df2]">
-            CRYPTOGRAPHIC PROVENANCE &amp; OBSERVABILITY TRAIL
-          </div>
+        <section className="console-page" data-testid="provenance-timeline">
+          <div className="console-kicker">Cryptographic Provenance &amp; Observability Trail</div>
 
-          <div className="bg-[#0b0e14] border border-[#dddee8]/15 rounded-sm p-6 sm:p-8">
+          <div className="timeline-panel">
             <div className="relative border-l border-[#dddee8]/15 ml-3 pl-6 sm:pl-8 space-y-6">
               {provenance.map((evt, idx) => (
                 <div key={idx} className="relative">
@@ -341,31 +383,28 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
                     )}
                   </div>
                   <p className="text-xs text-[#8d94a1] mt-1 leading-relaxed">
-                    {typeof evt.payload === "string" ? evt.payload : JSON.stringify(evt.payload || evt.detail || "")}
+                    {formatEventPayload(evt)}
                   </p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* 5. Trust Receipt & Export Action */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#a99df2]">
-            IMMUTABLE TRUST RECEIPT
+      <section className="console-page" data-testid="transaction-receipt-panel">
+        <div className="console-panel-header">
+          <div>
+            <span className="console-kicker">Immutable Trust Receipt</span>
+            <h2 className="console-panel-title">Trust Receipt</h2>
           </div>
-          <button
-            onClick={downloadPdf}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#10141e] border border-[#dddee8]/15 hover:border-[#a99df2]/40 rounded-sm text-xs font-mono text-[#8d94a1] hover:text-[#f0eef5] transition-colors"
-          >
-            <Download className="w-3.5 h-3.5 text-[#a99df2]" />
+          <button className="console-button" onClick={downloadPdf} data-testid="export-receipt-pdf-button">
+            <Download size={13} />
             <span>Export Receipt PDF</span>
           </button>
         </div>
 
-        <div className="bg-[#0b0e14] border border-[#dddee8]/15 rounded-sm p-6 sm:p-8 space-y-6">
+        <div className="console-panel">
           <div className="flex justify-between items-center pb-5 border-b border-[#dddee8]/10">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-[#a99df2]" />
@@ -385,7 +424,7 @@ export function ConsoleTransactionDetail({ transactionId, onBack, onVerifySucces
             </p>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

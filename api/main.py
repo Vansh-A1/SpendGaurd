@@ -1,11 +1,17 @@
 import json
+import os
 import pickle
-from datetime import datetime, timezone
+import sqlite3
+import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Literal
+import bcrypt
+import jwt
 import pandas as pd
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
+from fastapi.responses import JSONResponse
 
 from data.schema import TransactionRequest, Product
 from policy.schema import Mandate
@@ -58,11 +64,106 @@ def get_resources():
     return MANDATES_CACHE, INTENTS_CACHE, CATALOG_CACHE, RISK_MODEL_CACHE
 
 
+AUTH_DB_PATH = REPO_ROOT / "data" / "spendguard.db"
+JWT_ALGORITHM = "HS256"
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+def auth_connection():
+    connection = sqlite3.connect(AUTH_DB_PATH)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+
+
+def create_access_token(user: Dict[str, Any]) -> str:
+    payload = {"sub": user["id"], "email": user["email"], "role": user["role"], "exp": datetime.now(timezone.utc) + timedelta(minutes=15), "type": "access"}
+    return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm=JWT_ALGORITHM)
+
+
+def create_refresh_token(user: Dict[str, Any]) -> str:
+    payload = {"sub": user["id"], "exp": datetime.now(timezone.utc) + timedelta(days=7), "type": "refresh"}
+    return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm=JWT_ALGORITHM)
+
+
+def public_user(user: Dict[str, Any]) -> Dict[str, Any]:
+    return {"id": user["id"], "email": user["email"], "name": user.get("name", ""), "role": user["role"]}
+
+
+def set_auth_cookies(response: Response, user: Dict[str, Any]) -> None:
+    response.set_cookie("access_token", create_access_token(user), httponly=True, secure=True, samesite="none", max_age=900, path="/")
+    response.set_cookie("refresh_token", create_refresh_token(user), httponly=True, secure=True, samesite="none", max_age=604800, path="/")
+
+
+def find_user_by_email(email: str):
+    with auth_connection() as connection:
+        row = connection.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        return dict(row) if row else None
+
+
+def find_user_by_id(user_id: str):
+    with auth_connection() as connection:
+        row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def authenticate_request(request: Request):
+    token = request.cookies.get("access_token")
+    auth_header = request.headers.get("Authorization", "")
+    if not token and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "access":
+            return None
+        user = find_user_by_id(payload["sub"])
+        return public_user(user) if user else None
+    except jwt.InvalidTokenError:
+        return None
+
+
+def get_current_user(request: Request):
+    user = authenticate_request(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
+
+
+def init_auth_db():
+    with auth_connection() as connection:
+        connection.execute("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT)")
+        connection.execute("CREATE TABLE IF NOT EXISTS login_attempts (identifier TEXT PRIMARY KEY, count INTEGER NOT NULL, locked_until TEXT, updated_at TEXT NOT NULL)")
+        for prefix, role, name in [("ADMIN", "admin", "SpendGuard Admin"), ("OPERATOR", "operator", "SpendGuard Operator"), ("VIEWER", "viewer", "SpendGuard Viewer")]:
+            email = os.environ[f"{prefix}_EMAIL"].strip().lower()
+            password = os.environ[f"{prefix}_PASSWORD"]
+            existing = connection.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+            if not existing:
+                connection.execute("INSERT INTO users (id, email, name, role, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)", (str(uuid.uuid4()), email, name, role, hash_password(password), datetime.now(timezone.utc).isoformat()))
+            elif not verify_password(password, existing["password_hash"]) or existing["role"] != role:
+                connection.execute("UPDATE users SET role = ?, password_hash = ?, updated_at = ? WHERE email = ?", (role, hash_password(password), datetime.now(timezone.utc).isoformat(), email))
+        connection.commit()
+
+
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    init_auth_db()
     get_resources()
     yield
 
@@ -70,13 +171,90 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="SpendGuard Trust Layer API", version="1.0.0", lifespan=lifespan)
 
+frontend_url = os.environ["FRONTEND_URL"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[frontend_url, "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def protect_console_api(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/api"):
+        path = path[4:] or "/"
+    if request.method == "OPTIONS" or path.startswith("/auth") or path in {"/", "/health"}:
+        return await call_next(request)
+    if path == "/transactions/evaluate" and request.method == "POST":
+        return await call_next(request)
+
+    user = authenticate_request(request)
+    if not user:
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
+    if request.method in SAFE_METHODS:
+        return await call_next(request)
+    if path.startswith("/admin") and user["role"] != "admin":
+        return JSONResponse(status_code=403, content={"detail": "Admin role required"})
+    if path.endswith("/verify") and user["role"] not in {"admin", "operator"}:
+        return JSONResponse(status_code=403, content={"detail": "Operator role required"})
+    if user["role"] == "viewer":
+        return JSONResponse(status_code=403, content={"detail": "Viewer role is read-only"})
+    return await call_next(request)
+
+
+@app.post("/auth/login")
+def login(request: Request, response: Response, body: LoginRequest):
+    email = body.email.strip().lower()
+    identifier = f"{request.client.host if request.client else 'unknown'}:{email}"
+    now = datetime.now(timezone.utc)
+    with auth_connection() as connection:
+        attempt = connection.execute("SELECT * FROM login_attempts WHERE identifier = ?", (identifier,)).fetchone()
+        if attempt and attempt["locked_until"] and datetime.fromisoformat(attempt["locked_until"]) > now:
+            raise HTTPException(status_code=429, detail="Too many failed attempts. Try again in 15 minutes.")
+        user = find_user_by_email(email)
+        if not user or not verify_password(body.password, user["password_hash"]):
+            failed = (attempt["count"] if attempt else 0) + 1
+            locked_until = (now + timedelta(minutes=15)).isoformat() if failed >= 5 else None
+            connection.execute("INSERT INTO login_attempts (identifier, count, locked_until, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(identifier) DO UPDATE SET count = excluded.count, locked_until = excluded.locked_until, updated_at = excluded.updated_at", (identifier, failed, locked_until, now.isoformat()))
+            connection.commit()
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        connection.execute("DELETE FROM login_attempts WHERE identifier = ?", (identifier,))
+        connection.commit()
+    set_auth_cookies(response, user)
+    return public_user(user)
+
+
+@app.post("/auth/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
+    return {"status": "ok"}
+
+
+@app.get("/auth/me")
+def me(user=Depends(get_current_user)):
+    return user
+
+
+@app.post("/auth/refresh")
+def refresh(request: Request, response: Response):
+    token = request.cookies.get("refresh_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token")
+        user = find_user_by_id(payload["sub"])
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        response.set_cookie("access_token", create_access_token(user), httponly=True, secure=True, samesite="none", max_age=900, path="/")
+        return public_user(user)
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(status_code=401, detail="Invalid token") from exc
 
 
 @app.get("/health")

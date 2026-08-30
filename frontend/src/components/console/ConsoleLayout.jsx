@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { ArrowLeft, ShieldCheck, Database, RefreshCw, AlertCircle } from "lucide-react";
+import { ArrowLeft, Clock3, Database, LayoutDashboard, Layers, LogOut, ReceiptText } from "lucide-react";
+import "./console.css";
 
-export function ConsoleLayout({ currentTab, setTab, children, onSeedComplete }) {
+const navigation = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "transactions", label: "Transactions", icon: ReceiptText },
+  { id: "review", label: "Verification Queue", icon: Clock3 },
+  { id: "sessions", label: "Purchase Sessions", icon: Layers },
+];
+
+export function ConsoleLayout({ currentTab, setTab, children, onSeedComplete, user, onLogout }) {
   const [health, setHealth] = useState("checking");
   const [seeding, setSeeding] = useState(false);
   const [seedMessage, setSeedMessage] = useState(null);
@@ -40,97 +48,61 @@ export function ConsoleLayout({ currentTab, setTab, children, onSeedComplete }) 
     }
   };
 
+  const activeNav = navigation.find((item) => item.id === currentTab);
+
   return (
-    <div className="min-h-screen bg-[#07090d] text-[#f0eef5] font-sans selection:bg-[#a99df2] selection:text-[#07090d]">
-      {/* Top Console Navigation Bar */}
-      <header className="sticky top-0 z-50 border-b border-[#dddee8]/10 bg-[#07090d]/90 backdrop-blur-md px-6 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => setTab("landing")}
-              className="inline-flex items-center gap-1.5 text-xs text-[#8d94a1] hover:text-[#a99df2] transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Product</span>
-            </button>
-
-            <div className="h-4 w-px bg-[#dddee8]/15 hidden md:block" />
-
-            <div className="flex items-center gap-2">
-              <span className="font-serif text-lg font-bold tracking-tight text-[#f0eef5]">
-                SPENDGUARD
-              </span>
-              <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-[#a99df2]/10 text-[#a99df2] border border-[#a99df2]/20">
-                CONSOLE
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="flex items-center gap-1 sm:gap-2 text-xs font-medium">
-            {[
-              { id: "overview", label: "Overview" },
-              { id: "transactions", label: "Transactions" },
-              { id: "review", label: "Verification Queue" },
-              { id: "sessions", label: "Purchase Sessions" },
-            ].map((nav) => (
-              <button
-                key={nav.id}
-                onClick={() => setTab(nav.id)}
-                className={`px-3 py-1.5 rounded-sm transition-all ${
-                  currentTab === nav.id
-                    ? "bg-[#dddee8]/10 text-[#f0eef5] font-semibold border-b border-[#a99df2]"
-                    : "text-[#8d94a1] hover:text-[#f0eef5] hover:bg-[#dddee8]/5"
-                }`}
-              >
-                {nav.label}
+    <div className="console-shell" data-testid="console-layout">
+      <aside className="console-sidebar" data-testid="console-sidebar">
+        <button className="console-brand" onClick={() => setTab("landing")} data-testid="console-brand">
+          <strong>SpendGuard</strong>
+          <span>Console</span>
+        </button>
+        <button className="console-back" onClick={() => setTab("landing")} data-testid="console-back-button">
+          <ArrowLeft size={14} />
+          <span>Back to Product</span>
+        </button>
+        <nav className="console-nav" aria-label="Console navigation" data-testid="console-navigation">
+          {navigation.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button key={item.id} onClick={() => setTab(item.id)} className={currentTab === item.id ? "active" : ""} data-testid={`console-nav-${item.id}`}>
+                <Icon />
+                <span>{item.label}</span>
               </button>
-            ))}
-          </nav>
-
-          {/* Actions & Health Status */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleSeed}
-              disabled={seeding}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#10141e] border border-[#dddee8]/15 hover:border-[#a99df2]/40 rounded-sm text-[11px] font-mono text-[#8d94a1] hover:text-[#f0eef5] transition-all disabled:opacity-50"
-              title="Batch-evaluates and seeds all 110 canonical scenarios into the SQLite database"
-            >
-              <Database className="w-3 h-3 text-[#a99df2]" />
-              <span>{seeding ? "Seeding..." : "Seed 110 Scenarios"}</span>
-            </button>
-
-            <div className="flex items-center gap-2 text-[11px] font-mono">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  health === "healthy"
-                    ? "bg-emerald-400 animate-pulse"
-                    : health === "offline"
-                    ? "bg-rose-400"
-                    : "bg-amber-400"
-                }`}
-              />
-              <span className="text-[#8d94a1] hidden sm:inline">
-                {health === "healthy"
-                  ? "Decision Engine Live"
-                  : health === "offline"
-                  ? "Backend Offline"
-                  : "Checking API..."}
-              </span>
-            </div>
+            );
+          })}
+        </nav>
+        <div className="console-sidebar-foot">
+          <div className="console-user" data-testid="console-current-user">
+            <span>{user?.email}</span>
+            <strong>{user?.role}</strong>
           </div>
+          <button className="console-button console-logout" onClick={onLogout} data-testid="console-logout-button">
+            <LogOut size={13} />
+            <span>Sign out</span>
+          </button>
+          <div className={`console-status ${health}`} data-testid="console-system-status">
+            <i />
+            <span>{health === "healthy" ? "Decision Engine Live" : health === "offline" ? "Backend Offline" : "Checking API"}</span>
+          </div>
+          {seedMessage && <div className="console-seed-message" data-testid="seed-message">{seedMessage}</div>}
         </div>
+      </aside>
 
-        {seedMessage && (
-          <div className="max-w-7xl mx-auto mt-3 px-3 py-2 rounded bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4" />
-            <span>{seedMessage}</span>
+      <div className="console-main">
+        <header className="console-topbar" data-testid="console-topbar">
+          <span className="console-topbar-title">{activeNav?.label || "Transaction Detail"}</span>
+          <div className="console-topbar-actions">
+            {user?.role === "admin" && (
+              <button className="console-button" onClick={handleSeed} disabled={seeding} data-testid="seed-scenarios-button">
+                <Database size={13} />
+                <span>{seeding ? "Seeding..." : "Seed 110 Scenarios"}</span>
+              </button>
+            )}
           </div>
-        )}
-      </header>
-
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
+        </header>
+        <main className="console-content" data-testid="console-content">{children}</main>
+      </div>
     </div>
   );
 }

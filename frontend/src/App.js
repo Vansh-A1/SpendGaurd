@@ -11,6 +11,7 @@ import { ConsoleTransactions } from "@/components/console/ConsoleTransactions";
 import { ConsoleTransactionDetail } from "@/components/console/ConsoleTransactionDetail";
 import { ConsoleVerificationQueue } from "@/components/console/ConsoleVerificationQueue";
 import { ConsoleSessions } from "@/components/console/ConsoleSessions";
+import { ConsoleAuth } from "@/components/console/ConsoleAuth";
 
 const checks = [
   { key: "01", name: "AUTHORITY", copy: "Can the agent make this purchase?", detail: "Verified spending limit and mandate.", plain: "The agent can spend only within the permissions and limits you set." },
@@ -453,6 +454,8 @@ function App() {
   const [view, setView] = useState("landing"); // "landing" or "console"
   const [consoleTab, setConsoleTab] = useState("overview"); // overview, transactions, review, sessions
   const [selectedTxId, setSelectedTxId] = useState(null);
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [liveMetrics, setLiveMetrics] = useState({
     signals: 4,
@@ -460,6 +463,15 @@ function App() {
     blocked: 12,
     trails: 1,
   });
+
+  useEffect(() => {
+    let mounted = true;
+    api.getCurrentUser()
+      .then((user) => { if (mounted) setAuthUser(user); })
+      .catch(() => { if (mounted) setAuthUser(null); })
+      .finally(() => { if (mounted) setAuthLoading(false); });
+    return () => { mounted = false; };
+  }, []);
 
   // Fetch live backend metrics on landing page
   useEffect(() => {
@@ -519,8 +531,21 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } finally {
+      setAuthUser(null);
+      setSelectedTxId(null);
+      setView("landing");
+    }
+  };
+
   // If in Console View, render Console Experience
   if (view === "console") {
+    if (authLoading) return <div className="console-shell"><div className="console-loading"><RefreshCw size={14} /><span>Checking operator session...</span></div></div>;
+    if (!authUser) return <ConsoleAuth onBack={() => setView("landing")} onSuccess={setAuthUser} />;
+
     return (
       <ConsoleLayout
         currentTab={selectedTxId ? "detail" : consoleTab}
@@ -532,12 +557,15 @@ function App() {
             setConsoleTab(tab);
           }
         }}
+        user={authUser}
+        onLogout={handleLogout}
       >
         {selectedTxId ? (
           <ConsoleTransactionDetail
             transactionId={selectedTxId}
             onBack={() => setSelectedTxId(null)}
             onVerifySuccess={() => {}}
+            user={authUser}
           />
         ) : consoleTab === "overview" ? (
           <ConsoleOverview
@@ -551,6 +579,7 @@ function App() {
         ) : consoleTab === "review" ? (
           <ConsoleVerificationQueue
             onSelectTransaction={(id) => setSelectedTxId(id)}
+            user={authUser}
           />
         ) : consoleTab === "sessions" ? (
           <ConsoleSessions

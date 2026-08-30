@@ -27,3 +27,21 @@ Combines pillar results into one of:
 - `api/`: FastAPI endpoints.
 - `payments/`: Razorpay payment execution integration.
 - `frontend/`: Dashboard & human-in-the-loop review interface.
+
+
+## Console access control
+
+The FastAPI console API uses JWT access/refresh cookies with bcrypt password hashing and Admin / Operator / Viewer roles. Configure these variables before running the backend:
+
+```bash
+FRONTEND_URL=http://localhost:3000
+JWT_SECRET=replace-with-a-32-byte-random-secret
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace-me
+OPERATOR_EMAIL=operator@example.com
+OPERATOR_PASSWORD=replace-me
+VIEWER_EMAIL=viewer@example.com
+VIEWER_PASSWORD=replace-me
+```
+
+Public landing-page evaluation remains available at `POST /transactions/evaluate`. Console reads require an authenticated role; verify actions require Admin or Operator; admin-only actions require Admin.

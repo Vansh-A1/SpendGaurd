@@ -7,3 +7,5 @@ razorpay
 pydantic
 httpx
 pytest
+bcrypt
+PyJWT

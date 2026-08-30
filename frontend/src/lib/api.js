@@ -3,14 +3,12 @@
  * Connects the Emergent React frontend to the FastAPI backend.
  */
 
-const API_BASE =
-  process.env.REACT_APP_API_BASE_URL ||
-  process.env.VITE_API_BASE_URL ||
-  "http://localhost:8000";
+const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
   const config = {
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
@@ -27,7 +25,7 @@ async function request(endpoint, options = {}) {
     }
     return await res.json();
   } catch (err) {
-    console.error(`[API Error] ${options.method || "GET"} ${endpoint}:`, err.message);
+    if (!options.silent) console.error(`[API Error] ${options.method || "GET"} ${endpoint}:`, err.message);
     throw err;
   }
 }
@@ -36,6 +34,10 @@ export const api = {
   // System
   getHealth: () => request("/health"),
   seedScenarios: () => request("/admin/seed_scenarios", { method: "POST" }),
+  login: (email, password) => request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  logout: () => request("/auth/logout", { method: "POST" }),
+  getCurrentUser: () => request("/auth/me", { silent: true }),
+  refreshSession: () => request("/auth/refresh", { method: "POST" }),
 
   // Transactions & Decision Engine
   evaluateTransaction: (transactionRequest) =>
