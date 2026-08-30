@@ -1,24 +1,49 @@
 # SpendGuard Landing Page
 
 ## Original problem statement
-Build ONLY the SpendGuard landing page first. Create an original cinematic product-launch experience for an evidence-driven trust layer for autonomous AI payments, inspired by—but not copying—the supplied art direction. The page must communicate TRUST BEFORE THE TAP through atmosphere, typography, motion, whitespace, and a clear narrative rather than dashboard UI.
+Build ONLY the SpendGuard landing page first, then refine it into a premium, minimal, cinematic fintech product-launch experience. SpendGuard is an evidence-driven trust layer for autonomous AI payments that evaluates Authority, Intent, Evidence, and Behavior before producing ALLOW / VERIFY / BLOCK decisions. The experience must remain unmistakably SpendGuard, preserve existing behavior, and avoid becoming a dashboard.
+
+## User personas
+- Fintech or AI-product buyer evaluating whether SpendGuard feels credible and enterprise-ready.
+- Technical evaluator checking whether the trust model is understandable before requesting a product demo.
+- Prospective customer encountering autonomous-payment risk for the first time.
+
+## Core requirements
+- Frontend-only landing page; no live demo API or backend changes.
+- Preserve all existing routes, CTA behavior, integrations, demo flows, test IDs, and SpendGuard logic.
+- Navigation: SpendGuard; Product; How it works; Trust; Demo; Open Console →.
+- Sections: spacious trust-orbit hero; problem statement; four horizontal trust checks; Sony WH-1000XM6 live decision; RTX 4060/3050 evidence conflict; premium Trust Receipt; vertical observability timeline; isolated count-up metrics; final autonomy/control CTA.
+- Near-black/midnight palette, ivory text, muted gray secondary text, restrained violet/indigo accents, subtle atmosphere, editorial serif headlines, modern sans UI text, responsive behavior, and reduced-motion support.
 
 ## Architecture decisions
-- Frontend-only React experience for this phase; no backend endpoints or third-party integrations.
-- CSS-built abstract trust-gate visual with Framer Motion scroll/entrance motion, rather than reproducing the reference image.
-- Single responsive page with anchor-driven navigation and reduced-motion support.
+- React/CRACO frontend remains the application stack.
+- Existing Framer Motion package is used only for scroll reveals and subtle hero parallax; ambient motion is CSS.
+- Single-page anchor navigation remains intact; Open Console preserves its previous in-page destination.
+- Client-side jsPDF generates the sample Trust Receipt PDF; no backend or storage integration is used.
+- No backend, MongoDB, Gemini, authentication, or third-party API integration was added.
 
 ## Implemented
-- Cinematic responsive hero with original luminous gate metaphor and minimal navigation.
-- Scroll narrative: autonomous-payment problem, intent mismatch, four trust checks, behavioral risk, evidence conflict, trust receipt, provenance timeline, console reveal, and final CTA.
-- Premium typography, midnight/indigo palette, grain, atmospheric gradients, motion, responsive mobile layout, and descriptive test IDs.
-- Verified desktop/mobile layout, CTAs, anchors, reduced motion, no overflow, and production build.
+- 2026-07: Initial cinematic SpendGuard landing page and passing baseline frontend validation.
+- 2026-07: Premium minimal redesign with fewer panels, stronger whitespace, editorial hierarchy, restrained violet accents, trust-orbit hero, chaptered storytelling, editorial marquee, count-up metrics, and calmer product preview.
+- 2026-07: Interactive Sony purchase replay from Purchase Request through Authority, Intent, Behavior, and Evidence, ending in the evidence-conflict BLOCKED decision.
+- 2026-07: Downloadable polished sample Trust Receipt PDF with intent, selected product, transaction details, four trust checks, final VERIFY decision, reason, and observable decision trail.
+- 2026-07: Reveal component forwards test IDs and other props correctly.
+
+## Verification
+- Production frontend build passes after the replay and receipt-download additions.
+- Desktop and mobile screenshots checked; no horizontal overflow.
+- Replay verified through Purchase Request, Authority, Intent, Behavior, Evidence, and final BLOCKED state; reduced-motion mode jumps directly to the final state.
+- Receipt PDF download verified as spendguard-trust-receipt-000184.pdf; PDF content analysis confirmed all required fields and the eight-event decision trail.
+- Open Console still reaches the existing in-page console preview; Gemini remains unimplemented by user choice.
+- Standalone ESLint was not run because the starter project has no ESLint v9 configuration file.
 
 ## Prioritized backlog
-- P0: None for current landing-page scope.
-- P1: Connect Open Console and Enter SpendGuard CTAs to the future product experience.
-- P2: Add real scroll-linked camera depth and richer live trust-receipt interactions.
+- P0: None for the current landing-page scope.
+- P1: Connect Open Console to a real console experience only when that product scope is requested.
+- P1: Gemini decision explanations remain explicitly out of scope unless the user reverses the current decision.
+- P2: Add richer receipt export options without increasing landing-page visual density.
 
 ## Next tasks
-- Preserve the landing page as the product-launch entry point.
-- Introduce the console only as a separate experience when requested.
+- Keep the landing page frontend-only unless the user asks for a live demo API.
+- Build the internal console as a separate experience only when explicitly requested.
+- Preserve the current Open Console destination and behavior until a real console exists.

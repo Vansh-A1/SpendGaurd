@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { jsPDF } from "jspdf";
 import "@/App.css";
 
 const checks = [
@@ -27,6 +28,25 @@ const metrics = [
   { value: 12, label: "RISK SIGNALS REJECTED" },
   { value: 1, label: "DECISION TRAIL" },
 ];
+
+const decisionSteps = [
+  ["PURCHASE REQUEST", "Sony WH-1000XM6 · black · under ₹35,000", "RECEIVED"],
+  ["AUTHORITY", "Within approved limit", "PASS"],
+  ["INTENT", "Product family matched", "PASS"],
+  ["BEHAVIOR", "Session pattern normal", "PASS"],
+  ["EVIDENCE", "Merchant model mismatch", "CONFLICT"],
+];
+
+const receiptData = {
+  id: "000184",
+  requested: "Sony WH-1000XM6",
+  intentDetail: "Black · ≤ ₹35,000",
+  selected: "Sony WH-1000XM5",
+  amount: "₹28,000",
+  decision: "VERIFY",
+  reason: "The requested XM6 was unavailable. The agent selected XM5 as a substitution.",
+  checks: [["AUTHORITY", "PASS"], ["INTENT", "SUBSTITUTION"], ["EVIDENCE", "VERIFIED"], ["BEHAVIOR", "LOW RISK"]],
+};
 
 function Eyebrow({ children }) {
   return <span className="eyebrow" data-testid="section-eyebrow">{children}</span>;
@@ -77,12 +97,157 @@ function CountUp({ value }) {
   return <strong ref={ref} data-testid="metric-value">{display}</strong>;
 }
 
+function downloadTrustReceipt() {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const width = doc.internal.pageSize.getWidth();
+  const height = doc.internal.pageSize.getHeight();
+  const margin = 56;
+  const ink = [24, 26, 34];
+  const muted = [102, 105, 116];
+  const accent = [95, 80, 173];
+  const rule = [190, 185, 177];
+
+  doc.setProperties({ title: `SpendGuard Trust Receipt ${receiptData.id}` });
+  doc.setFillColor(243, 241, 236);
+  doc.rect(0, 0, width, height, "F");
+  doc.setDrawColor(...rule);
+  doc.setLineWidth(0.8);
+  doc.rect(24, 24, width - 48, height - 48);
+
+  doc.setTextColor(...ink);
+  doc.setFont("courier", "bold");
+  doc.setFontSize(10);
+  doc.text("SPENDGUARD", margin, 66);
+  doc.setFont("courier", "normal");
+  doc.text(`TRUST RECEIPT / ${receiptData.id}`, width - margin, 66, { align: "right" });
+  doc.line(margin, 82, width - margin, 82);
+
+  doc.setFont("times", "normal");
+  doc.setFontSize(34);
+  doc.text("Trust Receipt", margin, 128);
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text("AUTONOMOUS PURCHASE DECISION · SAMPLE · JULY 2026", margin, 148);
+
+  doc.setTextColor(...muted);
+  doc.text("USER INTENT", margin, 192);
+  doc.setTextColor(...ink);
+  doc.setFont("times", "normal");
+  doc.setFontSize(23);
+  doc.text(receiptData.requested, margin, 220);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(...muted);
+  doc.text("Black · up to INR 35,000", margin, 239);
+
+  doc.line(margin, 262, width - margin, 262);
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.text("SELECTED", margin, 292);
+  doc.text("TRANSACTION", width / 2 + 16, 292);
+  doc.setTextColor(...ink);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(receiptData.selected, margin, 314);
+  doc.text("INR 28,000", width / 2 + 16, 314);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...muted);
+  doc.text("Substitution for requested XM6", margin, 331);
+  doc.text(`Decision ID ${receiptData.id}`, width / 2 + 16, 331);
+
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text("TRUST EVALUATION", margin, 348);
+  doc.text("AUTHORITY · INTENT · EVIDENCE · BEHAVIOR", width - margin, 348, { align: "right" });
+
+  let y = 374;
+  receiptData.checks.forEach(([label, value], index) => {
+    doc.setDrawColor(...rule);
+    doc.line(margin, y - 19, width - margin, y - 19);
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text(label, margin, y);
+    doc.setTextColor(...ink);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(value, width - margin, y, { align: "right" });
+    y += index === receiptData.checks.length - 1 ? 0 : 31;
+  });
+
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text("FINAL DECISION", margin, 534);
+  doc.setTextColor(...accent);
+  doc.setFont("times", "normal");
+  doc.setFontSize(42);
+  doc.text(receiptData.decision, margin, 577);
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text("WHY", width / 2 + 16, 534);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(...ink);
+  doc.text(doc.splitTextToSize(receiptData.reason, 205), width / 2 + 16, 552);
+
+  doc.setDrawColor(...rule);
+  doc.line(margin, 626, width - margin, 626);
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text("OBSERVABLE DECISION TRAIL", margin, 650);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  events.forEach((event, index) => {
+    const column = index < 4 ? margin : width / 2 + 16;
+    const rowY = 676 + (index % 4) * 28;
+    doc.setTextColor(...accent);
+    doc.text(String(index + 1).padStart(2, "0"), column, rowY);
+    doc.setTextColor(...ink);
+    doc.text(event, column + 28, rowY);
+  });
+
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text("SPENDGUARD · TRUST BEFORE THE TAP.", margin, height - 54);
+  doc.text("EVIDENCE-BACKED AUTONOMY", width - margin, height - 54, { align: "right" });
+  doc.save(`spendguard-trust-receipt-${receiptData.id}.pdf`);
+}
+
 function App() {
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const orbitScale = useTransform(scrollYProgress, [0, 0.22], [1, 1.18]);
   const orbitY = useTransform(scrollYProgress, [0, 0.22], [0, -42]);
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+  const [replayStep, setReplayStep] = useState(decisionSteps.length - 1);
+  const [isReplaying, setIsReplaying] = useState(false);
+
+  useEffect(() => {
+    if (!isReplaying) return undefined;
+    if (replayStep === decisionSteps.length - 1) {
+      setIsReplaying(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setReplayStep((step) => step + 1), 1050);
+    return () => clearTimeout(timer);
+  }, [isReplaying, replayStep]);
+
+  const replayDecision = () => {
+    if (reduced) {
+      setReplayStep(decisionSteps.length - 1);
+      setIsReplaying(false);
+      return;
+    }
+    setReplayStep(0);
+    setIsReplaying(true);
+  };
 
   return (
     <main className="site-shell">
@@ -173,21 +338,20 @@ function App() {
             <span className="chapter">03 / LIVE TRUST DECISION</span>
             <h2>WITHIN BUDGET.<br /><span>WRONG PURCHASE.</span></h2>
             <p className="request" data-testid="purchase-request">“Buy me a Sony WH-1000XM6,<br />black, under ₹35,000.”</p>
+            <div className="decision-actions">
+              <button className="text-button replay-button" onClick={replayDecision} disabled={isReplaying} data-testid="replay-decision-button">{isReplaying ? "Replaying…" : "Replay decision ↻"}</button>
+              <span className="replay-status" aria-live="polite" data-testid="replay-status">{isReplaying ? `${decisionSteps[replayStep][0]} · ${decisionSteps[replayStep][2]}` : "FINAL DECISION · BLOCKED"}</span>
+            </div>
           </Reveal>
           <Reveal className="decision-sequence" data-testid="decision-sequence">
-            {[
-              ["AUTHORITY", "Within approved limit", "PASS"],
-              ["INTENT", "Product family matched", "PASS"],
-              ["BEHAVIOR", "Session pattern normal", "PASS"],
-              ["EVIDENCE", "Merchant model mismatch", "CONFLICT"],
-            ].map(([name, copy, state], index) => (
-              <div className={state === "CONFLICT" ? "conflict" : ""} key={name}>
+            {decisionSteps.map(([name, copy, state], index) => (
+              <div className={`${state === "CONFLICT" ? "conflict " : ""}${index <= replayStep ? "active" : ""}${isReplaying && index === replayStep ? " current" : ""}`} key={name} data-testid={`decision-step-${name.toLowerCase().replace(" ", "-")}`}>
                 <span>0{index + 1} / {name}</span>
                 <p>{copy}</p>
                 <b>{state}</b>
               </div>
             ))}
-            <strong className="blocked" data-testid="decision-blocked">BLOCKED <small>EVIDENCE CONFLICT</small></strong>
+            <strong className={`blocked${replayStep === decisionSteps.length - 1 ? " active" : ""}`} data-testid="decision-blocked">BLOCKED <small>EVIDENCE CONFLICT</small></strong>
           </Reveal>
         </div>
       </section>
@@ -216,14 +380,17 @@ function App() {
             <span className="chapter">05 / TRUST RECEIPT</span>
             <h2>EVERY DECISION<br /><span>LEAVES PROOF.</span></h2>
             <p>Every approval, substitution, and block becomes an auditable financial artifact.</p>
-            <button className="text-button" onClick={() => scrollTo("timeline")} data-testid="view-decision-trail-button">View decision trail →</button>
+            <div className="receipt-actions">
+              <button className="text-button" onClick={() => scrollTo("timeline")} data-testid="view-decision-trail-button">View decision trail →</button>
+              <button className="text-button" onClick={downloadTrustReceipt} data-testid="download-receipt-button">Download receipt ↓</button>
+            </div>
           </Reveal>
           <motion.div className="receipt" initial={reduced ? false : { opacity: 0, rotateY: -7, y: 40 }} whileInView={{ opacity: 1, rotateY: 0, y: 0 }} viewport={{ once: true, amount: 0.25 }} transition={{ duration: 1.1 }} data-testid="trust-receipt">
-            <div className="receipt-top"><strong>SPENDGUARD</strong><span>TRUST RECEIPT / 000184</span></div>
-            <div className="receipt-intent"><span>USER INTENT</span><h3>Sony WH-1000XM6</h3><p>Black · ≤ ₹35,000</p></div>
-            <div className="receipt-decision"><div><span>SELECTED</span><strong>Sony WH-1000XM5</strong><small>₹28,000</small></div><div><span>DECISION</span><strong className="verify">VERIFY</strong><small>Substitution</small></div></div>
-            <div className="receipt-grid">{[["AUTHORITY","PASS"],["INTENT","SUBSTITUTION"],["EVIDENCE","VERIFIED"],["BEHAVIOR","LOW RISK"]].map(([a,b]) => <div key={a}><span>{a}</span><strong>{b}</strong></div>)}</div>
-            <div className="receipt-why"><span>WHY?</span><p>The requested XM6 was unavailable. The agent selected XM5 as a substitution.</p></div>
+            <div className="receipt-top"><strong>SPENDGUARD</strong><span>TRUST RECEIPT / {receiptData.id}</span></div>
+            <div className="receipt-intent"><span>USER INTENT</span><h3>{receiptData.requested}</h3><p>{receiptData.intentDetail}</p></div>
+            <div className="receipt-decision"><div><span>SELECTED</span><strong>{receiptData.selected}</strong><small>{receiptData.amount}</small></div><div><span>DECISION</span><strong className="verify">{receiptData.decision}</strong><small>Substitution</small></div></div>
+            <div className="receipt-grid">{receiptData.checks.map(([a,b]) => <div key={a}><span>{a}</span><strong>{b}</strong></div>)}</div>
+            <div className="receipt-why"><span>WHY?</span><p>{receiptData.reason}</p></div>
           </motion.div>
         </div>
       </section>
