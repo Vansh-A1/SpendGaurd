@@ -5,10 +5,10 @@ import { jsPDF } from "jspdf";
 import "@/App.css";
 
 const checks = [
-  { key: "01", name: "AUTHORITY", copy: "Can the agent make this purchase?", detail: "Verified spending limit and mandate." },
-  { key: "02", name: "INTENT", copy: "Is this what the user asked for?", detail: "Sony WH-1000XM6, black, under ₹35,000." },
-  { key: "03", name: "BEHAVIOR", copy: "Does the agent still behave normally?", detail: "Session pattern remains within baseline." },
-  { key: "04", name: "EVIDENCE", copy: "Can the product claims be proven?", detail: "Model specification conflicts at checkout." },
+  { key: "01", name: "AUTHORITY", copy: "Can the agent make this purchase?", detail: "Verified spending limit and mandate.", plain: "The agent can spend only within the permissions and limits you set." },
+  { key: "02", name: "INTENT", copy: "Is this what the user asked for?", detail: "Sony WH-1000XM6, black, under ₹35,000.", plain: "The purchase must match what you actually asked for, not just the category." },
+  { key: "03", name: "BEHAVIOR", copy: "Does the agent still behave normally?", detail: "Session pattern remains within baseline.", plain: "SpendGuard watches the current session for unusual or risky spending patterns." },
+  { key: "04", name: "EVIDENCE", copy: "Can the product claims be proven?", detail: "Model specification conflicts at checkout.", plain: "Important product claims are checked against observable merchant information." },
 ];
 
 const events = [
@@ -434,7 +434,12 @@ function App() {
             {checks.map((check, index) => (
               <Reveal className="trust-row" key={check.name} data-testid={`trust-check-${check.name.toLowerCase()}`}>
                 <span>{check.key}</span>
-                <h3>{check.name}</h3>
+                <h3>
+                  <button type="button" className="glossary-term" aria-describedby={`glossary-${check.name.toLowerCase()}`} data-testid={`glossary-term-${check.name.toLowerCase()}`}>
+                    {check.name}
+                    <span className="glossary-tip" role="tooltip" id={`glossary-${check.name.toLowerCase()}`} data-testid={`glossary-tip-${check.name.toLowerCase()}`}>{check.plain}</span>
+                  </button>
+                </h3>
                 <p>{check.copy}<small>{check.detail}</small></p>
                 <b>{index === 3 ? "CONFLICT" : "PASS"}</b>
               </Reveal>
