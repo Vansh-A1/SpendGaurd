@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #f0eef5;
+  --muted: #8d94a1;
+  --accent: #a99df2;
+  --line: rgba(221, 222, 232, .1);
+  --bg: #07090d;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Manrope', sans-serif;
+  --display: 'Playfair Display', serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+button:focus-visible { outline: 1px solid var(--accent); outline-offset: 4px; }
+::selection { color: #07090d; background: var(--accent); }

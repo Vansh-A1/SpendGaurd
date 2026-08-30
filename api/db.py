@@ -364,7 +364,9 @@ def get_transaction_receipt(transaction_id: str, db_path: Optional[Path] = None)
             return json_val
 
     receipt = {
+        **tx,
         "transaction_id": tx["id"],
+        "claimed_product": _parse_pillar(tx.get("claimed_product_json")),
         "authorization": _parse_pillar(tx["authorization_json"]),
         "intent_fidelity": _parse_pillar(tx["intent_fidelity_json"]),
         "behavioral_risk": _parse_pillar(tx["behavioral_risk_json"]),
