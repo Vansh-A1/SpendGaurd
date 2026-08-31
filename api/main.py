@@ -53,7 +53,23 @@ def get_resources():
                 INTENTS_CACHE = {k: UserIntent(**v) for k, v in data.items()}
 
     if not CATALOG_CACHE:
-        CATALOG_CACHE = get_catalog()
+        sim_file = REPO_ROOT / "simulator" / "trap_catalog.json"
+        sim_items = []
+        if sim_file.exists():
+            with open(sim_file, "r", encoding="utf-8") as f:
+                sim_data = json.load(f)
+                sim_items = [
+                    Product(
+                        sku=p["sku"],
+                        brand=p["brand"],
+                        model=p["model"],
+                        category=p["category"],
+                        price=float(p["price"]),
+                        specs=p.get("catalog_truth", {}),
+                    )
+                    for p in sim_data
+                ]
+        CATALOG_CACHE = get_catalog() + sim_items
 
     if RISK_MODEL_CACHE is None:
         model_file = REPO_ROOT / "model" / "risk_model.pkl"

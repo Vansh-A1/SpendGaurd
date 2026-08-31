@@ -21,11 +21,13 @@ from .exceptions import (
     PurchaseBlocked,
     VerificationRequired,
 )
+from .integrations.langchain import SpendGuardCheckoutTool
 
 __version__ = "0.1.0"
 
 __all__ = [
     "SpendGuardClient",
+    "SpendGuardCheckoutTool",
     "TransactionRequest",
     "DecisionReceipt",
     "ClaimedProduct",
