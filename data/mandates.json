@@ -140,6 +140,6 @@
     "time_window_start": "00:00",
     "time_window_end": "23:59",
     "issued_at": "2026-08-01T10:30:00Z",
-    "ttl_seconds": 2592000
+    "ttl_seconds": 31536000
   }
 ]

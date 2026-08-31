@@ -31,6 +31,8 @@ def test_trap_catalog_archetype_coverage():
         "stale_expired_mandate",
         "category_creep",
         "multi_step_drift",
+        "adversarial_fake_substitution",
+        "prompt_injection_exploit",
     }
     present_archetypes = {p["trap_type"] for p in catalog}
     assert required_archetypes.issubset(present_archetypes), f"Missing archetypes: {required_archetypes - present_archetypes}"

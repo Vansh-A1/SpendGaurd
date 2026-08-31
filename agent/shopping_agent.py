@@ -211,7 +211,16 @@ def run_shopping_agent(
     Supports live LLM tool-calling (Groq / OpenAI / Anthropic / Gemini / Ollama) or fallback runtime.
     Returns complete run telemetry: transcript, agent choice, SpendGuard verdict, and resolved leakage status.
     """
-    provider = (preferred_mode or os.environ.get("LLM_PROVIDER", "fallback")).strip().lower()
+    env_provider = os.environ.get("LLM_PROVIDER", "groq").strip().lower()
+    if preferred_mode in ("groq", "openai", "anthropic", "gemini"):
+        provider = preferred_mode
+    elif preferred_mode == "live_llm":
+        provider = env_provider
+    elif preferred_mode == "fallback_rule_based":
+        provider = "fallback"
+    else:
+        provider = env_provider
+
     groq_key = os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ_KEY") or os.environ.get("OPENAI_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
 
@@ -381,13 +390,20 @@ def run_shopping_agent(
             "model": selected_product["model"],
         }
 
+    prompt_lower = task.get("prompt", "").lower()
+    detected_brand = selected_product["brand"]
+    for b in ["Apple", "Sony", "Dell", "LG", "Logitech", "HP", "Keychron", "Secretlab", "Samsung", "Bose", "ASUS", "DeLonghi"]:
+        if b.lower() in prompt_lower:
+            detected_brand = b
+            break
+
     intent = UserIntent(
         id=f"intent_{task.get('task_id', 'sim')}",
         agent_id="sim_shopping_agent_01",
         hard_requirements={
             "category": task.get("target_category", selected_product["category"]),
             "max_price": float(task.get("budget", selected_product["price"] * 1.1)),
-            "brand": "Sony" if "sony" in task.get("prompt", "").lower() else selected_product["brand"],
+            "brand": detected_brand,
         },
         soft_preferences=soft_prefs,
         substitution_allowed=is_subst,
