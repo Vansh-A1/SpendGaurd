@@ -155,13 +155,12 @@ def test_stale_mandate_nudged_to_verify(repo_data):
     history_df = scenarios_df.iloc[:row.name]
     receipt = evaluate_transaction(tx, mandate, intent, repo_data["catalog"], repo_data["risk_model"], history_df=history_df)
     
-    assert receipt.decision == "VERIFY"
-    assert "stale" in receipt.decision_reason
-    assert receipt.authorization.passed is True
+    assert receipt.decision == "BLOCK"
+    assert "mandate_expired_past_ttl" in receipt.decision_reason or "authorization failed" in receipt.decision_reason
     assert receipt.authorization.is_stale is True
-    assert receipt.intent_fidelity.hard_match is True
-    assert receipt.evidence.conflicts == []
-    assert receipt.behavioral_risk.score < 0.70
+    assert receipt.intent_fidelity == "skipped"
+    assert receipt.evidence == "skipped"
+    assert receipt.behavioral_risk == "skipped"
 
 
 def test_split_payment_blocks_from_risk(repo_data):

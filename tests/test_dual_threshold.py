@@ -180,7 +180,7 @@ def test_stale_mandate_nudge_ceiling():
         merchant="Amazon",
         timestamp=datetime(2026, 8, 15, 12, 0, 0, tzinfo=timezone.utc),
         scenario_type="stale_mandate",
-        expected_decision="VERIFY",
+        expected_decision="BLOCK",
     )
 
     mock_extreme_risk = MagicMock()
@@ -188,5 +188,5 @@ def test_stale_mandate_nudge_ceiling():
     mock_extreme_risk.feature_importances_ = np.ones(11)
 
     receipt = evaluate_transaction(tx, mandate, intent, [product], mock_extreme_risk)
-    assert receipt.decision == "VERIFY"
-    assert "stale" in receipt.decision_reason
+    assert receipt.decision == "BLOCK"
+    assert "mandate_expired_past_ttl" in receipt.decision_reason or "authorization failed" in receipt.decision_reason

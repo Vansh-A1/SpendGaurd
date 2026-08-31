@@ -59,11 +59,11 @@ def test_evaluate_budget_violation(client, scenarios_data):
 
 
 def test_evaluate_and_human_verify_flow(client, scenarios_data):
-    stale_row = next(r for r in scenarios_data if r["scenario_type"] == "stale_mandate")
-    tx_id = stale_row["id"]
+    verify_row = next(r for r in scenarios_data if r["expected_decision"] == "VERIFY")
+    tx_id = verify_row["id"]
 
-    # 1. Evaluate stale mandate -> expect VERIFY
-    eval_res = client.post("/transactions/evaluate", json=stale_row)
+    # 1. Evaluate policy hold -> expect VERIFY
+    eval_res = client.post("/transactions/evaluate", json=verify_row)
     assert eval_res.status_code == 200
     eval_receipt = eval_res.json()
     assert eval_receipt["decision"] == "VERIFY"

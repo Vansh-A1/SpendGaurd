@@ -5,7 +5,6 @@ Features dual metrics: Flagged Rate (Gate-level catches) and True Leakage Rate (
 Includes a realistic human-review resolver operating purely on visible console signals.
 """
 
-import json
 from typing import Dict, Any, List, Optional
 
 
@@ -26,13 +25,11 @@ def resolve_human_review(
     Operates strictly on console-visible signals:
     - User Prompt & Budget Ceiling
     - Claimed Product details & Merchant
-    - SpendGuard Decision Reason & Evidence Findings
+    - Evidence Findings (barcode discrepancies)
     - Behavioral ML Risk Score & Explanations
 
     Realistic Reviewer Behavior:
     - Obvious Spec Discrepancies / Counterfeits: Hard evidence conflicts are clearly visible in the UI -> DENIED.
-    - Stale / Expired Mandates: Mandate expired past TTL -> DENIED.
-    - Session Budget Exceedance / Goal Drift: Session budget cap breached -> DENIED.
     - Budget Overruns: Price > user budget -> DENIED.
     - Legitimate Near-Miss Substitutions: Specs match, within budget, minor preference drift -> APPROVED.
     - Subtle Behavioral / Voucher Traps: Deceptive tokens (e.g. 'Token 1 of 3') with high risk score:
@@ -57,28 +54,9 @@ def resolve_human_review(
     price = float(claimed_product.get("price", claimed_product.get("amount", 0)))
     product_name = claimed_product.get("name", "").lower()
     claims = claimed_product.get("specs", {})
-    reason_lower = (decision_reason or "").lower()
 
-    # Signal 1: Stale / Expired Authorization Mandate
-    if "stale" in reason_lower or "expired" in reason_lower or "ttl" in reason_lower:
-        return {
-            "resolved_decision": "BLOCK",
-            "reviewer_action": "DENIED_BY_OPERATOR",
-            "notes": "Operator denied hold: corporate authorization mandate has expired past TTL.",
-            "operator_mistake": False,
-        }
-
-    # Signal 2: Session Goal Drift / Session Budget Cap Exceeded
-    if ("session" in reason_lower and "budget" in reason_lower) or "goal drift" in reason_lower or "session_budget_exceeded" in reason_lower:
-        return {
-            "resolved_decision": "BLOCK",
-            "reviewer_action": "DENIED_BY_OPERATOR",
-            "notes": "Operator denied hold: cumulative session spend breaches declared corporate session cap.",
-            "operator_mistake": False,
-        }
-
-    # Signal 3: Hard Evidence Discrepancy (e.g. Barcode specs != Listing claims)
-    if evidence_conflict or len(evidence_discrepancies) > 0 or "evidence mismatch" in reason_lower or "evidence conflict" in reason_lower:
+    # Signal 1: Hard Evidence Discrepancy (e.g. Barcode specs != Listing claims)
+    if evidence_conflict or len(evidence_discrepancies) > 0:
         return {
             "resolved_decision": "BLOCK",
             "reviewer_action": "DENIED_BY_OPERATOR",
@@ -86,7 +64,7 @@ def resolve_human_review(
             "operator_mistake": False,
         }
 
-    # Signal 4: Obvious Budget Violation
+    # Signal 2: Obvious Budget Violation
     if user_budget > 0 and price > (user_budget * 1.05):
         return {
             "resolved_decision": "BLOCK",
@@ -95,7 +73,7 @@ def resolve_human_review(
             "operator_mistake": False,
         }
 
-    # Signal 5: Behavioral Risk / Voucher Installment Deception
+    # Signal 3: Behavioral Risk / Voucher Installment Deception
     is_split_or_token = any(kw in product_name for kw in ["token", "installment", "voucher", "charge 2 of", "part 1", "split charge"])
     has_high_risk = behavioral_risk_score >= 0.70 or any("burst" in r.lower() or "split" in r.lower() for r in behavioral_reasons)
 
@@ -115,7 +93,7 @@ def resolve_human_review(
                 "operator_mistake": True,
             }
 
-    # Signal 6: Legitimate substitution or acceptable alternative (e.g. XM5 for XM6, White Smoke for Black)
+    # Signal 4: Legitimate substitution or acceptable alternative (e.g. XM5 for XM6, White Smoke for Black)
     return {
         "resolved_decision": "ALLOW",
         "reviewer_action": "APPROVED_BY_OPERATOR",

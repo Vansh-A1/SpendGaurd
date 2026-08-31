@@ -68,14 +68,14 @@ def test_block_does_not_call_razorpay(client, scenarios_data):
 
 
 def test_verify_approval_creates_order_on_approval_only(client, scenarios_data):
-    stale_row = next(r for r in scenarios_data if r["scenario_type"] == "stale_mandate")
-    tx_id = stale_row["id"]
+    verify_row = next(r for r in scenarios_data if r["expected_decision"] == "VERIFY")
+    tx_id = verify_row["id"]
 
-    mock_order = {"id": "order_human_approved_67890", "amount": int(stale_row["amount"] * 100), "status": "created"}
+    mock_order = {"id": "order_human_approved_67890", "amount": int(verify_row["amount"] * 100), "status": "created"}
 
     # 1. Evaluation produces VERIFY and does NOT call Razorpay
     with patch("api.main.create_test_order") as mock_create:
-        eval_res = client.post("/transactions/evaluate", json=stale_row)
+        eval_res = client.post("/transactions/evaluate", json=verify_row)
         assert eval_res.status_code == 200
         assert eval_res.json()["decision"] == "VERIFY"
         assert eval_res.json().get("razorpay_order_id") is None

@@ -75,8 +75,11 @@ def evaluate_transaction(
     # Step 1: Authorization Check (Pillar 1)
     # -------------------------------------------------------------------------
     auth_result = check_authorization(transaction, mandate)
-    if not auth_result.passed:
-        reasons_str = ", ".join(auth_result.failed_checks)
+    if not auth_result.passed or auth_result.is_stale:
+        failed_checks = list(auth_result.failed_checks)
+        if auth_result.is_stale and "mandate_expired_past_ttl" not in failed_checks:
+            failed_checks.append("mandate_expired_past_ttl")
+        reasons_str = ", ".join(failed_checks)
         dec = "BLOCK"
         dec_reason = f"blocked: authorization failed ({reasons_str})"
         receipt_dict = {
@@ -282,6 +285,34 @@ def evaluate_transaction(
                 }
             )
 
+    if drift_result and drift_result.has_drift and drift_result.reason == "session_budget_exceeded":
+        dec = "BLOCK"
+        dec_reason = f"blocked: session goal drift detected ({drift_result.reason} - cumulative spend exceeds declared session budget cap)"
+        drift_risk = BehavioralRiskResult(score=0.90, top_reasons=["Session cumulative budget cap breached", "Workstation multi-step drift"])
+        receipt_dict = {
+            "authorization": auth_result,
+            "intent_fidelity": intent_result,
+            "behavioral_risk": drift_risk,
+            "evidence": evidence_result,
+            "goal_drift": drift_result,
+            "provenance_trail": provenance_trail,
+            "decision": dec,
+            "decision_reason": dec_reason,
+        }
+        snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
+        return DecisionReceipt(
+            transaction_id=transaction.id,
+            authorization=auth_result,
+            intent_fidelity=intent_result,
+            behavioral_risk=drift_risk,
+            evidence=evidence_result,
+            goal_drift=drift_result,
+            provenance_trail=provenance_trail,
+            decision=dec,
+            decision_reason=dec_reason,
+            trust_snapshot=snapshot,
+        )
+
     # -------------------------------------------------------------------------
     # Step 4: Behavioral Risk Model (Pillar 3)
     # -------------------------------------------------------------------------
@@ -322,10 +353,9 @@ def evaluate_transaction(
         base_decision = "BLOCK"
 
     # Identify nudge-tier status based on deterministic policy signals
-    has_drift = (drift_result is not None and drift_result.has_drift)
+    has_drift = (drift_result is not None and drift_result.has_drift and drift_result.reason != "session_budget_exceeded")
     is_nudge_tier = (
-        auth_result.is_stale
-        or (intent_result.soft_score <= 0.50)
+        (intent_result.soft_score <= 0.50)
         or evidence_soft_conflict
         or evidence_unverifiable
         or is_legitimate_emi
@@ -334,13 +364,11 @@ def evaluate_transaction(
 
     decision_reason = ""
     if is_nudge_tier:
-        # Core Invariant: Nudge-tier transactions (allowed substitution, stale mandate, soft evidence, unverifiable specs, goal drift)
+        # Core Invariant: Nudge-tier transactions (allowed substitution, soft evidence, unverifiable specs, non-budget drift)
         # have a decision ceiling of VERIFY — they must never reach BLOCK purely from an ML risk score.
         decision = "VERIFY"
         if is_legitimate_emi:
             decision_reason = "verified: authorized EMI installment plan requires human verification"
-        elif auth_result.is_stale:
-            decision_reason = "verified: mandate is stale (past TTL expiration)"
         elif intent_result.soft_score <= 0.50:
             decision_reason = f"verified: intent soft score {intent_result.soft_score:.2f} is below threshold (substitution/preference deviation)"
         elif has_drift:

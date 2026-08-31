@@ -171,14 +171,14 @@ def test_goal_drift_budget_exceeded_nudge_verify(catalog, mandates):
         merchant="Amazon",
         timestamp=datetime(2026, 8, 15, 12, 0, 0, tzinfo=timezone.utc),
         scenario_type="legitimate_unusual",
-        expected_decision="VERIFY",
+        expected_decision="BLOCK",
         session_id="sess_drift_budget_test",
     )
 
     receipt = evaluate_transaction(tx2, mandate, intent, catalog, None, history_df=history_df)
 
-    assert receipt.decision == "VERIFY"
-    assert "session goal drift detected (session_budget_exceeded)" in receipt.decision_reason
+    assert receipt.decision == "BLOCK"
+    assert "session goal drift detected (session_budget_exceeded" in receipt.decision_reason
     assert receipt.goal_drift is not None
     assert receipt.goal_drift.has_drift is True
     assert receipt.goal_drift.reason == "session_budget_exceeded"
