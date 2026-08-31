@@ -130,12 +130,16 @@
       "Croma",
       "Apple Store",
       "iStore Authorized",
+      "Apple Authorized Reseller",
       "Dell Official Store",
       "Logitech Official Store",
       "HP Official Store",
       "Keychron India",
       "Sony Center",
-      "Reliance Digital"
+      "Reliance Digital",
+      "Bose Authorized Hub",
+      "Silicon Valley Components",
+      "Secretlab Direct"
     ],
     "time_window_start": "00:00",
     "time_window_end": "23:59",
