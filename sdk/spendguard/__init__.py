@@ -22,12 +22,14 @@ from .exceptions import (
     VerificationRequired,
 )
 from .integrations.langchain import SpendGuardCheckoutTool
+from .integrations.mcp_server import create_mcp_server
 
 __version__ = "0.1.0"
 
 __all__ = [
     "SpendGuardClient",
     "SpendGuardCheckoutTool",
+    "create_mcp_server",
     "TransactionRequest",
     "DecisionReceipt",
     "ClaimedProduct",

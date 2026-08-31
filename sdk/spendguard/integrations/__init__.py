@@ -1,7 +1,4 @@
-"""
-SpendGuard Third-Party Framework Integrations (LangChain, LlamaIndex, MCP, etc.)
-"""
-
 from .langchain import SpendGuardCheckoutTool, SpendGuardCheckoutInput
+from .mcp_server import create_mcp_server
 
-__all__ = ["SpendGuardCheckoutTool", "SpendGuardCheckoutInput"]
+__all__ = ["SpendGuardCheckoutTool", "SpendGuardCheckoutInput", "create_mcp_server"]
