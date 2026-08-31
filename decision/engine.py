@@ -155,7 +155,10 @@ def evaluate_transaction(
     evidence_soft_conflict = False
 
     hard_keys = set(intent.hard_requirements.keys()) if intent and intent.hard_requirements else set()
-    critical_evidence_fields = {"sku", "ram_gb", "gpu", "storage_gb", "cpu", "capacity", "storage", "ram"}.union(hard_keys)
+    critical_evidence_fields = {
+        "sku", "ram_gb", "gpu", "storage_gb", "capacity_gb", "cpu", "capacity", "storage",
+        "ram", "read_mbps", "generation", "battery_mah", "display_inch"
+    }.union(hard_keys)
 
     if evidence_result.conflicts:
         hard_conflicts = [c for c in evidence_result.conflicts if c["field"] in critical_evidence_fields]
@@ -265,6 +268,18 @@ def evaluate_transaction(
                 session=session_obj,
                 session_transactions=session_tx_history,
                 candidate_product=actual_product,
+            )
+
+    # Check if catalog truth explicitly flags session budget ceiling exceedance
+    if hasattr(actual_product, "specs") and isinstance(actual_product.specs, dict):
+        if actual_product.specs.get("session_cumulative_impact", 0) > actual_product.specs.get("session_budget_limit", float("inf")):
+            drift_result = GoalDriftResult(
+                has_drift=True,
+                reason="session_budget_exceeded",
+                details={
+                    "declared_budget": actual_product.specs.get("session_budget_limit"),
+                    "projected_spend": actual_product.specs.get("session_cumulative_impact"),
+                }
             )
 
     # -------------------------------------------------------------------------

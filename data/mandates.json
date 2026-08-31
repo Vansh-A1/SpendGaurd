@@ -97,8 +97,8 @@
     ],
     "time_window_start": "08:00",
     "time_window_end": "22:00",
-    "issued_at": "2026-08-28T15:00:00Z",
-    "ttl_seconds": 1209600
+    "issued_at": "2026-07-01T10:00:00Z",
+    "ttl_seconds": 86400
   },
   {
     "id": "mandate_shop_enterprise",
