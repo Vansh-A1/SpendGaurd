@@ -72,13 +72,14 @@ class SpendGuardCheckoutTool(BaseTool):
         model: Optional[str] = None,
         claimed_specs: Optional[Dict[str, Any]] = None,
         notes: Optional[str] = "",
-        agent_id: Optional[str] = "langchain_procurement_agent",
+        agent_id: Optional[str] = None,
         mandate_id: Optional[str] = "mandate_shop_enterprise",
         user_intent_id: Optional[str] = None,
         **kwargs: Any,
     ) -> str:
         """Executes the checkout check through SpendGuardClient."""
         tx_id = f"tx_langchain_{uuid.uuid4().hex[:8]}"
+        resolved_agent_id = agent_id or f"lc_agent_{uuid.uuid4().hex[:6]}"
         intent_id = user_intent_id or f"intent_lc_{tx_id}"
 
         claimed = {
@@ -91,7 +92,7 @@ class SpendGuardCheckoutTool(BaseTool):
 
         tx = TransactionRequest(
             id=tx_id,
-            agent_id=agent_id or "langchain_procurement_agent",
+            agent_id=resolved_agent_id,
             mandate_id=mandate_id or "mandate_shop_enterprise",
             user_intent_id=intent_id,
             claimed_product=claimed,

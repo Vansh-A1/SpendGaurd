@@ -56,6 +56,10 @@ def main():
     print(" Demonstrating real-time 4-pillar trust gating on a generic LangChain tool-calling agent")
     print("=" * 100)
 
+    import api.main as api_mod
+    api_mod.MANDATES_CACHE = {}
+    api_mod.CATALOG_CACHE = []
+
     sg_client, mock_urlopen = create_in_process_spendguard_client()
 
     scenarios = [
