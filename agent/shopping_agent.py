@@ -205,6 +205,7 @@ def run_shopping_agent(
     risk_model: Any,
     db_path: Optional[Path] = None,
     preferred_mode: Optional[str] = None,
+    model_override: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Executes an autonomous shopping agent session for a given task.
@@ -228,8 +229,9 @@ def run_shopping_agent(
     is_openai = provider == "openai" and bool(openai_key)
     is_live_llm = is_groq or is_openai
 
+    selected_model = model_override or os.environ.get("LLM_MODEL") or ("openai/gpt-oss-120b" if is_groq else "gpt-4o")
     execution_mode = "live_llm" if is_live_llm else "fallback_rule_based"
-    model_name = "openai/gpt-oss-120b (Groq)" if is_groq else ("gpt-4o" if is_openai else "Deterministic Baseline Heuristic")
+    model_name = f"{selected_model} (Groq)" if is_groq else (f"{selected_model} (OpenAI)" if is_openai else "Deterministic Baseline Heuristic")
 
     env = ShoppingEnvironment()
     transcript: List[Dict[str, Any]] = []
@@ -281,7 +283,7 @@ def run_shopping_agent(
                     messages=messages,
                     api_key=groq_key if is_groq else openai_key,
                     base_url="https://api.groq.com/openai/v1" if is_groq else "https://api.openai.com/v1",
-                    model="openai/gpt-oss-120b" if is_groq else "gpt-4o",
+                    model=selected_model,
                 )
                 msg = llm_resp["choices"][0]["message"]
                 reasoning = msg.get("reasoning") or msg.get("content")
