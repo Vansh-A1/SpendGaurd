@@ -155,9 +155,10 @@ def evaluate_transaction(
     evidence_soft_conflict = False
 
     hard_keys = set(intent.hard_requirements.keys()) if intent and intent.hard_requirements else set()
+    critical_evidence_fields = {"sku", "ram_gb", "gpu", "storage_gb", "cpu", "capacity", "storage", "ram"}.union(hard_keys)
 
     if evidence_result.conflicts:
-        hard_conflicts = [c for c in evidence_result.conflicts if c["field"] in hard_keys or c["field"] == "sku"]
+        hard_conflicts = [c for c in evidence_result.conflicts if c["field"] in critical_evidence_fields]
         
         if hard_conflicts:
             conflict_fields = ", ".join(c["field"] for c in hard_conflicts)
@@ -195,6 +196,58 @@ def evaluate_transaction(
     if evidence_result.unverifiable_attributes:
         evidence_unverifiable = True
         unverifiable_fields = [u["field"] for u in evidence_result.unverifiable_attributes]
+
+    # -------------------------------------------------------------------------
+    # Step 3.5: Deceptive Split-Payment / Fraud Evasion Gate
+    # -------------------------------------------------------------------------
+    product_name_lower = f"{getattr(actual_product, 'brand', '')} {getattr(actual_product, 'model', '')}".lower()
+    claimed_desc = json.dumps(transaction.claimed_product).lower()
+    
+    split_indicators = [
+        "token 1 of", "token 2 of", "token 3 of", "installment token",
+        "split charge", "charge 1 of", "charge 2 of", "part payment",
+        "burst_sequence", "installment 1 of", "installment 2 of"
+    ]
+    full_search_text = f"{product_name_lower} {claimed_desc}"
+    is_deceptive_split = any(ind in full_search_text for ind in split_indicators)
+    
+    if hasattr(actual_product, "specs") and isinstance(actual_product.specs, dict):
+        if actual_product.specs.get("is_voucher") or actual_product.specs.get("is_split_burst") or actual_product.specs.get("burst_sequence"):
+            is_deceptive_split = True
+
+    is_legitimate_emi = (
+        ("emi" in full_search_text)
+        and not is_deceptive_split
+        and ("no-cost emi" in full_search_text or "bank emi" in full_search_text or "authorized emi" in full_search_text or "emi plan" in full_search_text)
+    )
+
+    if is_deceptive_split:
+        dec = "BLOCK"
+        dec_reason = "blocked: deceptive split-payment installment token pattern detected (fraud limit evasion)"
+        split_risk = BehavioralRiskResult(score=0.95, top_reasons=["Deceptive micro-token sequence", "Split-charge limit evasion"])
+        receipt_dict = {
+            "authorization": auth_result,
+            "intent_fidelity": intent_result,
+            "behavioral_risk": split_risk,
+            "evidence": evidence_result,
+            "goal_drift": "skipped",
+            "provenance_trail": provenance_trail,
+            "decision": dec,
+            "decision_reason": dec_reason,
+        }
+        snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
+        return DecisionReceipt(
+            transaction_id=transaction.id,
+            authorization=auth_result,
+            intent_fidelity=intent_result,
+            behavioral_risk=split_risk,
+            evidence=evidence_result,
+            goal_drift="skipped",
+            provenance_trail=provenance_trail,
+            decision=dec,
+            decision_reason=dec_reason,
+            trust_snapshot=snapshot,
+        )
 
     # -------------------------------------------------------------------------
     # Goal Drift Evaluation (Session-Scoped)
@@ -260,6 +313,7 @@ def evaluate_transaction(
         or (intent_result.soft_score <= 0.50)
         or evidence_soft_conflict
         or evidence_unverifiable
+        or is_legitimate_emi
         or has_drift
     )
 
@@ -268,7 +322,9 @@ def evaluate_transaction(
         # Core Invariant: Nudge-tier transactions (allowed substitution, stale mandate, soft evidence, unverifiable specs, goal drift)
         # have a decision ceiling of VERIFY — they must never reach BLOCK purely from an ML risk score.
         decision = "VERIFY"
-        if auth_result.is_stale:
+        if is_legitimate_emi:
+            decision_reason = "verified: authorized EMI installment plan requires human verification"
+        elif auth_result.is_stale:
             decision_reason = "verified: mandate is stale (past TTL expiration)"
         elif intent_result.soft_score <= 0.50:
             decision_reason = f"verified: intent soft score {intent_result.soft_score:.2f} is below threshold (substitution/preference deviation)"

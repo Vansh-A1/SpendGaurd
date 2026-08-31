@@ -283,3 +283,134 @@ def test_full_scenarios_batch_match_rate(repo_data):
             print(f"  - [{m['id']}] {m['scenario_type']}: Expected={m['expected']}, Actual={m['actual']} | Reason: {m['reason']}")
 
     assert match_rate >= 0.90, f"Match rate {match_rate * 100:.1f}% is below 90%"
+
+
+def test_deceptive_split_payment_token_hard_blocks(repo_data):
+    """
+    Test that a deceptive installment token (e.g. 'Token 1 of 3') is escalated to a hard BLOCK
+    at the trust gate rather than held at a soft VERIFY.
+    """
+    mandate = next(iter(repo_data["mandates"].values()))
+    intent = UserIntent(
+        id="intent_test_split_scam",
+        agent_id="agent_01",
+        hard_requirements={"category": "electronics", "brand": "Dell", "max_price": 100000.0},
+        soft_preferences={},
+        substitution_allowed=False,
+        created_at=datetime.now(timezone.utc),
+    )
+    catalog = repo_data["catalog"]
+    risk_model = repo_data["risk_model"]
+
+    tx = TransactionRequest(
+        id="test_split_scam_01",
+        agent_id="agent_01",
+        mandate_id=mandate.id,
+        user_intent_id=intent.id,
+        claimed_product={
+            "sku": "ELEC-DELL-G15-4060",
+            "brand": "Dell",
+            "model": "G15 5530 (Installment Token 1 of 3)",
+            "category": "electronics",
+            "specs": {"ram_gb": 16, "installment_sequence": "1 of 3"},
+        },
+        actual_sku="ELEC-DELL-G15-4060",
+        amount=9999.0,
+        category="electronics",
+        merchant="Croma", # whitelisted merchant
+        timestamp=datetime.now(timezone.utc),
+        scenario_type="price_split_bait",
+        expected_decision="BLOCK",
+    )
+
+    receipt = evaluate_transaction(tx, mandate, intent, catalog, risk_model)
+    assert receipt.decision == "BLOCK"
+    assert "deceptive split-payment" in receipt.decision_reason
+    assert receipt.behavioral_risk.score >= 0.75
+
+
+def test_legitimate_authorized_emi_plan_resolves_verify(repo_data):
+    """
+    Test that a legitimate authorized EMI installment plan (e.g. 'No-Cost EMI')
+    resolves to VERIFY for human pre-authorization rather than hard BLOCK.
+    """
+    mandate = next(iter(repo_data["mandates"].values()))
+    intent = UserIntent(
+        id="intent_test_emi",
+        agent_id="agent_01",
+        hard_requirements={"category": "electronics", "brand": "Dell", "max_price": 100000.0},
+        soft_preferences={},
+        substitution_allowed=False,
+        created_at=datetime.now(timezone.utc),
+    )
+    catalog = repo_data["catalog"]
+    risk_model = repo_data["risk_model"]
+
+    tx = TransactionRequest(
+        id="test_legit_emi_01",
+        agent_id="agent_01",
+        mandate_id=mandate.id,
+        user_intent_id=intent.id,
+        claimed_product={
+            "sku": "ELEC-DELL-G15-4060",
+            "brand": "Dell",
+            "model": "G15 5530 (Authorized 3-Month No-Cost EMI)",
+            "category": "electronics",
+            "specs": {"tenure_months": 3, "monthly_emi": 32990.0, "ram_gb": 16, "storage_gb": 512, "display_inch": 15.6, "gpu": "RTX 4060", "cpu": "Intel Core i7-13650HX"},
+        },
+        actual_sku="ELEC-DELL-G15-4060",
+        amount=32990.0,
+        category="electronics",
+        merchant="Dell Official Store",
+        timestamp=datetime.now(timezone.utc),
+        scenario_type="clean_baseline",
+        expected_decision="VERIFY",
+    )
+
+    receipt = evaluate_transaction(tx, mandate, intent, catalog, risk_model)
+    assert receipt.decision == "VERIFY"
+    assert "authorized EMI installment plan" in receipt.decision_reason
+
+
+def test_split_burst_with_high_risk_score_hard_blocks(repo_data):
+    """
+    Test that a sequence of split-charge bursts with high risk score hard blocks.
+    """
+    mandate = next(iter(repo_data["mandates"].values()))
+    intent = UserIntent(
+        id="intent_test_split_burst",
+        agent_id="agent_01",
+        hard_requirements={"category": "electronics", "brand": "Dell", "max_price": 100000.0},
+        soft_preferences={},
+        substitution_allowed=False,
+        created_at=datetime.now(timezone.utc),
+    )
+    catalog = repo_data["catalog"]
+    risk_model = repo_data["risk_model"]
+
+    tx = TransactionRequest(
+        id="test_split_burst_02",
+        agent_id="agent_01",
+        mandate_id=mandate.id,
+        user_intent_id=intent.id,
+        claimed_product={
+            "sku": "ELEC-DELL-G15-4060",
+            "brand": "Dell",
+            "model": "G15 5530 (Split Charge 2 of 2)",
+            "category": "electronics",
+            "specs": {"split_order": "2 of 2"},
+        },
+        actual_sku="ELEC-DELL-G15-4060",
+        amount=26900.0,
+        category="electronics",
+        merchant="Dell Official Store",
+        timestamp=datetime.now(timezone.utc),
+        scenario_type="price_split_bait",
+        expected_decision="BLOCK",
+    )
+
+    receipt = evaluate_transaction(tx, mandate, intent, catalog, risk_model)
+    assert receipt.decision == "BLOCK"
+    assert "deceptive split-payment" in receipt.decision_reason
+
+

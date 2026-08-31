@@ -155,6 +155,7 @@ def init_db(db_path: Optional[Path] = None):
         selected_product_name TEXT,
         amount REAL,
         execution_mode TEXT NOT NULL,
+        model_name TEXT,
         agent_fooled INTEGER NOT NULL,
         initial_decision TEXT NOT NULL,
         resolved_decision TEXT NOT NULL,
@@ -165,6 +166,11 @@ def init_db(db_path: Optional[Path] = None):
         created_at TEXT NOT NULL
     );
     """)
+
+    cursor.execute("PRAGMA table_info(simulation_runs)")
+    sim_cols = [row[1] for row in cursor.fetchall()]
+    if "model_name" not in sim_cols:
+        cursor.execute("ALTER TABLE simulation_runs ADD COLUMN model_name TEXT")
 
     conn.commit()
     conn.close()
@@ -476,9 +482,9 @@ def save_simulation_run(run_dict: Dict[str, Any], db_path: Optional[Path] = None
     cursor.execute("""
     INSERT OR REPLACE INTO simulation_runs (
         id, task_id, task_prompt, difficulty, trap_type, selected_sku, selected_product_name,
-        amount, execution_mode, agent_fooled, initial_decision, resolved_decision,
+        amount, execution_mode, model_name, agent_fooled, initial_decision, resolved_decision,
         is_true_leakage, reviewer_action, decision_reason, transcript_json, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         run_dict["id"],
         run_dict["task_id"],
@@ -489,6 +495,7 @@ def save_simulation_run(run_dict: Dict[str, Any], db_path: Optional[Path] = None
         run_dict.get("selected_product_name"),
         float(run_dict.get("amount", 0)),
         run_dict.get("execution_mode", "fallback_rule_based"),
+        run_dict.get("model_name"),
         1 if run_dict.get("agent_fooled") else 0,
         run_dict["initial_decision"],
         run_dict["resolved_decision"],
