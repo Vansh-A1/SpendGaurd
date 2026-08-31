@@ -64,9 +64,9 @@ def engineer_features(
     
     # Parse timestamp as datetime if it is string
     if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
-        df["_parsed_ts"] = pd.to_datetime(df["timestamp"], utc=True)
+        df["_parsed_ts"] = pd.to_datetime(df["timestamp"], format="mixed", utc=True)
     else:
-        df["_parsed_ts"] = df["timestamp"]
+        df["_parsed_ts"] = pd.to_datetime(df["timestamp"], utc=True)
 
     # Ensure amount is float
     df["amount"] = df["amount"].astype(float)
