@@ -1,17 +1,31 @@
 import json
 import urllib.request
 import urllib.error
+import socket
 from typing import Optional, Dict, Any, Union
 from datetime import datetime, timezone
 
 from .models import TransactionRequest, DecisionReceipt, ClaimedProduct
-from .exceptions import SpendGuardError, SpendGuardAPIError, PurchaseBlocked, VerificationRequired
+from .exceptions import (
+    SpendGuardError,
+    SpendGuardConnectionError,
+    SpendGuardAPIError,
+    PurchaseBlocked,
+    VerificationRequired,
+)
 
 
 class SpendGuardClient:
     """
     SpendGuard Framework-Agnostic Python SDK Client.
-    Provides synchronous client access to the SpendGuard AI Trust Gate API.
+    
+    Provides synchronous evaluation of proposed agent transactions against SpendGuard's
+    Four-Pillar Trust Gate (Authorization, Intent Fidelity, Behavioral Risk, and Evidence).
+    
+    Security Guarantee:
+        Strictly FAIL-CLOSED. If the gateway is unreachable or request times out,
+        the client raises SpendGuardConnectionError. It will NEVER silently return an
+        ALLOW-like state or let unverified purchases through.
     """
 
     def __init__(
@@ -26,9 +40,10 @@ class SpendGuardClient:
         
         Args:
             base_url: The root URL of the SpendGuard API gateway (default: http://localhost:8000).
-            api_key: Optional API key for header authentication.
+            api_key: Secret API Key for SpendGuard authentication. Optional for local development,
+                     required for non-local / staging / production deployments.
             token: Optional JWT bearer token for console/API authentication.
-            timeout: HTTP request timeout in seconds.
+            timeout: Network request timeout in seconds (default: 10.0s). If exceeded, raises SpendGuardConnectionError.
         """
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -39,12 +54,13 @@ class SpendGuardClient:
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "SpendGuard-Python-SDK/1.0.0",
+            "User-Agent": "SpendGuard-Python-SDK/0.1.0",
         }
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
-        elif self.api_key:
+        if self.api_key:
             headers["X-API-Key"] = self.api_key
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        elif self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
     def _json_serial(self, obj: Any) -> Any:
@@ -59,15 +75,28 @@ class SpendGuardClient:
         raise_on_verify: bool = False,
     ) -> DecisionReceipt:
         """
-        Evaluates a proposed agent transaction through SpendGuard's 4-Pillar Trust Gate.
+        Evaluates a proposed agent transaction across SpendGuard's 4-Pillar Trust Gate.
+        
+        Default Behavior (No Flags):
+            Returns the complete `DecisionReceipt` model without raising exceptions.
+            The caller can inspect `receipt.decision`, `receipt.is_allowed`, `receipt.is_blocked`,
+            `receipt.is_verification_required`, and `receipt.decision_reason`.
+            
+        Opt-In Exception Modes:
+            - Set `raise_on_block=True` to immediately raise `PurchaseBlocked` if decision is BLOCK.
+            - Set `raise_on_verify=True` to immediately raise `VerificationRequired` if decision is VERIFY.
+            
+        Fail-Closed Contract:
+            If SpendGuard is unreachable, times out, or returns a transport error, this method
+            raises `SpendGuardConnectionError`. It will NEVER default to an ALLOW verdict.
         
         Args:
-            transaction: TransactionRequest instance or raw dictionary representing the transaction.
-            raise_on_block: If True, raises PurchaseBlocked exception if decision is BLOCK.
-            raise_on_verify: If True, raises VerificationRequired exception if decision is VERIFY.
+            transaction: TransactionRequest model instance or raw dict of transaction attributes.
+            raise_on_block: (Optional) If True, raises PurchaseBlocked when decision == BLOCK. Default: False.
+            raise_on_verify: (Optional) If True, raises VerificationRequired when decision == VERIFY. Default: False.
             
         Returns:
-            DecisionReceipt: Complete decision receipt with verdict, reason, pillar signals, and provenance trail.
+            DecisionReceipt: Structured verdict containing decision, reason, pillar breakdowns, and provenance trail.
         """
         if isinstance(transaction, dict):
             tx_obj = TransactionRequest(**transaction)
@@ -84,10 +113,15 @@ class SpendGuardClient:
 
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                status_code = resp.getcode()
                 raw_body = resp.read().decode("utf-8")
                 data = json.loads(raw_body)
                 receipt = DecisionReceipt(**data)
+        except (socket.timeout, TimeoutError) as err:
+            raise SpendGuardConnectionError(
+                message=f"SpendGuard Trust Gate timed out after {self.timeout}s at {url} (Fail-Closed)",
+                endpoint=url,
+                timeout=self.timeout,
+            ) from err
         except urllib.error.HTTPError as err:
             err_body = None
             try:
@@ -102,8 +136,17 @@ class SpendGuardClient:
                 response_body=err_body,
             ) from err
         except urllib.error.URLError as err:
-            raise SpendGuardAPIError(
-                message=f"Failed to connect to SpendGuard API at {self.base_url}: {err.reason}",
+            # Handle socket timeout wrapped inside URLError
+            if isinstance(err.reason, socket.timeout) or "timed out" in str(err.reason).lower():
+                raise SpendGuardConnectionError(
+                    message=f"SpendGuard Trust Gate timed out after {self.timeout}s at {url} (Fail-Closed)",
+                    endpoint=url,
+                    timeout=self.timeout,
+                ) from err
+            raise SpendGuardConnectionError(
+                message=f"Failed to connect to SpendGuard gateway at {self.base_url}: {err.reason} (Fail-Closed)",
+                endpoint=url,
+                timeout=self.timeout,
             ) from err
         except Exception as err:
             raise SpendGuardError(f"Unexpected SpendGuard SDK error: {err}") from err
@@ -128,10 +171,21 @@ class SpendGuardClient:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 return DecisionReceipt(**data)
+        except (socket.timeout, TimeoutError) as err:
+            raise SpendGuardConnectionError(
+                message=f"SpendGuard receipt retrieval timed out after {self.timeout}s at {url}",
+                endpoint=url,
+                timeout=self.timeout,
+            ) from err
         except urllib.error.HTTPError as err:
             raise SpendGuardAPIError(
                 message=f"Receipt {transaction_id} not found or error (HTTP {err.code})",
                 status_code=err.code,
+            ) from err
+        except urllib.error.URLError as err:
+            raise SpendGuardConnectionError(
+                message=f"Failed to connect to SpendGuard gateway at {self.base_url}: {err.reason}",
+                endpoint=url,
             ) from err
         except Exception as err:
             raise SpendGuardError(f"Failed to retrieve receipt: {err}") from err
@@ -141,8 +195,14 @@ class SpendGuardClient:
         url = f"{self.base_url}/health"
         headers = self._get_headers()
         req = urllib.request.Request(url, headers=headers, method="GET")
-        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception as err:
+            raise SpendGuardConnectionError(
+                message=f"SpendGuard gateway health check failed at {url}: {err}",
+                endpoint=url,
+            ) from err
 
     def __enter__(self):
         return self

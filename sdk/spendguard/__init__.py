@@ -16,12 +16,13 @@ from .models import (
 )
 from .exceptions import (
     SpendGuardError,
+    SpendGuardConnectionError,
     SpendGuardAPIError,
     PurchaseBlocked,
     VerificationRequired,
 )
 
-__version__ = "1.0.0"
+__version__ = "0.1.0"
 
 __all__ = [
     "SpendGuardClient",
@@ -34,6 +35,7 @@ __all__ = [
     "EvidenceResultModel",
     "GoalDriftResultModel",
     "SpendGuardError",
+    "SpendGuardConnectionError",
     "SpendGuardAPIError",
     "PurchaseBlocked",
     "VerificationRequired",

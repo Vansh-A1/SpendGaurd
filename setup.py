@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="spendguard",
-    version="1.0.0",
+    version="0.1.0",
     description="SpendGuard: AI Agent Corporate Spend Governance and Four-Pillar Trust Gate SDK",
     author="SpendGuard AI",
     packages=find_packages(where="sdk"),

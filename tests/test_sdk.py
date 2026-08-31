@@ -1,9 +1,11 @@
 """
 Tests for SpendGuard Python SDK (Framework-Agnostic Client).
-Validates models, client initialization, evaluate round-trips, typed receipts, and exception handling.
+Validates models, client initialization, default evaluation behavior, fail-closed connection handling,
+opt-in exceptions, and end-to-end API round-trips.
 """
 
 import json
+import socket
 from unittest.mock import patch, MagicMock
 import pytest
 from fastapi.testclient import TestClient
@@ -17,6 +19,7 @@ from spendguard import (
     PurchaseBlocked,
     VerificationRequired,
     SpendGuardAPIError,
+    SpendGuardConnectionError,
 )
 from api.main import app
 
@@ -26,12 +29,13 @@ def api_client():
     return TestClient(app)
 
 
-def test_sdk_package_exports():
-    """Confirms all key classes and exceptions are exported at top-level."""
-    assert spendguard.__version__ == "1.0.0"
+def test_sdk_package_exports_and_version():
+    """Confirms version 0.1.0 and all key classes/exceptions are exported."""
+    assert spendguard.__version__ == "0.1.0"
     assert SpendGuardClient is not None
     assert TransactionRequest is not None
     assert DecisionReceipt is not None
+    assert SpendGuardConnectionError is not None
     assert PurchaseBlocked is not None
     assert VerificationRequired is not None
 
@@ -78,54 +82,104 @@ def test_sdk_model_serialization_and_properties():
     assert block_receipt.is_allowed is False
 
 
-def test_sdk_evaluate_with_mocked_http():
-    """Tests SpendGuardClient.evaluate() over standard HTTP client interface."""
-    client = SpendGuardClient(base_url="http://localhost:8000")
+def test_sdk_default_evaluation_returns_receipt_without_raising():
+    """
+    Validates the default (no-flag) behavior of .evaluate():
+    When evaluate() is called with no flags, it returns the DecisionReceipt directly
+    for both ALLOW and BLOCK transactions without raising exceptions.
+    """
+    client = SpendGuardClient(base_url="http://localhost:8000", api_key="test_key_123")
 
-    mock_resp_data = {
-        "transaction_id": "tx_mock_01",
-        "decision": "ALLOW",
-        "decision_reason": "allowed: all 4 trust pillars passed",
-        "authorization": {"passed": True, "failed_checks": []},
-        "intent_fidelity": {"passed": True, "hard_match": True, "soft_score": 1.0},
-        "behavioral_risk": {"score": 0.05, "top_reasons": []},
-        "evidence": {"conflict": False, "discrepancies": []},
-        "provenance_trail": [{"event_type": "decision", "payload": {"decision": "ALLOW"}}],
-        "razorpay_order_id": "order_test_12345",
+    mock_block_data = {
+        "transaction_id": "tx_default_block_01",
+        "decision": "BLOCK",
+        "decision_reason": "blocked: authorization failed (budget_exceeded)",
+        "provenance_trail": [],
     }
 
     mock_http_response = MagicMock()
     mock_http_response.getcode.return_value = 200
-    mock_http_response.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_http_response.read.return_value = json.dumps(mock_block_data).encode("utf-8")
     mock_http_response.__enter__.return_value = mock_http_response
 
     with patch("urllib.request.urlopen", return_value=mock_http_response) as mock_urlopen:
-        tx = TransactionRequest(
-            id="tx_mock_01",
-            agent_id="agent_01",
-            mandate_id="mandate_shop_enterprise",
-            user_intent_id="intent_01",
-            claimed_product={"brand": "Dell"},
-            actual_sku="ELEC-DELL-G15-4060",
-            amount=50000.0,
-            category="electronics",
-            merchant="Dell Official Store",
-        )
+        tx = {
+            "id": "tx_default_block_01",
+            "agent_id": "agent_01",
+            "mandate_id": "mandate_shop_enterprise",
+            "user_intent_id": "intent_01",
+            "claimed_product": {"brand": "Dell"},
+            "actual_sku": "ELEC-DELL-G15-4060",
+            "amount": 250000.0,
+            "category": "electronics",
+            "merchant": "Dell Official Store",
+        }
 
+        # Must NOT raise by default
         receipt = client.evaluate(tx)
         assert isinstance(receipt, DecisionReceipt)
-        assert receipt.is_allowed is True
-        assert receipt.transaction_id == "tx_mock_01"
-        assert receipt.razorpay_order_id == "order_test_12345"
+        assert receipt.is_blocked is True
+        assert receipt.decision == "BLOCK"
+        assert "budget_exceeded" in receipt.decision_reason
 
-        # Verify request parameters
+        # Verify auth headers sent
         req_sent = mock_urlopen.call_args[0][0]
-        assert req_sent.full_url == "http://localhost:8000/transactions/evaluate"
-        assert req_sent.get_method() == "POST"
+        assert req_sent.headers.get("X-api-key") == "test_key_123" or req_sent.headers.get("Authorization") == "Bearer test_key_123"
+
+
+def test_sdk_fail_closed_on_unreachable_gateway():
+    """
+    CRITICAL SECURITY CONTRACT: FAIL-CLOSED.
+    If SpendGuard API is unreachable or connection is refused, SpendGuardClient MUST raise
+    SpendGuardConnectionError rather than silently returning an ALLOW or default state.
+    """
+    client = SpendGuardClient(base_url="http://unreachable-spendguard-host:8000", timeout=5.0)
+
+    from urllib.error import URLError
+
+    with patch("urllib.request.urlopen", side_effect=URLError(ConnectionRefusedError("Connection refused"))):
+        with pytest.raises(SpendGuardConnectionError) as exc_info:
+            client.evaluate({
+                "id": "tx_fail_closed_01",
+                "agent_id": "agent_01",
+                "mandate_id": "mandate_shop_enterprise",
+                "user_intent_id": "intent_01",
+                "claimed_product": {"brand": "Dell"},
+                "actual_sku": "ELEC-DELL-G15-4060",
+                "amount": 50000.0,
+                "category": "electronics",
+                "merchant": "Dell Official Store",
+            })
+        assert "Fail-Closed" in str(exc_info.value)
+        assert "Failed to connect to SpendGuard" in str(exc_info.value)
+
+
+def test_sdk_fail_closed_on_network_timeout():
+    """
+    CRITICAL SECURITY CONTRACT: FAIL-CLOSED ON TIMEOUT.
+    If the trust gate evaluation times out, client MUST raise SpendGuardConnectionError.
+    """
+    client = SpendGuardClient(base_url="http://localhost:8000", timeout=2.0)
+
+    with patch("urllib.request.urlopen", side_effect=socket.timeout("Socket timed out")):
+        with pytest.raises(SpendGuardConnectionError) as exc_info:
+            client.evaluate({
+                "id": "tx_timeout_01",
+                "agent_id": "agent_01",
+                "mandate_id": "mandate_shop_enterprise",
+                "user_intent_id": "intent_01",
+                "claimed_product": {"brand": "Dell"},
+                "actual_sku": "ELEC-DELL-G15-4060",
+                "amount": 50000.0,
+                "category": "electronics",
+                "merchant": "Dell Official Store",
+            })
+        assert "timed out" in str(exc_info.value).lower()
+        assert "Fail-Closed" in str(exc_info.value)
 
 
 def test_sdk_evaluate_raise_on_block_exception():
-    """Verifies that raise_on_block=True correctly raises PurchaseBlocked."""
+    """Verifies that opt-in raise_on_block=True correctly raises PurchaseBlocked."""
     client = SpendGuardClient()
 
     mock_resp_data = {
@@ -161,7 +215,7 @@ def test_sdk_evaluate_raise_on_block_exception():
 
 
 def test_sdk_evaluate_raise_on_verify_exception():
-    """Verifies that raise_on_verify=True correctly raises VerificationRequired."""
+    """Verifies that opt-in raise_on_verify=True correctly raises VerificationRequired."""
     client = SpendGuardClient()
 
     mock_resp_data = {
@@ -196,7 +250,7 @@ def test_sdk_evaluate_raise_on_verify_exception():
 
 
 def test_sdk_api_error_handling():
-    """Verifies that HTTP errors are cleanly wrapped in SpendGuardAPIError."""
+    """Verifies that HTTP 4xx/5xx errors are cleanly wrapped in SpendGuardAPIError."""
     client = SpendGuardClient(base_url="http://localhost:8000")
 
     from urllib.error import HTTPError
