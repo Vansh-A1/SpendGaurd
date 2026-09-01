@@ -71,10 +71,13 @@ Evaluates any autonomous corporate purchase against corporate mandates, intent f
 
 ### Natural Language Tool Observation Outputs:
 - **APPROVED**:  
-  `APPROVED: Purchase of TRAP-ELEC-DELL-5530-CLEAN for ₹48,990.00 at Dell Official Store authorized by SpendGuard Trust Gateway. Razorpay Order ID: order_test_123. All 4 trust pillars passed.`
+  `APPROVED: Purchase of TRAP-ELEC-DELL-5530-CLEAN for ₹48,990.00 at Dell Official Store authorized by SpendGuard Trust Gateway. Razorpay Order ID: order_test_123. All 4 trust pillars passed.`  
+  `Summary: Approved purchase of Dell Inspiron 15 5530 (SKU: TRAP-ELEC-DELL-5530-CLEAN) from Dell Official Store for ₹48,990.00. The transaction satisfied all corporate policy limits, passed independent catalog spec verification, matched the user's requirements, and demonstrated low behavioral risk (score: 0.03). You may inform the user the purchase succeeded.`
 - **HELD FOR HUMAN REVIEW**:  
-  `HELD FOR HUMAN VERIFICATION: Purchase requires human operator approval. (Hold ID: hold_abc) Reason: soft preferences mismatch (color).`
+  `HELD FOR HUMAN VERIFICATION: Purchase requires human operator approval. (Hold ID: hold_abc) Reason: soft preferences mismatch (color).`  
+  `Summary: Held for human review: An alternative variant for Bose QuietComfort 45 from Bose Authorized Hub (₹24,900.00) was selected that differs on color, but satisfies core mandatory requirements and budget caps. An operator should confirm whether this substitution is acceptable.`
 - **BLOCKED**:  
-  `BLOCKED: Purchase was rejected by SpendGuard Trust Gateway. Reason: evidence conflict on hard requirement (ram_gb, storage_gb).`
+  `BLOCKED: Purchase was rejected by SpendGuard Trust Gateway. Reason: blocked: evidence conflict on hard requirement (ram_gb, storage_gb).`  
+  `Summary: Purchase rejected by Pillar 3 (Evidence Verification): Independent catalog verification detected a specification conflict with the seller's claims: ram_gb mismatch (claimed '32' vs actual '8'); storage_gb mismatch (claimed '1024' vs actual '256'). You must select a compliant alternative product that satisfies corporate policies or abort.`
 - **FAIL-CLOSED ON NETWORK ERROR**:  
   `BLOCKED (SECURITY FAIL-CLOSED): SpendGuard Trust Gateway is unreachable. The transaction was blocked because corporate security policies cannot be verified offline.`

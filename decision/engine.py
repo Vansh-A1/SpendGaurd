@@ -17,6 +17,7 @@ from model.features import engineer_features, FEATURE_COLUMNS
 from model.explain import explain_risk
 from session.manager import get_session, record_session_transaction
 from decision.snapshot import generate_trust_snapshot, TrustSnapshot, BehavioralRiskSnapshot
+from decision.summary import build_plain_english_summary
 
 
 class BehavioralRiskResult(BaseModel):
@@ -34,6 +35,7 @@ class DecisionReceipt(BaseModel):
     provenance_trail: List[Dict[str, Any]]
     decision: Literal["ALLOW", "VERIFY", "BLOCK"]
     decision_reason: str
+    summary: Optional[str] = None
     trust_snapshot: Optional[TrustSnapshot] = None
     payment_hold_id: Optional[str] = None
     payment_hold_status: Optional[str] = None
@@ -82,6 +84,16 @@ def evaluate_transaction(
         reasons_str = ", ".join(failed_checks)
         dec = "BLOCK"
         dec_reason = f"blocked: authorization failed ({reasons_str})"
+        summary = build_plain_english_summary(
+            transaction=transaction,
+            decision=dec,
+            decision_reason=dec_reason,
+            authorization=auth_result,
+            intent_fidelity="skipped",
+            evidence="skipped",
+            behavioral_risk="skipped",
+            goal_drift="skipped",
+        )
         receipt_dict = {
             "authorization": auth_result,
             "intent_fidelity": "skipped",
@@ -91,6 +103,7 @@ def evaluate_transaction(
             "provenance_trail": provenance_trail,
             "decision": dec,
             "decision_reason": dec_reason,
+            "summary": summary,
         }
         snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
         return DecisionReceipt(
@@ -103,6 +116,7 @@ def evaluate_transaction(
             provenance_trail=provenance_trail,
             decision=dec,
             decision_reason=dec_reason,
+            summary=summary,
             trust_snapshot=snapshot,
         )
 
@@ -127,6 +141,16 @@ def evaluate_transaction(
         mismatches_str = ", ".join(intent_result.mismatched_fields)
         dec = "BLOCK"
         dec_reason = f"blocked: intent fidelity hard requirement mismatch ({mismatches_str})"
+        summary = build_plain_english_summary(
+            transaction=transaction,
+            decision=dec,
+            decision_reason=dec_reason,
+            authorization=auth_result,
+            intent_fidelity=intent_result,
+            evidence="skipped",
+            behavioral_risk="skipped",
+            goal_drift="skipped",
+        )
         receipt_dict = {
             "authorization": auth_result,
             "intent_fidelity": intent_result,
@@ -136,6 +160,7 @@ def evaluate_transaction(
             "provenance_trail": provenance_trail,
             "decision": dec,
             "decision_reason": dec_reason,
+            "summary": summary,
         }
         snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
         return DecisionReceipt(
@@ -148,6 +173,7 @@ def evaluate_transaction(
             provenance_trail=provenance_trail,
             decision=dec,
             decision_reason=dec_reason,
+            summary=summary,
             trust_snapshot=snapshot,
         )
 
@@ -170,6 +196,16 @@ def evaluate_transaction(
             conflict_fields = ", ".join(c["field"] for c in hard_conflicts)
             dec = "BLOCK"
             dec_reason = f"blocked: evidence conflict on hard requirement ({conflict_fields})"
+            summary = build_plain_english_summary(
+                transaction=transaction,
+                decision=dec,
+                decision_reason=dec_reason,
+                authorization=auth_result,
+                intent_fidelity=intent_result,
+                evidence=evidence_result,
+                behavioral_risk="skipped",
+                goal_drift="skipped",
+            )
             receipt_dict = {
                 "authorization": auth_result,
                 "intent_fidelity": intent_result,
@@ -179,6 +215,7 @@ def evaluate_transaction(
                 "provenance_trail": provenance_trail,
                 "decision": dec,
                 "decision_reason": dec_reason,
+                "summary": summary,
             }
             snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
             return DecisionReceipt(
@@ -191,6 +228,7 @@ def evaluate_transaction(
                 provenance_trail=provenance_trail,
                 decision=dec,
                 decision_reason=dec_reason,
+                summary=summary,
                 trust_snapshot=snapshot,
             )
         else:
@@ -231,6 +269,16 @@ def evaluate_transaction(
         dec = "BLOCK"
         dec_reason = "blocked: deceptive split-payment installment token pattern detected (fraud limit evasion)"
         split_risk = BehavioralRiskResult(score=0.95, top_reasons=["Deceptive micro-token sequence", "Split-charge limit evasion"])
+        summary = build_plain_english_summary(
+            transaction=transaction,
+            decision=dec,
+            decision_reason=dec_reason,
+            authorization=auth_result,
+            intent_fidelity=intent_result,
+            evidence=evidence_result,
+            behavioral_risk=split_risk,
+            goal_drift="skipped",
+        )
         receipt_dict = {
             "authorization": auth_result,
             "intent_fidelity": intent_result,
@@ -240,6 +288,7 @@ def evaluate_transaction(
             "provenance_trail": provenance_trail,
             "decision": dec,
             "decision_reason": dec_reason,
+            "summary": summary,
         }
         snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
         return DecisionReceipt(
@@ -252,6 +301,7 @@ def evaluate_transaction(
             provenance_trail=provenance_trail,
             decision=dec,
             decision_reason=dec_reason,
+            summary=summary,
             trust_snapshot=snapshot,
         )
 
@@ -289,6 +339,16 @@ def evaluate_transaction(
         dec = "BLOCK"
         dec_reason = f"blocked: session goal drift detected ({drift_result.reason} - cumulative spend exceeds declared session budget cap)"
         drift_risk = BehavioralRiskResult(score=0.90, top_reasons=["Session cumulative budget cap breached", "Workstation multi-step drift"])
+        summary = build_plain_english_summary(
+            transaction=transaction,
+            decision=dec,
+            decision_reason=dec_reason,
+            authorization=auth_result,
+            intent_fidelity=intent_result,
+            evidence=evidence_result,
+            behavioral_risk=drift_risk,
+            goal_drift=drift_result,
+        )
         receipt_dict = {
             "authorization": auth_result,
             "intent_fidelity": intent_result,
@@ -298,6 +358,7 @@ def evaluate_transaction(
             "provenance_trail": provenance_trail,
             "decision": dec,
             "decision_reason": dec_reason,
+            "summary": summary,
         }
         snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
         return DecisionReceipt(
@@ -310,6 +371,7 @@ def evaluate_transaction(
             provenance_trail=provenance_trail,
             decision=dec,
             decision_reason=dec_reason,
+            summary=summary,
             trust_snapshot=snapshot,
         )
 
@@ -390,6 +452,17 @@ def evaluate_transaction(
         elif decision == "BLOCK":
             decision_reason = f"blocked: behavioral risk score {risk_score:.2f} exceeds threshold (0.75)"
 
+    summary = build_plain_english_summary(
+        transaction=transaction,
+        decision=decision,
+        decision_reason=decision_reason,
+        authorization=auth_result,
+        intent_fidelity=intent_result,
+        evidence=evidence_result,
+        behavioral_risk=behavioral_result,
+        goal_drift=drift_result,
+    )
+
     receipt_dict = {
         "authorization": auth_result,
         "intent_fidelity": intent_result,
@@ -399,6 +472,7 @@ def evaluate_transaction(
         "provenance_trail": provenance_trail,
         "decision": decision,
         "decision_reason": decision_reason,
+        "summary": summary,
     }
     snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
 
@@ -412,6 +486,7 @@ def evaluate_transaction(
         provenance_trail=provenance_trail,
         decision=decision,
         decision_reason=decision_reason,
+        summary=summary,
         trust_snapshot=snapshot,
     )
 

@@ -110,6 +110,7 @@ def run_sandbox_demo():
 
         print(f"\n2. SpendGuard Decision Receipt Received:")
         print(f"   • Verdict:         {receipt1.decision} (Reason: {receipt1.decision_reason})")
+        print(f"   • Summary:         {receipt1.summary}")
         print(f"   • Authorization:   Passed={_get(receipt1.authorization, 'passed')}")
         print(f"   • Intent Fidelity: Hard Match={_get(receipt1.intent_fidelity, 'hard_match')}, Soft Score={_get(receipt1.intent_fidelity, 'soft_score')}")
         print(f"   • Evidence Gate:   Conflict={_get(receipt1.evidence, 'conflict')}")
@@ -177,6 +178,7 @@ def run_sandbox_demo():
 
         print(f"\n2. SpendGuard Decision Receipt Received:")
         print(f"   • Verdict:         {receipt2.decision} (Reason: {receipt2.decision_reason})")
+        print(f"   • Summary:         {receipt2.summary}")
         print(f"   • Evidence Gate:   Conflict={_get(receipt2.evidence, 'conflict')}")
         print(f"   • Discrepancies:   {_get(receipt2.evidence, 'discrepancies')}")
         print(f"   • Razorpay Order:  {receipt2.razorpay_order_id} (Zero Order Created)")
@@ -231,6 +233,7 @@ def run_sandbox_demo():
 
         print(f"\n2. SpendGuard Decision Receipt Received:")
         print(f"   • Verdict:         {receipt3.decision} (Reason: {receipt3.decision_reason})")
+        print(f"   • Summary:         {receipt3.summary}")
         print(f"   • Payment Hold ID: {receipt3.payment_hold_id}")
         print(f"   • Hold Status:     {str(receipt3.payment_hold_status).upper()}")
 

@@ -203,21 +203,22 @@ def execute_native_checkout(
         return f"BLOCKED (SECURITY FAIL-CLOSED): Unexpected verification error ({err})."
 
     # Natural language observation format
+    summary_text = f"\nSummary: {receipt.summary}" if receipt.summary else ""
     if receipt.is_allowed:
         order_info = f" Razorpay Order ID: {receipt.razorpay_order_id}." if receipt.razorpay_order_id else ""
         return (
             f"APPROVED: Purchase of {sku} for ₹{amount:,.2f} at {merchant} authorized by SpendGuard Trust Gateway."
-            f"{order_info} All 4 trust pillars passed. You may inform the user the purchase succeeded."
+            f"{order_info} All 4 trust pillars passed.{summary_text} You may inform the user the purchase succeeded."
         )
     elif receipt.is_verification_required:
         hold_info = f" (Hold ID: {receipt.payment_hold_id})" if receipt.payment_hold_id else ""
         return (
             f"HELD FOR HUMAN VERIFICATION: Purchase of {sku} requires human operator approval.{hold_info} "
-            f"Reason: {receipt.decision_reason}. Inform the user that the order is pending compliance review."
+            f"Reason: {receipt.decision_reason}.{summary_text} Inform the user that the order is pending compliance review."
         )
     else:  # is_blocked
         return (
             f"BLOCKED: Purchase of {sku} was rejected by SpendGuard Trust Gateway. "
-            f"Reason: {receipt.decision_reason}. "
+            f"Reason: {receipt.decision_reason}.{summary_text} "
             "You must select a compliant alternative product that satisfies corporate policies or abort."
         )

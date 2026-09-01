@@ -65,6 +65,7 @@ class DecisionReceipt(BaseModel):
     transaction_id: str
     decision: Literal["ALLOW", "VERIFY", "BLOCK"]
     decision_reason: str
+    summary: Optional[str] = None
     authorization: Union[AuthorizationResultModel, Dict[str, Any], Literal["skipped"]] = "skipped"
     intent_fidelity: Union[IntentFidelityResultModel, Dict[str, Any], Literal["skipped"]] = "skipped"
     behavioral_risk: Union[BehavioralRiskResultModel, Dict[str, Any], Literal["skipped"]] = "skipped"
