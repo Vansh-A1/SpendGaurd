@@ -23,7 +23,7 @@ On Windows: `%APPDATA%\Claude\claude_desktop_config.json`
       ],
       "env": {
         "SPENDGUARD_API_URL": "http://localhost:8000",
-        "SPENDGUARD_API_KEY": "sg_live_your_key_here"
+        "SPENDGUARD_API_KEY": "<your-spendguard-api-key>"
       }
     }
   }
@@ -39,7 +39,7 @@ On Windows: `%APPDATA%\Claude\claude_desktop_config.json`
       "command": "python -m spendguard.integrations.mcp_server",
       "env": {
         "SPENDGUARD_API_URL": "https://spendguard.internal.net",
-        "SPENDGUARD_API_KEY": "sg_live_production_key"
+        "SPENDGUARD_API_KEY": "<your-spendguard-api-key>"
       }
     }
   }

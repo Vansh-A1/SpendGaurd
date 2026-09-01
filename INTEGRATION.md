@@ -77,7 +77,7 @@ Add SpendGuard to your `claude_desktop_config.json`:
       "args": ["-m", "spendguard.integrations.mcp_server"],
       "env": {
         "SPENDGUARD_API_URL": "http://localhost:8000",
-        "SPENDGUARD_API_KEY": "sg_live_your_key_here"
+        "SPENDGUARD_API_KEY": "<your-spendguard-api-key>"
       }
     }
   }
