@@ -40,6 +40,10 @@ class DecisionReceipt(BaseModel):
     payment_hold_id: Optional[str] = None
     payment_hold_status: Optional[str] = None
     razorpay_order_id: Optional[str] = None
+    razorpay_payment_id: Optional[str] = None
+    captured_at: Optional[str] = None
+    settlement_status: Optional[str] = None
+    settlement_receipt_token: Optional[str] = None
     payment_error: Optional[str] = None
 
 

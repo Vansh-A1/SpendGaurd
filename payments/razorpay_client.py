@@ -186,45 +186,143 @@ def create_payment_hold(
     return hold_record
 
 
+class PaymentRailSecurityError(Exception):
+    """Raised when an unapproved, blocked, or invalid transaction attempts to touch payment rails."""
+    pass
+
+
+def execute_checkout_settlement(
+    receipt: Any,
+    transaction: Any,
+    card_last4: str = "4242",
+    card_network: str = "Visa",
+    is_operator_approved: bool = False,
+) -> Dict[str, Any]:
+    """
+    Code-level gate protecting the payment rail.
+    Strictly forbids BLOCK, fail-closed, or unapproved VERIFY transactions from touching payment rails.
+    """
+    decision = getattr(receipt, "decision", None) or (receipt.get("decision") if isinstance(receipt, dict) else None)
+
+    # Explicit Code-Level Guard
+    if decision == "BLOCK":
+        raise PaymentRailSecurityError(
+            f"SECURITY VIOLATION: Blocked transaction {getattr(transaction, 'id', '')} attempted to access payment rails. Execution halted."
+        )
+
+    if decision == "VERIFY" and not is_operator_approved:
+        raise PaymentRailSecurityError(
+            f"SECURITY VIOLATION: Unapproved VERIFY transaction {getattr(transaction, 'id', '')} cannot be settled without explicit human operator clearance."
+        )
+
+    if decision not in ("ALLOW", "VERIFY"):
+        raise PaymentRailSecurityError(
+            f"SECURITY VIOLATION: Invalid or fail-closed transaction state ({decision}) cannot access payment rails."
+        )
+
+    # Execute full Razorpay test-mode order and payment capture loop
+    amount = float(getattr(transaction, "amount", 0.0) or (transaction.get("amount", 0.0) if isinstance(transaction, dict) else 0.0))
+    tx_id = getattr(transaction, "id", "") or (transaction.get("id", "") if isinstance(transaction, dict) else "")
+    merchant = getattr(transaction, "merchant", "") or (transaction.get("merchant", "") if isinstance(transaction, dict) else "")
+    sku = getattr(transaction, "actual_sku", "") or (transaction.get("actual_sku", "") if isinstance(transaction, dict) else "")
+
+    order = create_test_order(amount=amount, currency="INR", receipt_id=tx_id)
+    payment = simulate_sandbox_payment_capture(
+        order_id=order["id"],
+        amount=amount,
+        currency="INR",
+        card_last4=card_last4,
+        card_network=card_network,
+    )
+    settlement = generate_sandbox_receipt(
+        transaction_id=tx_id,
+        order_id=order["id"],
+        payment_id=payment["id"],
+        amount=amount,
+        merchant=merchant,
+        sku=sku,
+    )
+
+    return {
+        "order": order,
+        "payment": payment,
+        "settlement": settlement,
+        "razorpay_order_id": order["id"],
+        "razorpay_payment_id": payment["id"],
+        "captured_at": payment["captured_at"],
+        "settlement_status": "SETTLED",
+        "settlement_receipt_token": settlement["signature_hash"],
+    }
+
+
 def capture_payment_hold(
     hold_id: str,
     amount: Optional[float] = None,
     currency: str = "INR",
     transaction_id: str = "",
+    card_last4: str = "8888",
+    card_network: str = "MasterCard",
 ) -> Dict[str, Any]:
     """
     Phase 2 Capture: Triggered upon Human Approval of a VERIFY transaction.
-    Transitions local hold status to 'captured' and executes the underlying Razorpay order.
+    Transitions local hold status to 'captured' and executes the underlying Razorpay order & card settlement.
     """
     hold = _PAYMENT_HOLDS.get(hold_id)
     now_iso = datetime.now(timezone.utc).isoformat()
     capture_amount = amount if amount is not None else (hold["amount"] if hold else 0.0)
+    tx_id = transaction_id or (hold["transaction_id"] if hold else "")
 
-    # Attempt to create underlying Razorpay test order
+    # Create underlying Razorpay test order
     try:
         order = create_test_order(
             amount=capture_amount,
             currency=currency,
-            receipt_id=transaction_id or (hold["transaction_id"] if hold else ""),
+            receipt_id=tx_id,
             notes={"hold_id": hold_id, "action": "capture_post_verification"},
         )
         order_id = order.get("id")
     except Exception:
         order_id = f"order_cap_{uuid.uuid4().hex[:12]}"
 
+    # Execute payment capture
+    payment = simulate_sandbox_payment_capture(
+        order_id=order_id,
+        amount=capture_amount,
+        currency=currency,
+        card_last4=card_last4,
+        card_network=card_network,
+    )
+
+    # Generate settlement receipt token
+    settlement = generate_sandbox_receipt(
+        transaction_id=tx_id,
+        order_id=order_id,
+        payment_id=payment["id"],
+        amount=capture_amount,
+        merchant="Post-Verification Approved Merchant",
+        sku=tx_id,
+    )
+
     if hold:
         hold["status"] = "captured"
         hold["razorpay_order_id"] = order_id
+        hold["razorpay_payment_id"] = payment["id"]
+        hold["settlement_status"] = "SETTLED"
+        hold["settlement_receipt_token"] = settlement["signature_hash"]
+        hold["captured_at"] = now_iso
         hold["updated_at"] = now_iso
 
     return {
         "hold_id": hold_id,
-        "transaction_id": transaction_id or (hold["transaction_id"] if hold else ""),
+        "transaction_id": tx_id,
         "amount": capture_amount,
         "currency": currency,
         "status": "captured",
         "razorpay_order_id": order_id,
+        "razorpay_payment_id": payment["id"],
         "captured_at": now_iso,
+        "settlement_status": "SETTLED",
+        "settlement_receipt_token": settlement["signature_hash"],
     }
 
 
@@ -242,11 +340,13 @@ def void_payment_hold(
     if hold:
         hold["status"] = "voided"
         hold["void_reason"] = reason
+        hold["settlement_status"] = "HOLD_VOIDED"
         hold["updated_at"] = now_iso
 
     return {
         "hold_id": hold_id,
         "status": "voided",
+        "settlement_status": "HOLD_VOIDED",
         "reason": reason,
         "voided_at": now_iso,
     }

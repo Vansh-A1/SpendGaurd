@@ -108,10 +108,17 @@ def create_mcp_server(
         # Format natural language observation for LLM agent reasoning
         summary_text = f"\nSummary: {receipt.summary}" if receipt.summary else ""
         if receipt.is_allowed:
-            order_info = f" Razorpay Order ID: {receipt.razorpay_order_id}." if receipt.razorpay_order_id else ""
+            settle_parts = []
+            if receipt.razorpay_order_id:
+                settle_parts.append(f"Order: {receipt.razorpay_order_id}")
+            if receipt.razorpay_payment_id:
+                settle_parts.append(f"Payment ID: {receipt.razorpay_payment_id}")
+            if receipt.settlement_status:
+                settle_parts.append(f"Settlement: {receipt.settlement_status}")
+            settle_info = f" [{', '.join(settle_parts)}]" if settle_parts else ""
             return (
-                f"APPROVED: Purchase of {sku} for ₹{amount:,.2f} at {merchant} authorized by SpendGuard Trust Gateway."
-                f"{order_info} All 4 trust pillars passed.{summary_text} You may inform the user the purchase succeeded."
+                f"APPROVED: Purchase of {sku} for ₹{amount:,.2f} at {merchant} authorized and settled by SpendGuard Trust Gateway.{settle_info} "
+                f"All 4 trust pillars passed.{summary_text} You may inform the user the purchase succeeded."
             )
         elif receipt.is_verification_required:
             hold_info = f" (Hold ID: {receipt.payment_hold_id})" if receipt.payment_hold_id else ""

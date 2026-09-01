@@ -125,6 +125,16 @@ def init_db(db_path: Optional[Path] = None):
         cursor.execute("ALTER TABLE transactions ADD COLUMN payment_hold_id TEXT")
     if "payment_hold_status" not in tx_cols:
         cursor.execute("ALTER TABLE transactions ADD COLUMN payment_hold_status TEXT")
+    if "summary" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN summary TEXT")
+    if "razorpay_payment_id" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN razorpay_payment_id TEXT")
+    if "captured_at" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN captured_at TEXT")
+    if "settlement_status" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN settlement_status TEXT")
+    if "settlement_receipt_token" not in tx_cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN settlement_receipt_token TEXT")
 
     cursor.execute("PRAGMA table_info(provenance_events)")
     existing_cols = [row[1] for row in cursor.fetchall()]
@@ -234,8 +244,9 @@ def save_transaction_evaluation(
         claimed_product_json, actual_sku, authorization_json, intent_fidelity_json,
         behavioral_risk_json, evidence_json, decision, decision_reason, razorpay_order_id,
         payment_hold_id, payment_hold_status, session_id, intent_version, goal_drift_json,
-        trust_snapshot_json, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        trust_snapshot_json, summary, razorpay_payment_id, captured_at, settlement_status,
+        settlement_receipt_token, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         tx_dict["id"],
         tx_dict["agent_id"],
@@ -260,6 +271,11 @@ def save_transaction_evaluation(
         intent_version,
         drift_json,
         snap_json,
+        receipt_dict.get("summary"),
+        receipt_dict.get("razorpay_payment_id"),
+        receipt_dict.get("captured_at"),
+        receipt_dict.get("settlement_status"),
+        receipt_dict.get("settlement_receipt_token"),
         now_iso,
     ))
 
@@ -328,33 +344,30 @@ def get_transactions(
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
-    query = "SELECT * FROM transactions"
+    query = "SELECT * FROM transactions WHERE 1=1"
     params = []
-    conditions = []
 
     if decision:
-        conditions.append("decision = ?")
-        params.append(decision.upper())
+        query += " AND decision = ?"
+        params.append(decision)
     if agent_id:
-        conditions.append("agent_id = ?")
+        query += " AND agent_id = ?"
         params.append(agent_id)
     if session_id:
-        conditions.append("session_id = ?")
+        query += " AND session_id = ?"
         params.append(session_id)
 
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-
-    query += " ORDER BY created_at DESC, timestamp DESC"
-
-    cursor.execute(query, tuple(params))
+    query += " ORDER BY timestamp DESC"
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     results = [dict(r) for r in rows]
     conn.close()
     return results
 
 
-def get_transaction_receipt(transaction_id: str, db_path: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+def get_transaction_receipt(
+    transaction_id: str, db_path: Optional[Path] = None
+) -> Optional[Dict[str, Any]]:
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
@@ -403,12 +416,17 @@ def get_transaction_receipt(transaction_id: str, db_path: Optional[Path] = None)
         "provenance_trail": provenance_trail,
         "decision": tx["decision"],
         "decision_reason": tx["decision_reason"],
+        "summary": tx.get("summary"),
         "trust_snapshot": _parse_pillar(tx.get("trust_snapshot_json")),
         "session_id": tx.get("session_id"),
         "intent_version": tx.get("intent_version", 1),
         "payment_hold_id": tx.get("payment_hold_id"),
         "payment_hold_status": tx.get("payment_hold_status"),
         "razorpay_order_id": tx.get("razorpay_order_id"),
+        "razorpay_payment_id": tx.get("razorpay_payment_id"),
+        "captured_at": tx.get("captured_at"),
+        "settlement_status": tx.get("settlement_status"),
+        "settlement_receipt_token": tx.get("settlement_receipt_token"),
     }
     conn.close()
     return receipt
@@ -433,22 +451,38 @@ def update_transaction_decision(
     action: str,
     reason: str,
     razorpay_order_id: Optional[str] = None,
+    razorpay_payment_id: Optional[str] = None,
+    settlement_status: Optional[str] = None,
+    captured_at: Optional[str] = None,
+    settlement_receipt_token: Optional[str] = None,
     db_path: Optional[Path] = None,
 ) -> bool:
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
     now_iso = datetime.now(timezone.utc).isoformat()
 
+    updates = ["decision = ?", "decision_reason = ?"]
+    params = [new_decision, reason]
+
     if razorpay_order_id:
-        cursor.execute(
-            "UPDATE transactions SET decision = ?, decision_reason = ?, razorpay_order_id = ? WHERE id = ?",
-            (new_decision, reason, razorpay_order_id, transaction_id),
-        )
-    else:
-        cursor.execute(
-            "UPDATE transactions SET decision = ?, decision_reason = ? WHERE id = ?",
-            (new_decision, reason, transaction_id),
-        )
+        updates.append("razorpay_order_id = ?")
+        params.append(razorpay_order_id)
+    if razorpay_payment_id:
+        updates.append("razorpay_payment_id = ?")
+        params.append(razorpay_payment_id)
+    if settlement_status:
+        updates.append("settlement_status = ?")
+        params.append(settlement_status)
+    if captured_at:
+        updates.append("captured_at = ?")
+        params.append(captured_at)
+    if settlement_receipt_token:
+        updates.append("settlement_receipt_token = ?")
+        params.append(settlement_receipt_token)
+
+    params.append(transaction_id)
+    query = f"UPDATE transactions SET {', '.join(updates)} WHERE id = ?"
+    cursor.execute(query, params)
 
     if cursor.rowcount == 0:
         conn.close()

@@ -322,6 +322,9 @@ from payments.razorpay_client import (
     create_payment_hold,
     capture_payment_hold,
     void_payment_hold,
+    simulate_sandbox_payment_capture,
+    generate_sandbox_receipt,
+    execute_checkout_settlement,
 )
 from api.escalations import (
     create_escalation,
@@ -400,7 +403,28 @@ def evaluate(transaction: TransactionRequest):
                 currency="INR",
                 receipt_id=transaction.id,
             )
-            receipt.razorpay_order_id = order.get("id")
+            order_id = order.get("id") if isinstance(order, dict) else getattr(order, "id", None)
+            receipt.razorpay_order_id = order_id
+            if order_id:
+                payment = simulate_sandbox_payment_capture(
+                    order_id=order_id,
+                    amount=transaction.amount,
+                    currency="INR",
+                )
+                settlement = generate_sandbox_receipt(
+                    transaction_id=transaction.id,
+                    order_id=order_id,
+                    payment_id=payment["id"],
+                    amount=transaction.amount,
+                    merchant=transaction.merchant,
+                    sku=transaction.actual_sku,
+                )
+                receipt.razorpay_payment_id = payment.get("id")
+                receipt.captured_at = payment.get("captured_at")
+                receipt.settlement_status = "SETTLED"
+                receipt.settlement_receipt_token = settlement.get("signature_hash")
+                if receipt.summary:
+                    receipt.summary = f"{receipt.summary} Payment was captured and settled on card rails (Razorpay Payment ID: {payment.get('id')})."
         except Exception as e:
             receipt.payment_error = str(e)
     elif receipt.decision == "VERIFY":
@@ -412,6 +436,7 @@ def evaluate(transaction: TransactionRequest):
             )
             receipt.payment_hold_id = hold.get("hold_id")
             receipt.payment_hold_status = hold.get("status")
+            receipt.settlement_status = "HOLD_AUTHORIZED"
 
             # Register in escalation queue
             create_escalation(
@@ -500,6 +525,10 @@ def verify_transaction(id: str, body: VerifyRequest):
 
     amt = float(row["amount"]) if row else 0.0
     hold_id = row["payment_hold_id"] if row and "payment_hold_id" in row.keys() else receipt.get("payment_hold_id")
+    razorpay_payment_id = None
+    settlement_status = None
+    captured_at = None
+    settlement_receipt_token = None
 
     # 1. Capture hold on approval
     if body.approved:
@@ -509,9 +538,13 @@ def verify_transaction(id: str, body: VerifyRequest):
                 currency="INR",
                 receipt_id=id,
             )
-            razorpay_order_id = order.get("id")
+            razorpay_order_id = order.get("id") if isinstance(order, dict) else getattr(order, "id", None)
             if hold_id:
-                capture_payment_hold(hold_id=hold_id, amount=amt, transaction_id=id)
+                cap_res = capture_payment_hold(hold_id=hold_id, amount=amt, transaction_id=id)
+                razorpay_payment_id = cap_res.get("razorpay_payment_id")
+                captured_at = cap_res.get("captured_at")
+                settlement_status = "SETTLED"
+                settlement_receipt_token = cap_res.get("settlement_receipt_token")
         except Exception as e:
             payment_error = str(e)
         resolve_escalation(id, action="approved")
@@ -519,7 +552,8 @@ def verify_transaction(id: str, body: VerifyRequest):
         # 2. Void hold on denial
         if hold_id:
             try:
-                void_payment_hold(hold_id=hold_id, reason="human_denied")
+                void_res = void_payment_hold(hold_id=hold_id, reason="human_denied")
+                settlement_status = void_res.get("settlement_status", "HOLD_VOIDED")
             except Exception as e:
                 payment_error = str(e)
         resolve_escalation(id, action="denied")
@@ -531,6 +565,10 @@ def verify_transaction(id: str, body: VerifyRequest):
         action=action,
         reason=reason,
         razorpay_order_id=razorpay_order_id,
+        razorpay_payment_id=razorpay_payment_id,
+        settlement_status=settlement_status,
+        captured_at=captured_at,
+        settlement_receipt_token=settlement_receipt_token,
     )
     if not success:
         raise HTTPException(status_code=500, detail="Failed to update transaction decision")

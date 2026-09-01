@@ -2,10 +2,10 @@
 SpendGuard End-to-End Real Sandbox Payment Flow Demo.
 
 Demonstrates the complete lifecycle of autonomous agent procurement:
-1. Agent Proposal -> 4-Pillar Gate Evaluation
-2. ALLOW -> Immediate Razorpay Test-Mode Order -> Sandbox Card Token Capture -> Cryptographic Settlement Receipt
-3. BLOCK -> Hard Stop (Zero Order, Zero Card Charge)
-4. VERIFY -> Pre-Auth Hold -> Human Operator Approval -> Payment Capture & Settlement
+1. Case 1: ALLOW -> Immediate Razorpay Test-Mode Order -> Sandbox Card Token Capture -> Cryptographic Settlement Receipt
+2. Case 2: BLOCK -> Hard Stop & Code-Level Payment Rail Guard (Zero Order, Zero Card Charge)
+3. Case 3: VERIFY (Approved) -> Pre-Auth Hold -> Operator Approval -> Post-Review Card Capture & Settlement
+4. Case 4: VERIFY (Denied / Void) -> Pre-Auth Hold -> Operator Denial / Timeout -> Hold Voided (Zero Money Captured)
 """
 
 import os
@@ -27,7 +27,10 @@ from payments.razorpay_client import (
     simulate_sandbox_payment_capture,
     generate_sandbox_receipt,
     capture_payment_hold,
+    void_payment_hold,
     clear_payment_holds,
+    execute_checkout_settlement,
+    PaymentRailSecurityError,
 )
 
 
@@ -59,10 +62,18 @@ def create_in_process_spendguard_client():
     return sg_client, mock_urlopen
 
 
+def _get(obj, key, default=None):
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
 def run_sandbox_demo():
     print("=" * 100)
-    print(" SPENDGUARD REAL SANDBOX PAYMENT FLOW DEMO (RAZORPAY TEST RAILS)")
-    print(" Demonstrating full transaction lifecycle: Trust Gating -> Order Creation -> Sandbox Capture")
+    print(" SPENDGUARD REAL SANDBOX PAYMENT RAIL FLOW DEMO (RAZORPAY TEST MODE)")
+    print(" Demonstrating full transaction lifecycle: Trust Gating -> Order Creation -> Sandbox Card Capture -> Settlement")
     print("=" * 100)
 
     api_mod.MANDATES_CACHE = {}
@@ -73,7 +84,7 @@ def run_sandbox_demo():
 
     with patch("urllib.request.urlopen", side_effect=mock_urlopen):
         # ----------------------------------------------------------------------
-        # CASE 1: Clean Baseline Purchase (ALLOW -> Order -> Sandbox Capture)
+        # CASE 1: Clean Baseline Purchase (ALLOW -> Full Settlement)
         # ----------------------------------------------------------------------
         print("\n" + "#" * 100)
         print(" [CASE 1] CLEAN BASELINE PURCHASE: Dell Inspiron 15 (₹48,990.00)")
@@ -103,54 +114,29 @@ def run_sandbox_demo():
 
         receipt1 = sg_client.evaluate(tx1)
 
-        def _get(obj, key, default=None):
-            if isinstance(obj, dict):
-                return obj.get(key, default)
-            return getattr(obj, key, default)
-
         print(f"\n2. SpendGuard Decision Receipt Received:")
         print(f"   • Verdict:         {receipt1.decision} (Reason: {receipt1.decision_reason})")
-        print(f"   • Summary:         {receipt1.summary}")
+        print(f"   • Plain Summary:   {receipt1.summary}")
         print(f"   • Authorization:   Passed={_get(receipt1.authorization, 'passed')}")
         print(f"   • Intent Fidelity: Hard Match={_get(receipt1.intent_fidelity, 'hard_match')}, Soft Score={_get(receipt1.intent_fidelity, 'soft_score')}")
         print(f"   • Evidence Gate:   Conflict={_get(receipt1.evidence, 'conflict')}")
         print(f"   • Behavioral Risk: Score={_get(receipt1.behavioral_risk, 'score')}")
         print(f"   • Razorpay Order:  {receipt1.razorpay_order_id}")
+        print(f"   • Payment ID:      {receipt1.razorpay_payment_id}")
+        print(f"   • Settlement:      {receipt1.settlement_status} (Captured At: {receipt1.captured_at})")
+        print(f"   • Receipt Hash:    {str(receipt1.settlement_receipt_token)[:32]}...")
 
         assert receipt1.is_allowed
         assert receipt1.razorpay_order_id is not None
-
-        print(f"\n3. Executing Downstream Sandbox Payment Capture (Card Rail):")
-        payment1 = simulate_sandbox_payment_capture(
-            order_id=receipt1.razorpay_order_id,
-            amount=tx1.amount,
-            card_last4="4242",
-            card_network="Visa",
-        )
-        print(f"   • Payment ID:      {payment1['id']}")
-        print(f"   • Status:          {payment1['status'].upper()}")
-        print(f"   • Card:            {payment1['card']['network']} ending in {payment1['card']['last4']} ({payment1['card']['type']})")
-        print(f"   • Gateway Fee/Tax: ₹{payment1['fee']/100:.2f} + ₹{payment1['tax']/100:.2f}")
-
-        receipt_token1 = generate_sandbox_receipt(
-            transaction_id=tx1.id,
-            order_id=receipt1.razorpay_order_id,
-            payment_id=payment1["id"],
-            amount=tx1.amount,
-            merchant=tx1.merchant,
-            sku=tx1.actual_sku,
-        )
-        print(f"\n4. Cryptographic Settlement Receipt Issued:")
-        print(f"   • Receipt ID:      {receipt_token1['receipt_id']}")
-        print(f"   • Status:          {receipt_token1['status']}")
-        print(f"   • Signature Hash:  {receipt_token1['signature_hash'][:32]}...")
+        assert receipt1.razorpay_payment_id is not None
+        assert receipt1.is_settled
 
         # ----------------------------------------------------------------------
-        # CASE 2: Spec Spoofing Adversarial Trap (BLOCK -> Zero Payment)
+        # CASE 2: Spec Spoofing Adversarial Trap (BLOCK -> Hard Stop)
         # ----------------------------------------------------------------------
         print("\n" + "#" * 100)
         print(" [CASE 2] SPEC SPOOFING ATTACK: ThinkPad T14 Spoof (Claimed 32GB / Actual 8GB)")
-        print(" Expected Flow: Evidence Conflict -> Hard BLOCK -> Zero Razorpay Order -> Zero Payment")
+        print(" Expected Flow: Evidence Conflict -> Hard BLOCK -> Zero Razorpay Order -> Rail Guard Enforced")
         print("#" * 100)
 
         tx2 = TransactionRequest(
@@ -178,20 +164,29 @@ def run_sandbox_demo():
 
         print(f"\n2. SpendGuard Decision Receipt Received:")
         print(f"   • Verdict:         {receipt2.decision} (Reason: {receipt2.decision_reason})")
-        print(f"   • Summary:         {receipt2.summary}")
+        print(f"   • Plain Summary:   {receipt2.summary}")
         print(f"   • Evidence Gate:   Conflict={_get(receipt2.evidence, 'conflict')}")
         print(f"   • Discrepancies:   {_get(receipt2.evidence, 'discrepancies')}")
         print(f"   • Razorpay Order:  {receipt2.razorpay_order_id} (Zero Order Created)")
+        print(f"   • Payment ID:      {receipt2.razorpay_payment_id} (Zero Payment Created)")
 
         assert receipt2.is_blocked
         assert receipt2.razorpay_order_id is None
-        print(f"\n3. Security Verification: Payment rail was NEVER touched. Zero money moved.")
+        assert receipt2.razorpay_payment_id is None
+
+        # Test Code-Level Guard against non-approved transactions
+        try:
+            execute_checkout_settlement(receipt2, tx2)
+            raise AssertionError("Security Guard failed to stop blocked receipt from touching payment rail!")
+        except PaymentRailSecurityError as p_err:
+            print(f"\n3. Security Guard Active: {p_err}")
+            print(f"   Security Verification: Payment rail was NEVER touched. Zero money moved.")
 
         # ----------------------------------------------------------------------
-        # CASE 3: Near-Miss Substitution (VERIFY -> Pre-Auth Hold -> Approved -> Captured)
+        # CASE 3: Near-Miss Substitution (VERIFY -> Human Approval -> Capture)
         # ----------------------------------------------------------------------
         print("\n" + "#" * 100)
-        print(" [CASE 3] NEAR-MISS SUBSTITUTION: Bose QC 45 (VERIFY -> Human Approval -> Capture)")
+        print(" [CASE 3] NEAR-MISS SUBSTITUTION: Bose QC 45 (VERIFY -> Human Approval -> Settle)")
         print(" Expected Flow: Soft Mismatch -> Pre-Auth Hold -> Operator Approval -> Post-Review Capture")
         print("#" * 100)
 
@@ -209,7 +204,7 @@ def run_sandbox_demo():
 
         tx3 = TransactionRequest(
             id=f"tx_sbx_{uuid.uuid4().hex[:8]}",
-            agent_id=f"agent_sbx_{uuid.uuid4().hex[:6]}",
+            agent_id="agent_sbx_bose",
             mandate_id="mandate_shop_enterprise",
             user_intent_id="intent_bose_subst_demo",
             claimed_product={
@@ -233,35 +228,67 @@ def run_sandbox_demo():
 
         print(f"\n2. SpendGuard Decision Receipt Received:")
         print(f"   • Verdict:         {receipt3.decision} (Reason: {receipt3.decision_reason})")
-        print(f"   • Summary:         {receipt3.summary}")
+        print(f"   • Plain Summary:   {receipt3.summary}")
         print(f"   • Payment Hold ID: {receipt3.payment_hold_id}")
         print(f"   • Hold Status:     {str(receipt3.payment_hold_status).upper()}")
 
         assert receipt3.is_verification_required
         assert receipt3.payment_hold_id is not None
+        assert receipt3.razorpay_payment_id is None
 
         print(f"\n3. Operator Review in SpendGuard Console: Operator reviews provenance & approves substitution.")
-        capture_res = capture_payment_hold(
+        cap_res = capture_payment_hold(
             hold_id=receipt3.payment_hold_id,
             amount=tx3.amount,
             transaction_id=tx3.id,
-        )
-        print(f"   • Hold Transition: {receipt3.payment_hold_status} -> {capture_res['status'].upper()}")
-        print(f"   • Razorpay Order:  {capture_res['razorpay_order_id']}")
-
-        payment3 = simulate_sandbox_payment_capture(
-            order_id=capture_res["razorpay_order_id"],
-            amount=tx3.amount,
             card_last4="8888",
             card_network="MasterCard",
         )
-        print(f"   • Payment ID:      {payment3['id']}")
-        print(f"   • Payment Status:  {payment3['status'].upper()}")
-        print(f"   • Card:            {payment3['card']['network']} ending in {payment3['card']['last4']}")
+        print(f"   • Hold Transition: authorized -> {cap_res['status'].upper()}")
+        print(f"   • Razorpay Order:  {cap_res['razorpay_order_id']}")
+        print(f"   • Payment ID:      {cap_res['razorpay_payment_id']}")
+        print(f"   • Settlement:      {cap_res['settlement_status']} (Captured At: {cap_res['captured_at']})")
+        print(f"   • Settlement Token:{cap_res['settlement_receipt_token'][:32]}...")
+
+        # ----------------------------------------------------------------------
+        # CASE 4: Stale Mandate / Operator Denial (VERIFY -> Denied -> Voided Hold)
+        # ----------------------------------------------------------------------
+        print("\n" + "#" * 100)
+        print(" [CASE 4] OPERATOR DENIAL: Unusual Spending Spike (VERIFY -> Operator Denied -> Void)")
+        print(" Expected Flow: Elevated Risk -> Pre-Auth Hold -> Operator Rejection -> Hold Voided (Zero Debit)")
+        print("#" * 100)
+
+        tx4 = TransactionRequest(
+            id=f"tx_sbx_{uuid.uuid4().hex[:8]}",
+            agent_id="agent_sbx_bose",
+            mandate_id="mandate_shop_enterprise",
+            user_intent_id="intent_bose_subst_demo",
+            claimed_product={
+                "brand": "Bose",
+                "model": "QuietComfort 45",
+                "specs": {"color": "silver edition", "anc": True},
+            },
+            actual_sku="TRAP-ELEC-BOSE-QC45-SUBST",
+            amount=24900.0,
+            category="electronics",
+            merchant="Bose Authorized Hub",
+            scenario_type="near_miss_substitution",
+            expected_decision="VERIFY",
+        )
+
+        receipt4 = sg_client.evaluate(tx4)
+        print(f"\n1. Submitting Transaction -> Placed on Hold: {receipt4.payment_hold_id}")
+        assert receipt4.is_verification_required
+
+        print(f"\n2. Operator Review: Operator inspects and DENIES the purchase (policy non-compliance).")
+        void_res = void_payment_hold(hold_id=receipt4.payment_hold_id, reason="operator_declined_substitution")
+        print(f"   • Hold Transition: authorized -> {void_res['status'].upper()} (Reason: {void_res['reason']})")
+        print(f"   • Settlement:      {void_res['settlement_status']}")
+        print(f"   • Razorpay Rails:  Zero Orders Created | Zero Payments Captured | Zero Money Moved.")
 
     print("\n" + "=" * 100)
-    print(" SANDBOX PAYMENT DEMO COMPLETED SUCCESSFULLY (ALL 3 CASES VERIFIED)")
-    print("=" * 100)
+    print(" SANDBOX PAYMENT DEMO COMPLETED SUCCESSFULLY (ALL 4 CASES VERIFIED)")
+    print("=" * 100 + "\n")
 
 
 if __name__ == "__main__":
