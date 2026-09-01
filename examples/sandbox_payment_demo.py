@@ -177,7 +177,8 @@ def run_sandbox_demo():
 
         print(f"\n2. SpendGuard Decision Receipt Received:")
         print(f"   • Verdict:         {receipt2.decision} (Reason: {receipt2.decision_reason})")
-        print(f"   • Evidence Gate:   Conflict={receipt2.evidence.conflict}")
+        print(f"   • Evidence Gate:   Conflict={_get(receipt2.evidence, 'conflict')}")
+        print(f"   • Discrepancies:   {_get(receipt2.evidence, 'discrepancies')}")
         print(f"   • Razorpay Order:  {receipt2.razorpay_order_id} (Zero Order Created)")
 
         assert receipt2.is_blocked

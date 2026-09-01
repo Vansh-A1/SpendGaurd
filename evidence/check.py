@@ -15,8 +15,11 @@ class EvidenceDetail(BaseModel):
 
 
 class EvidenceResult(BaseModel):
-    conflicts: List[Dict[str, Any]]
-    sources_checked: List[str]
+    conflict: bool = False
+    conflicts: List[Dict[str, Any]] = []
+    unverifiable: bool = False
+    discrepancies: List[str] = []
+    sources_checked: List[str] = []
     unverifiable_attributes: Optional[List[Dict[str, Any]]] = None
     verification_status: str = "verified" # "verified", "conflict", "unverifiable"
     evidence_details: Optional[List[EvidenceDetail]] = None
@@ -164,15 +167,25 @@ def check_evidence(
                 "reason": "attribute_not_found_in_catalog_specs",
             })
 
-    if len(conflicts) > 0:
+    has_conflict = len(conflicts) > 0
+    has_unverifiable = len(unverifiable_attributes) > 0
+    discrepancies = [
+        f"{c['field']} mismatch (claimed '{c.get('claimed')}' vs actual '{c.get('actual')}')"
+        for c in conflicts
+    ]
+
+    if has_conflict:
         v_status = "conflict"
-    elif len(unverifiable_attributes) > 0:
+    elif has_unverifiable:
         v_status = "unverifiable"
     else:
         v_status = "verified"
 
     return EvidenceResult(
+        conflict=has_conflict,
         conflicts=conflicts,
+        unverifiable=has_unverifiable,
+        discrepancies=discrepancies,
         sources_checked=sources_checked,
         unverifiable_attributes=unverifiable_attributes or None,
         verification_status=v_status,
