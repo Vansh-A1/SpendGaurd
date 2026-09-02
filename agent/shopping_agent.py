@@ -27,8 +27,8 @@ from simulator.scorer import resolve_human_review
 load_dotenv()
 
 # Safety & Budget Configuration
-MAX_BATCH_RUNS = int(os.environ.get("MAX_SIMULATION_RUNS_PER_BATCH", 20))
-MAX_DAILY_LLM_CALLS = int(os.environ.get("MAX_LLM_CALLS_PER_DAY", 100))
+MAX_BATCH_RUNS = int(os.environ.get("MAX_SIMULATION_RUNS_PER_BATCH", 50))
+MAX_DAILY_LLM_CALLS = int(os.environ.get("MAX_LLM_CALLS_PER_DAY", 250))
 
 
 class ShoppingEnvironment:

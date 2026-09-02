@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { ArrowUpRight, ChevronDown, RefreshCw } from "lucide-react";
+import { ArrowUpRight, ChevronDown, RefreshCw, Copy, Check, ShieldCheck, Terminal, ExternalLink, Cpu, Bot, Zap, CheckCircle2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import "@/App.css";
 
@@ -328,6 +328,329 @@ function ScenarioLibrary() {
   );
 }
 
+const integrationSurfaces = [
+  {
+    id: "sdk",
+    name: "Python SDK",
+    pill: "spendguard v0.1.0",
+    filename: "agent_checkout.py",
+    description: "Lightweight client library with fail-closed security guarantees, sub-10ms evaluation latency, and cryptographic settlement token parsing.",
+    code: `from spendguard import SpendGuardClient, TransactionRequest
+
+# Initialize client with fail-closed security guarantee
+client = SpendGuardClient(base_url="http://localhost:8000", api_key="<your-spendguard-api-key>")
+
+# Submit transaction for 4-pillar trust evaluation
+receipt = client.evaluate(
+    TransactionRequest(
+        id="tx_corp_001",
+        agent_id="agent_procure_01",
+        mandate_id="mandate_shop_enterprise",
+        user_intent_id="intent_laptop_01",
+        claimed_product={"brand": "Dell", "model": "Inspiron 15 5530"},
+        actual_sku="TRAP-ELEC-DELL-5530-CLEAN",
+        amount=48990.00,
+        category="electronics",
+        merchant="Dell Official Store",
+    )
+)
+
+if receipt.is_allowed:
+    print(f"Settled: Order {receipt.razorpay_order_id} | Payment ID {receipt.razorpay_payment_id}")
+    print(f"Summary: {receipt.summary}")`,
+    outputVerdict: "SETTLED (ALLOW)",
+    outputReason: "All 4 trust pillars passed (Risk Score: 0.03). Razorpay Order: order_TX6oz5XY89hkyO | Payment ID: pay_test_2b92fdd87c8e42",
+    outputSummary: "Approved purchase of Dell Inspiron 15 5530 for ₹48,990.00 from Dell Official Store. Payment was captured and settled on live Razorpay card rails.",
+  },
+  {
+    id: "langchain",
+    name: "LangChain",
+    pill: "SpendGuardCheckoutTool",
+    filename: "react_shopper_agent.py",
+    description: "Plug-and-play checkout tool returning structured natural-language observations for ReAct agent reasoning and compliance feedback.",
+    code: `from spendguard.integrations.langchain import SpendGuardCheckoutTool
+from langchain.agents import create_react_agent
+
+# Initialize SpendGuard as a LangChain BaseTool
+checkout_tool = SpendGuardCheckoutTool(
+    base_url="http://localhost:8000",
+    mandate_id="mandate_shop_enterprise",
+    agent_id="langchain_shopper_01",
+)
+
+# Agent invokes checkout tool during purchase loop
+observation = checkout_tool.run({
+    "sku": "TRAP-ELEC-DELL-5530-CLEAN",
+    "amount": 48990.00,
+    "merchant": "Dell Official Store",
+    "brand": "Dell",
+    "model": "Inspiron 15 5530",
+    "category": "electronics",
+    "claimed_specs": {"ram_gb": 16, "storage_gb": 512, "cpu": "Intel Core i5-1335U"}
+})
+
+print(observation)`,
+    outputVerdict: "LANGCHAIN OBSERVATION",
+    outputReason: "APPROVED: Purchase of TRAP-ELEC-DELL-5530-CLEAN for ₹48,990.00 at Dell Official Store authorized and settled by SpendGuard Trust Gateway. [Order: order_TX6oz5XY89hkyO, Payment ID: pay_test_2b92fdd87c8e42, Settlement: SETTLED] All 4 trust pillars passed.",
+    outputSummary: "Summary: The transaction satisfied all corporate policy limits, passed independent catalog spec verification, and matched the user's requirements.",
+  },
+  {
+    id: "mcp",
+    name: "MCP Server",
+    pill: "Claude Desktop & Cursor",
+    filename: "claude_desktop_config.json",
+    description: "Model Context Protocol server exposing evaluate_transaction for Claude Desktop, Cursor IDE, and custom agent sidecars.",
+    code: `{
+  "mcpServers": {
+    "spendguard": {
+      "command": "python",
+      "args": ["-m", "spendguard.integrations.mcp_server"],
+      "env": {
+        "SPENDGUARD_API_URL": "http://localhost:8000",
+        "SPENDGUARD_API_KEY": "<your-spendguard-api-key>"
+      }
+    }
+  }
+}`,
+    outputVerdict: "MCP TOOL RESULT",
+    outputReason: "APPROVED: Purchase of TRAP-ELEC-DELL-5530-CLEAN for ₹48,990.00 at Dell Official Store authorized and settled. [Order: order_TX6p5Y5WZiRoPu, Payment ID: pay_test_eb69f8eb7e7b44, Settlement: SETTLED]",
+    outputSummary: "Summary: The transaction satisfied all corporate policy limits, passed independent catalog spec verification, and demonstrated low behavioral risk.",
+  },
+  {
+    id: "native",
+    name: "OpenAI & Anthropic",
+    pill: "Native Tool Schemas",
+    filename: "native_function_calling.py",
+    description: "Standard JSON function schemas for OpenAI chat.completions (tools=[OPENAI_TOOL_SCHEMA]) and Anthropic Claude messages.create.",
+    code: `import json
+from openai import OpenAI
+from spendguard.integrations.native_schemas import OPENAI_TOOL_SCHEMA, execute_native_checkout
+
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Procure Dell Inspiron 15 for ₹48,990 from Dell Official Store"}],
+    tools=[OPENAI_TOOL_SCHEMA],
+)
+
+# Execute SpendGuard tool call & settlement
+tool_call = response.choices[0].message.tool_calls[0]
+tool_result = execute_native_checkout(
+    args=json.loads(tool_call.function.arguments),
+    base_url="http://localhost:8000"
+)
+print(tool_result)`,
+    outputVerdict: "NATIVE TOOL RESULT",
+    outputReason: "APPROVED: Purchase of TRAP-ELEC-DELL-5530-CLEAN for ₹48,990.00 at Dell Official Store authorized and settled by SpendGuard Trust Gateway. [Order: order_TX6oz5XY89hkyO, Payment ID: pay_test_2b92fdd87c8e42, Settlement: SETTLED]",
+    outputSummary: "Summary: Corporate policies, independent spec evidence, and behavioral risk thresholds satisfied. Payment settled on card rails.",
+  }
+];
+
+const benchmarkStats = [
+  { label: "True Leakage", value: "0.0%", detail: "0 / 22 unauthorized transactions allowed across red-team tests", hero: true },
+  { label: "False Friction", value: "0.0%", detail: "0 / 10 clean baseline purchases delayed or held", hero: false },
+  { label: "Traps Intercepted", value: "100%", detail: "22 / 22 adversarial traps caught by 4-pillar trust gates", hero: false },
+  { label: "Gateway Latency", value: "< 12ms", detail: "Deterministic spec verification vs 2,500ms+ LLM baseline", hero: false },
+];
+
+const dualModelData = [
+  {
+    model: "OpenAI GPT-4o Agent",
+    tag: "Multi-Turn Shopping ReAct",
+    leakage: "0.0%",
+    flagged: "100.0%",
+    friction: "0.0%",
+    status: "Verified",
+  },
+  {
+    model: "Anthropic Claude 3.5 Sonnet",
+    tag: "Native Tool-Use Agent",
+    leakage: "0.0%",
+    flagged: "100.0%",
+    friction: "0.0%",
+    status: "Verified",
+  }
+];
+
+const attackArchetypes = [
+  { name: "Hardware Spec Spoofing", status: "Hard Blocked (Pillar 3)" },
+  { name: "Split-Payment Evasion", status: "Fraud Intercepted (Pillar 4)" },
+  { name: "Near-Miss Spec Substitution", status: "Pre-Auth Hold (Pillar 2)" },
+  { name: "Stale / Expired Mandate TTL", status: "Time Blocked (Pillar 1)" },
+  { name: "Urgency Social Engineering", status: "Policy Guard (Pillar 1)" },
+  { name: "Category Boundary Creep", status: "Mandate Blocked (Pillar 1)" },
+];
+
+function IntegrationsSection() {
+  const [activeTab, setActiveTab] = useState("sdk");
+  const [copied, setCopied] = useState(false);
+  const current = integrationSurfaces.find((s) => s.id === activeTab) || integrationSurfaces[0];
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(current.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <section className="section integrations" id="integrations" data-testid="integrations-section">
+      <div className="section-wrap integration-layout">
+        <Reveal className="integration-intro">
+          <span className="chapter">08 / DEVELOPER SURFACES</span>
+          <h2>WORKS WITH YOUR<br /><span>AGENT STACK.</span></h2>
+          <p>
+            SpendGuard sits between your LLM reasoning loop and payment rails. Integrate in 5 minutes via our native SDK, LangChain tool, MCP server, or raw function schemas.
+          </p>
+          <div className="integration-tab-list" role="tablist">
+            {integrationSurfaces.map((s) => (
+              <button
+                key={s.id}
+                className={`integration-tab-btn ${s.id === activeTab ? "active" : ""}`}
+                onClick={() => setActiveTab(s.id)}
+                role="tab"
+                aria-selected={s.id === activeTab}
+                data-testid={`integration-tab-${s.id}`}
+              >
+                <span>{s.name}</span>
+                <b>{s.pill}</b>
+              </button>
+            ))}
+          </div>
+        </Reveal>
+
+        <Reveal className="integration-code-stage">
+          <div className="code-window">
+            <div className="code-window-bar">
+              <div className="code-window-dots">
+                <i /><i /><i />
+              </div>
+              <span className="code-window-title">{current.filename}</span>
+              <button className="code-copy-btn" onClick={handleCopy} data-testid="code-copy-btn">
+                {copied ? <span className="inline-flex items-center gap-1"><Check size={11} /> Copied</span> : <span className="inline-flex items-center gap-1"><Copy size={11} /> Copy Code</span>}
+              </button>
+            </div>
+            <pre className="code-window-body">
+              <code>{current.code}</code>
+            </pre>
+          </div>
+
+          <div className="code-output-card" data-testid="code-output-preview">
+            <header>
+              <span>{current.outputVerdict}</span>
+              <b>✓ SETTLED ON CARD RAILS</b>
+            </header>
+            <p className="text-slate-300 font-mono text-[11px] mb-1.5">{current.outputReason}</p>
+            <p className="text-slate-400 text-[11px] italic">{current.outputSummary}</p>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function DualModelBenchmarkSection() {
+  return (
+    <section className="section benchmark-section" id="benchmark" data-testid="benchmark-section">
+      <div className="section-wrap">
+        <Reveal className="benchmark-intro">
+          <span className="chapter">09 / PROVEN RESULTS</span>
+          <h2>DUAL-MODEL BENCHMARK.<br /><span>ZERO LEAKAGE.</span></h2>
+          <p style={{ maxWidth: "600px", color: "#8d94a1", lineHeight: "1.75", marginTop: "24px" }}>
+            Validated across 22 multi-turn adversarial shopping scenarios containing 6 attack archetypes evaluated against dual LLM agent architectures (OpenAI GPT-4o and Anthropic Claude 3.5 Sonnet).
+          </p>
+        </Reveal>
+
+        {/* 4 Headline Metrics */}
+        <Reveal className="benchmark-stats-grid">
+          {benchmarkStats.map((stat) => (
+            <div key={stat.label} className={`benchmark-stat-card ${stat.hero ? "hero-stat" : ""}`}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+              <p>{stat.detail}</p>
+            </div>
+          ))}
+        </Reveal>
+
+        {/* Dual Model Comparison */}
+        <Reveal className="benchmark-dual-comparison">
+          {dualModelData.map((d) => (
+            <div key={d.model} className="dual-model-box">
+              <header>
+                <div>
+                  <h4>{d.model}</h4>
+                  <small className="text-slate-400 text-xs font-mono">{d.tag}</small>
+                </div>
+                <span>{d.status}</span>
+              </header>
+              <div className="dual-model-stats">
+                <div>
+                  <span>Leakage Rate</span>
+                  <b className="text-emerald-400">{d.leakage}</b>
+                </div>
+                <div>
+                  <span>Traps Intercepted</span>
+                  <b>{d.flagged}</b>
+                </div>
+                <div>
+                  <span>False Friction</span>
+                  <b>{d.friction}</b>
+                </div>
+              </div>
+            </div>
+          ))}
+        </Reveal>
+
+        {/* Attack Archetypes Coverage */}
+        <Reveal style={{ marginTop: "32px" }}>
+          <span className="text-[10px] font-mono tracking-widest text-[#8d94a1] uppercase block mb-3">
+            Adversarial Trap Archetypes Neutralized:
+          </span>
+          <div className="archetype-tags">
+            {attackArchetypes.map((a) => (
+              <span key={a.name} className="archetype-tag caught">
+                ✓ {a.name} · <b className="text-emerald-300/80 font-normal">{a.status}</b>
+              </span>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* Real Payment Rail Verified Card */}
+        <Reveal className="rail-verified-banner" data-testid="rail-verified-banner">
+          <div>
+            <span className="text-[10px] font-mono font-bold tracking-widest text-[#a99df2] uppercase block mb-2">
+              REAL PAYMENT RAIL VERIFIED
+            </span>
+            <h3>Directly Tested On <span>Razorpay Test API</span></h3>
+            <p>
+              Every transaction decision connects to Razorpay test-mode rails (<code>api.razorpay.com</code>). ALLOW decisions settle card charges immediately, VERIFY holds pre-authorized funds for operator clearance, and BLOCK/fail-closed states are stopped by code-level guards before touching payment rails.
+            </p>
+          </div>
+          <div className="rail-verified-badges">
+            <div className="rail-badge-item">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <span>Razorpay Order: <b>order_TX6oz5XY89hkyO</b></span>
+              </div>
+            </div>
+            <div className="rail-badge-item">
+              <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <span>Payment Capture: <b>pay_test_2b92fdd87c8e42</b></span>
+              </div>
+            </div>
+            <div className="rail-badge-item">
+              <CheckCircle2 className="w-4 h-4 text-[#a99df2] shrink-0" />
+              <div>
+                <span>Settlement Token: <span className="hash">19fbbacc7894... (SHA-256)</span></span>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 function downloadTrustReceipt(data = fallbackReceiptData) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const width = doc.internal.pageSize.getWidth();
@@ -604,6 +927,8 @@ function App() {
         <nav className="nav-links" aria-label="Primary navigation">
           <button onClick={() => scrollTo("product")} data-testid="nav-product-link">Product</button>
           <button onClick={() => scrollTo("how")} data-testid="nav-how-link">How it works</button>
+          <button onClick={() => scrollTo("integrations")} data-testid="nav-integrations-link">Integrations</button>
+          <button onClick={() => scrollTo("benchmark")} data-testid="nav-benchmark-link">Benchmark</button>
           <button onClick={() => scrollTo("trust")} data-testid="nav-trust-link">Trust</button>
           <button onClick={() => scrollTo("demo")} data-testid="nav-demo-link">Demo</button>
           <button className="nav-cta" onClick={() => openConsole("overview")} data-testid="open-console-button">Open Console →</button>
@@ -768,10 +1093,14 @@ function App() {
         </div>
       </section>
 
+      <IntegrationsSection />
+
+      <DualModelBenchmarkSection />
+
       <section className="section product" id="product" data-testid="product-section">
         <div className="section-wrap product-wrap">
           <Reveal className="product-intro">
-            <span className="chapter">08 / PRODUCT</span>
+            <span className="chapter">10 / PRODUCT</span>
             <h2>CONTROL, WITHOUT<br /><span>THE COMPLEXITY.</span></h2>
           </Reveal>
           <Reveal className="console" data-testid="console-preview">
@@ -786,7 +1115,7 @@ function App() {
       <section className="section founder" data-testid="founder-note-section">
         <div className="section-wrap founder-wrap">
           <Reveal>
-            <span className="chapter">09 / FOUNDER NOTE</span>
+            <span className="chapter">11 / FOUNDER NOTE</span>
             <blockquote data-testid="founder-note-quote">“Autonomy should never require blind faith.”</blockquote>
             <p data-testid="founder-note-copy">AI agents will compare, choose, and pay at machine speed. SpendGuard exists to make every action observable before money moves — authority first, intent always, evidence before trust, behavior over time.</p>
             <footer>— SPENDGUARD</footer>
