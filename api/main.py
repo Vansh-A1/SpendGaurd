@@ -347,6 +347,34 @@ class WebhookConfigRequest(BaseModel):
     url: str
 
 
+import time
+import threading
+from collections import defaultdict, deque
+
+_RATE_LIMIT_LOCK = threading.RLock()
+_AGENT_REQUEST_TIMESTAMPS: Dict[str, deque] = defaultdict(deque)
+BURST_WINDOW_SECONDS = 10.0
+BURST_MAX_REQUESTS = 35
+
+
+def check_burst_rate_limit(agent_id: str) -> bool:
+    """Thread-safe sliding-window burst rate limiter per agent_id."""
+    now = time.time()
+    with _RATE_LIMIT_LOCK:
+        dq = _AGENT_REQUEST_TIMESTAMPS[agent_id]
+        while dq and dq[0] < now - BURST_WINDOW_SECONDS:
+            dq.popleft()
+        if len(dq) >= BURST_MAX_REQUESTS:
+            return False
+        dq.append(now)
+        return True
+
+
+def clear_burst_rate_limits():
+    with _RATE_LIMIT_LOCK:
+        _AGENT_REQUEST_TIMESTAMPS.clear()
+
+
 @app.post("/transactions/evaluate", response_model=DecisionReceipt)
 def evaluate(transaction: TransactionRequest):
     """
@@ -355,15 +383,28 @@ def evaluate(transaction: TransactionRequest):
     places funds on authorization hold and registers escalations on VERIFY decisions,
     persists the DecisionReceipt and provenance trail to SQLite, and logs an audit event.
     """
+    # 0. Burst Rate Limiting Guard
+    if not check_burst_rate_limit(transaction.agent_id):
+        raise HTTPException(
+            status_code=429,
+            detail=f"Burst rate limit exceeded for agent '{transaction.agent_id}'. Maximum {BURST_MAX_REQUESTS} requests per {int(BURST_WINDOW_SECONDS)}s allowed. Please throttle agent requests.",
+            headers={"Retry-After": "5"}
+        )
+
+    # 0.5 Replay Attack Prevention Guard
+    existing_tx = get_transaction_receipt(transaction.id)
+    if existing_tx:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Duplicate transaction ID '{transaction.id}' detected (Replay Attack Rejected). Transaction was already recorded with decision: {existing_tx.get('decision')}."
+        )
+
     mandates_map, intents_map, catalog, risk_model = get_resources()
 
-    # 1. Resolve Mandate
+    # 1. Resolve Mandate strictly
     mandate = mandates_map.get(transaction.mandate_id)
     if not mandate:
-        # Fallback to agent default mandate if found
-        mandate = next((m for m in mandates_map.values() if m.agent_id == transaction.agent_id), None)
-        if not mandate:
-            raise HTTPException(status_code=404, detail=f"Mandate {transaction.mandate_id} not found")
+        raise HTTPException(status_code=404, detail=f"Mandate '{transaction.mandate_id}' not found")
 
     # 2. Resolve UserIntent
     intent = intents_map.get(transaction.user_intent_id)
@@ -375,28 +416,75 @@ def evaluate(transaction: TransactionRequest):
             hard_requirements={"brand": transaction.claimed_product.get("brand", "")},
             soft_preferences={},
             substitution_allowed=False,
-            created_at=transaction.timestamp,
+            created_at=transaction.timestamp or datetime.now(),
         )
 
-    # 3. Build history dataframe from DB for chronological feature velocity
+    # 3. Session Budget Concurrency Reservation
+    from session.manager import reserve_session_budget, release_session_reservation, commit_session_spend, get_session
+    session_reserved = False
+    if transaction.session_id:
+        reserved_ok, projected, limit = reserve_session_budget(transaction.session_id, transaction.amount)
+        if not reserved_ok:
+            from decision.engine import build_plain_english_summary, generate_trust_snapshot, BehavioralRiskResult, build_provenance_trail
+            from policy.authorization import AuthorizationResult
+            from intent.fidelity import IntentFidelityResult
+            from intent.drift import GoalDriftResult
+            from evidence.check import EvidenceResult
+
+            auth_res = AuthorizationResult(passed=True, failed_checks=[], is_stale=False)
+            intent_res = IntentFidelityResult(hard_match=True, soft_score=1.0, mismatched_fields=[])
+            ev_res = EvidenceResult(conflict=False, conflicts=[], unverifiable=False, discrepancies=[], sources_checked=["catalog_spec"], verification_status="verified")
+            drift_res = GoalDriftResult(has_drift=True, reason="session_budget_exceeded", details={"declared_budget": limit, "projected_spend": projected})
+            risk_res = BehavioralRiskResult(score=0.92, top_reasons=["Session cumulative budget cap breached under concurrent load"])
+            dec = "BLOCK"
+            dec_reason = f"blocked: session goal drift detected (session_budget_exceeded - cumulative projected spend ₹{projected:,.2f} exceeds declared limit ₹{limit:,.2f})"
+            prov = build_provenance_trail(transaction_id=transaction.id, intent=intent, catalog=catalog, selected_sku=transaction.actual_sku)
+            summ = build_plain_english_summary(transaction, dec, dec_reason, auth_res, intent_res, ev_res, risk_res, drift_res)
+            receipt_d = {"authorization": auth_res, "intent_fidelity": intent_res, "behavioral_risk": risk_res, "evidence": ev_res, "goal_drift": drift_res, "provenance_trail": prov, "decision": dec, "decision_reason": dec_reason, "summary": summ}
+            snap = generate_trust_snapshot(transaction, mandate, intent, receipt_d)
+            r = DecisionReceipt(
+                transaction_id=transaction.id,
+                authorization=auth_res,
+                intent_fidelity=intent_res,
+                behavioral_risk=risk_res,
+                evidence=ev_res,
+                goal_drift=drift_res,
+                provenance_trail=prov,
+                decision=dec,
+                decision_reason=dec_reason,
+                summary=summ,
+                trust_snapshot=snap,
+            )
+            save_transaction_evaluation(transaction.model_dump(mode="json"), r.model_dump(mode="json"), actor="system")
+            return r
+        session_reserved = True
+
+    # 4. Build history dataframe from DB for chronological feature velocity
     prior_txs = get_transactions(agent_id=transaction.agent_id)
     if prior_txs:
         history_df = pd.DataFrame(prior_txs)
     else:
         history_df = None
 
-    # 4. Evaluate through Decision Engine
-    receipt = evaluate_transaction(
-        transaction=transaction,
-        mandate=mandate,
-        intent=intent,
-        catalog=catalog,
-        risk_model=risk_model,
-        history_df=history_df,
-    )
+    # 5. Evaluate through Decision Engine
+    try:
+        receipt = evaluate_transaction(
+            transaction=transaction,
+            mandate=mandate,
+            intent=intent,
+            catalog=catalog,
+            risk_model=risk_model,
+            history_df=history_df,
+        )
+    except Exception as e:
+        if session_reserved:
+            release_session_reservation(transaction.session_id, transaction.amount)
+        raise e
 
-    # 5. Two-Phase Payment Execution
+    # 6. Two-Phase Payment Execution
     if receipt.decision == "ALLOW":
+        if session_reserved:
+            commit_session_spend(transaction.session_id, transaction.id, transaction.amount)
         try:
             order = create_test_order(
                 amount=transaction.amount,
@@ -428,6 +516,8 @@ def evaluate(transaction: TransactionRequest):
         except Exception as e:
             receipt.payment_error = str(e)
     elif receipt.decision == "VERIFY":
+        if session_reserved:
+            commit_session_spend(transaction.session_id, transaction.id, transaction.amount)
         try:
             hold = create_payment_hold(
                 amount=transaction.amount,
@@ -453,8 +543,12 @@ def evaluate(transaction: TransactionRequest):
             )
         except Exception as e:
             receipt.payment_error = str(e)
+    else:
+        # BLOCK decision
+        if session_reserved:
+            release_session_reservation(transaction.session_id, transaction.amount)
 
-    # 6. Persist to DB
+    # 7. Persist to DB
     tx_dict = transaction.model_dump(mode="json")
     receipt_dict = receipt.model_dump(mode="json")
     save_transaction_evaluation(tx_dict, receipt_dict, actor="system")

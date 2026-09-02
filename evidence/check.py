@@ -1,9 +1,64 @@
+import re
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
 from data.schema import Product
 from evidence.sources import EvidenceSourceRecord, is_record_fresh, resolve_source_records, get_source_rank
+
+
+SPEC_CANONICAL_ALIASES = {
+    # RAM aliases
+    "system_memory_gb": "ram_gb",
+    "system_memory": "ram_gb",
+    "main_ram": "ram_gb",
+    "main_ram_capacity": "ram_gb",
+    "ram_size": "ram_gb",
+    "memory_gb": "ram_gb",
+    "ram": "ram_gb",
+    "system_ram": "ram_gb",
+    "installed_ram": "ram_gb",
+    # Storage aliases
+    "storage_drive_size": "storage_gb",
+    "disk_capacity_gb": "storage_gb",
+    "disk_capacity": "storage_gb",
+    "disk_size": "storage_gb",
+    "ssd_gb": "storage_gb",
+    "hdd_gb": "storage_gb",
+    "storage": "storage_gb",
+    "capacity_gb": "storage_gb",
+    "capacity": "storage_gb",
+    "drive_size": "storage_gb",
+    # GPU aliases
+    "gpu_processor": "gpu",
+    "graphics_card": "gpu",
+    "gpu_chip": "gpu",
+    "video_card": "gpu",
+    "graphics": "gpu",
+    "gpu_model": "gpu",
+    # CPU aliases
+    "processor": "cpu",
+    "cpu_model": "cpu",
+    "cpu_chip": "cpu",
+    "processor_type": "cpu",
+    "cpu_processor": "cpu",
+}
+
+
+def canonicalize_spec_key(k: str) -> str:
+    cleaned = k.lower().strip().replace("-", "_").replace(" ", "_")
+    return SPEC_CANONICAL_ALIASES.get(cleaned, cleaned)
+
+
+def _extract_numeric_spec(val: Any) -> Optional[float]:
+    """Extract numeric value from string representations like '128GB', '32 GB', etc."""
+    if isinstance(val, (int, float)) and not isinstance(val, bool):
+        return float(val)
+    if isinstance(val, str):
+        match = re.search(r"(\d+(?:\.\d+)?)", val)
+        if match:
+            return float(match.group(1))
+    return None
 
 
 class EvidenceDetail(BaseModel):
@@ -27,7 +82,9 @@ class EvidenceResult(BaseModel):
 
 def _match_val(claimed_val: Any, actual_val: Any, field_name: str) -> bool:
     """Compare claimed value with actual catalog value."""
-    if field_name == "price" or (
+    canonical_f = canonicalize_spec_key(field_name)
+
+    if canonical_f == "price" or (
         isinstance(claimed_val, (int, float))
         and isinstance(actual_val, (int, float))
         and not isinstance(claimed_val, bool)
@@ -39,6 +96,13 @@ def _match_val(claimed_val: Any, actual_val: Any, field_name: str) -> bool:
         if a_num == 0:
             return c_num == 0
         return abs(c_num - a_num) / a_num <= 0.01
+
+    # Numeric spec extraction for ram_gb, storage_gb, etc.
+    if canonical_f in ("ram_gb", "storage_gb", "capacity_gb", "read_mbps", "battery_mah", "display_inch"):
+        c_num = _extract_numeric_spec(claimed_val)
+        a_num = _extract_numeric_spec(actual_val)
+        if c_num is not None and a_num is not None:
+            return abs(c_num - a_num) < 0.01
 
     if isinstance(claimed_val, str) and isinstance(actual_val, str):
         return claimed_val.strip().lower() == actual_val.strip().lower()
@@ -116,25 +180,33 @@ def check_evidence(
             evidence_details=evidence_details or None,
         )
 
-    # Flatten real product attributes and specs for comparison
+    # Flatten and canonicalize real product attributes and specs for comparison
     real_specs = dict(matched_product.specs or {})
+    canon_real_specs = {canonicalize_spec_key(k): v for k, v in real_specs.items()}
     top_level_keys = ["brand", "model", "category", "price", "sku"]
 
     # Helper to get ground truth value: prefers resolved multi-source record if present, else catalog
     def _get_truth_val(field_name: str, fallback_val: Any) -> Any:
+        canon_f = canonicalize_spec_key(field_name)
+        if canon_f in resolved_sources:
+            return resolved_sources[canon_f].value
         if field_name in resolved_sources:
             return resolved_sources[field_name].value
+        if canon_f in canon_real_specs:
+            return canon_real_specs[canon_f]
         return fallback_val
 
     # Check claimed_product attributes
     for key, claimed_val in claimed_product.items():
+        canon_key = canonicalize_spec_key(key)
         if key == "specs" and isinstance(claimed_val, dict):
             for spec_k, spec_v in claimed_val.items():
-                if spec_k in real_specs or spec_k in resolved_sources:
-                    actual_v = _get_truth_val(spec_k, real_specs.get(spec_k))
-                    if actual_v is not None and not _match_val(spec_v, actual_v, spec_k):
+                canon_spec_k = canonicalize_spec_key(spec_k)
+                if canon_spec_k in canon_real_specs or canon_spec_k in resolved_sources or spec_k in real_specs:
+                    actual_v = _get_truth_val(canon_spec_k, canon_real_specs.get(canon_spec_k, real_specs.get(spec_k)))
+                    if actual_v is not None and not _match_val(spec_v, actual_v, canon_spec_k):
                         conflicts.append({
-                            "field": spec_k,
+                            "field": canon_spec_k,
                             "claimed": spec_v,
                             "actual": actual_v,
                         })
@@ -152,11 +224,11 @@ def check_evidence(
                     "claimed": claimed_val,
                     "actual": actual_v,
                 })
-        elif key in real_specs or key in resolved_sources:
-            actual_v = _get_truth_val(key, real_specs.get(key))
-            if actual_v is not None and not _match_val(claimed_val, actual_v, key):
+        elif canon_key in canon_real_specs or canon_key in resolved_sources:
+            actual_v = _get_truth_val(canon_key, canon_real_specs.get(canon_key))
+            if actual_v is not None and not _match_val(claimed_val, actual_v, canon_key):
                 conflicts.append({
-                    "field": key,
+                    "field": canon_key,
                     "claimed": claimed_val,
                     "actual": actual_v,
                 })

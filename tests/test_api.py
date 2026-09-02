@@ -92,8 +92,10 @@ def test_evaluate_and_human_verify_flow(client, scenarios_data):
 
 
 def test_batch_evaluation_and_list_filtering(client, scenarios_data):
+    from api.main import clear_burst_rate_limits
     # Batch post all transactions
     for row in scenarios_data:
+        clear_burst_rate_limits()
         res = client.post("/transactions/evaluate", json=row)
         assert res.status_code == 200
 

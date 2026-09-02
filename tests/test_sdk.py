@@ -5,6 +5,7 @@ opt-in exceptions, and end-to-end API round-trips.
 """
 
 import json
+import uuid
 import socket
 from unittest.mock import patch, MagicMock
 import pytest
@@ -284,8 +285,8 @@ def test_sdk_api_error_handling():
 def test_sdk_roundtrip_against_fastapi_app(api_client):
     """End-to-end integration test validating that SDK payload matches FastAPI schema exactly."""
     tx = TransactionRequest(
-        id="tx_sdk_e2e_clean_sony",
-        agent_id="agent_clean_test_01",
+        id=f"tx_sdk_e2e_clean_sony_{uuid.uuid4().hex[:8]}",
+        agent_id="sim_shopping_agent_01",
         mandate_id="mandate_shop_enterprise",
         user_intent_id="intent_sony_clean",
         claimed_product={

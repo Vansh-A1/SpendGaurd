@@ -1,4 +1,19 @@
 {
+  "intent_corp_clean_dell": {
+    "id": "intent_corp_clean_dell",
+    "agent_id": "sim_shopping_agent_01",
+    "hard_requirements": {
+      "brand": "Dell",
+      "category": "electronics",
+      "max_price": 60000.0
+    },
+    "soft_preferences": {},
+    "substitution_allowed": false,
+    "created_at": "2026-08-15T11:45:00Z",
+    "intent_version": 1,
+    "parent_intent_id": null,
+    "intent_hash": "c001"
+  },
   "intent_0001": {
     "id": "intent_0001",
     "agent_id": "agent_shopping_01",

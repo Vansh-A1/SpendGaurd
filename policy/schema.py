@@ -18,7 +18,8 @@ class Mandate(BaseModel):
     time_window_start: str
     time_window_end: str
     issued_at: datetime
-    ttl_seconds: int
+    ttl_seconds: int = 86400
     time_windows: Optional[List[TimeWindowRule]] = None
     period_caps: Optional[Dict[str, float]] = None
+    total_mandate_budget: Optional[float] = None
     version: int = 1

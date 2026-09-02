@@ -182,19 +182,89 @@ def evaluate_transaction(
         )
 
     # -------------------------------------------------------------------------
-    # Step 3: Evidence Check (Pillar 4)
+    # Step 3: Deceptive Split-Payment / Fraud Evasion & Legitimate EMI Gate
     # -------------------------------------------------------------------------
+    product_name_lower = f"{getattr(actual_product, 'brand', '')} {getattr(actual_product, 'model', '')}".lower()
+    claimed_desc = json.dumps(transaction.claimed_product).lower()
+    
+    split_indicators = [
+        "token 1 of", "token 2 of", "token 3 of", "installment token",
+        "split charge", "charge 1 of", "charge 2 of", "part payment",
+        "burst_sequence", "installment 1 of", "installment 2 of"
+    ]
+    full_search_text = f"{product_name_lower} {claimed_desc}"
+    is_deceptive_split = any(ind in full_search_text for ind in split_indicators)
+    
+    if hasattr(actual_product, "specs") and isinstance(actual_product.specs, dict):
+        if actual_product.specs.get("is_voucher") or actual_product.specs.get("is_split_burst") or actual_product.specs.get("burst_sequence"):
+            is_deceptive_split = True
+
+    is_legitimate_emi = (
+        ("emi" in full_search_text)
+        and not is_deceptive_split
+        and ("no-cost emi" in full_search_text or "bank emi" in full_search_text or "authorized emi" in full_search_text or "emi plan" in full_search_text)
+    )
+
+    if is_deceptive_split:
+        dec = "BLOCK"
+        dec_reason = "blocked: deceptive split-payment installment token pattern detected (fraud limit evasion)"
+        split_risk = BehavioralRiskResult(score=0.95, top_reasons=["Deceptive micro-token sequence", "Split-charge limit evasion"])
+        summary = build_plain_english_summary(
+            transaction=transaction,
+            decision=dec,
+            decision_reason=dec_reason,
+            authorization=auth_result,
+            intent_fidelity=intent_result,
+            evidence=check_evidence(transaction.claimed_product, transaction.actual_sku, catalog),
+            behavioral_risk=split_risk,
+            goal_drift="skipped",
+        )
+        receipt_dict = {
+            "authorization": auth_result,
+            "intent_fidelity": intent_result,
+            "behavioral_risk": split_risk,
+            "evidence": check_evidence(transaction.claimed_product, transaction.actual_sku, catalog),
+            "goal_drift": "skipped",
+            "provenance_trail": provenance_trail,
+            "decision": dec,
+            "decision_reason": dec_reason,
+            "summary": summary,
+        }
+        snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
+        return DecisionReceipt(
+            transaction_id=transaction.id,
+            authorization=auth_result,
+            intent_fidelity=intent_result,
+            behavioral_risk=split_risk,
+            evidence=check_evidence(transaction.claimed_product, transaction.actual_sku, catalog),
+            goal_drift="skipped",
+            provenance_trail=provenance_trail,
+            decision=dec,
+            decision_reason=dec_reason,
+            summary=summary,
+            trust_snapshot=snapshot,
+        )
+
+    # -------------------------------------------------------------------------
+    # Step 3.5: Evidence Check (Pillar 4)
+    # -------------------------------------------------------------------------
+    from evidence.check import canonicalize_spec_key
     evidence_result = check_evidence(transaction.claimed_product, transaction.actual_sku, catalog)
     evidence_soft_conflict = False
 
     hard_keys = set(intent.hard_requirements.keys()) if intent and intent.hard_requirements else set()
     critical_evidence_fields = {
         "sku", "ram_gb", "gpu", "storage_gb", "capacity_gb", "cpu", "capacity", "storage",
-        "ram", "read_mbps", "generation", "battery_mah", "display_inch"
+        "ram", "read_mbps", "generation", "battery_mah", "display_inch", "price", "brand"
     }.union(hard_keys)
+    canonical_critical_fields = {canonicalize_spec_key(k) for k in critical_evidence_fields}
+
+    if is_legitimate_emi:
+        canonical_critical_fields.discard("price")
+        canonical_critical_fields.discard("model")
 
     if evidence_result.conflicts:
-        hard_conflicts = [c for c in evidence_result.conflicts if c["field"] in critical_evidence_fields]
+        hard_conflicts = [c for c in evidence_result.conflicts if canonicalize_spec_key(c["field"]) in canonical_critical_fields]
         
         if hard_conflicts:
             conflict_fields = ", ".join(c["field"] for c in hard_conflicts)
@@ -244,70 +314,6 @@ def evaluate_transaction(
     if evidence_result.unverifiable_attributes:
         evidence_unverifiable = True
         unverifiable_fields = [u["field"] for u in evidence_result.unverifiable_attributes]
-
-    # -------------------------------------------------------------------------
-    # Step 3.5: Deceptive Split-Payment / Fraud Evasion Gate
-    # -------------------------------------------------------------------------
-    product_name_lower = f"{getattr(actual_product, 'brand', '')} {getattr(actual_product, 'model', '')}".lower()
-    claimed_desc = json.dumps(transaction.claimed_product).lower()
-    
-    split_indicators = [
-        "token 1 of", "token 2 of", "token 3 of", "installment token",
-        "split charge", "charge 1 of", "charge 2 of", "part payment",
-        "burst_sequence", "installment 1 of", "installment 2 of"
-    ]
-    full_search_text = f"{product_name_lower} {claimed_desc}"
-    is_deceptive_split = any(ind in full_search_text for ind in split_indicators)
-    
-    if hasattr(actual_product, "specs") and isinstance(actual_product.specs, dict):
-        if actual_product.specs.get("is_voucher") or actual_product.specs.get("is_split_burst") or actual_product.specs.get("burst_sequence"):
-            is_deceptive_split = True
-
-    is_legitimate_emi = (
-        ("emi" in full_search_text)
-        and not is_deceptive_split
-        and ("no-cost emi" in full_search_text or "bank emi" in full_search_text or "authorized emi" in full_search_text or "emi plan" in full_search_text)
-    )
-
-    if is_deceptive_split:
-        dec = "BLOCK"
-        dec_reason = "blocked: deceptive split-payment installment token pattern detected (fraud limit evasion)"
-        split_risk = BehavioralRiskResult(score=0.95, top_reasons=["Deceptive micro-token sequence", "Split-charge limit evasion"])
-        summary = build_plain_english_summary(
-            transaction=transaction,
-            decision=dec,
-            decision_reason=dec_reason,
-            authorization=auth_result,
-            intent_fidelity=intent_result,
-            evidence=evidence_result,
-            behavioral_risk=split_risk,
-            goal_drift="skipped",
-        )
-        receipt_dict = {
-            "authorization": auth_result,
-            "intent_fidelity": intent_result,
-            "behavioral_risk": split_risk,
-            "evidence": evidence_result,
-            "goal_drift": "skipped",
-            "provenance_trail": provenance_trail,
-            "decision": dec,
-            "decision_reason": dec_reason,
-            "summary": summary,
-        }
-        snapshot = generate_trust_snapshot(transaction, mandate, intent, receipt_dict)
-        return DecisionReceipt(
-            transaction_id=transaction.id,
-            authorization=auth_result,
-            intent_fidelity=intent_result,
-            behavioral_risk=split_risk,
-            evidence=evidence_result,
-            goal_drift="skipped",
-            provenance_trail=provenance_trail,
-            decision=dec,
-            decision_reason=dec_reason,
-            summary=summary,
-            trust_snapshot=snapshot,
-        )
 
     # -------------------------------------------------------------------------
     # Goal Drift Evaluation (Session-Scoped)

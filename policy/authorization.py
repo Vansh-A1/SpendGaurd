@@ -1,4 +1,5 @@
-from datetime import datetime, time, timedelta
+import unicodedata
+from datetime import datetime, time, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
@@ -10,6 +11,14 @@ class AuthorizationResult(BaseModel):
     passed: bool
     failed_checks: List[str]
     is_stale: bool
+
+
+def _normalize_merchant_name(name: str) -> str:
+    """Normalize Unicode (NFKC), strip, and collapse whitespace for canonical comparison."""
+    if not name:
+        return ""
+    nfkc = unicodedata.normalize("NFKC", str(name))
+    return " ".join(nfkc.strip().lower().split())
 
 
 def _parse_time(time_str: str) -> time:
@@ -67,17 +76,25 @@ def check_authorization(
     """
     Evaluates a transaction against a mandate under Pillar 1 (Authorization).
     
-    Checks 1-4 are deterministic hard checks:
+    Checks 1-5 are deterministic hard checks:
     1. Budget: amount > per_transaction_cap -> "budget_exceeded"
     2. Category: category not in categories -> "category_not_allowed"
-    3. Merchant: if merchants non-empty, merchant not in merchants -> "merchant_not_allowed"
+    3. Merchant: canonical normalized merchant check -> "merchant_not_allowed"
     4. Time window: evaluated against mandate.time_windows list if present, else legacy start/end
-    5. Cumulative Period Caps: checks daily/weekly/monthly cumulative spend against mandate.period_caps
+    5. Cumulative Mandate Budget & Period Caps: checks total lifetime budget and periodic spend
     
     Check 6 (Mandate Freshness):
-    - If timestamp > issued_at + ttl_seconds -> is_stale=True (does not cause passed to fail here)
+    - Evaluated against both transaction timestamp and authoritative server wall-clock time
     """
     failed_checks: List[str] = []
+
+    # 0. Amount positivity check
+    if transaction.amount <= 0:
+        failed_checks.append("invalid_amount_non_positive")
+
+    # 0.5 Agent-Mandate identity binding check
+    if mandate.agent_id and transaction.agent_id and transaction.agent_id != mandate.agent_id:
+        failed_checks.append("agent_mandate_mismatch")
 
     # 1. Budget check (per-transaction cap)
     if transaction.amount > mandate.per_transaction_cap:
@@ -87,9 +104,12 @@ def check_authorization(
     if transaction.category not in mandate.categories:
         failed_checks.append("category_not_allowed")
 
-    # 3. Merchant check
-    if mandate.merchants and transaction.merchant not in mandate.merchants:
-        failed_checks.append("merchant_not_allowed")
+    # 3. Merchant check with Unicode NFKC & whitespace normalization
+    if mandate.merchants and len(mandate.merchants) > 0:
+        norm_tx_merchant = _normalize_merchant_name(transaction.merchant)
+        norm_allowed_merchants = {_normalize_merchant_name(m) for m in mandate.merchants}
+        if norm_tx_merchant not in norm_allowed_merchants:
+            failed_checks.append("merchant_not_allowed")
 
     # 4. Time window check (multi-window support with legacy fallback)
     if mandate.time_windows and len(mandate.time_windows) > 0:
@@ -100,19 +120,28 @@ def check_authorization(
         if not _is_time_in_window(tx_time, mandate.time_window_start, mandate.time_window_end):
             failed_checks.append("outside_time_window")
 
-    # 5. Cumulative Period Caps check (if period_caps specified)
+    # 5. Cumulative Mandate Budget & Period Caps
+    priors = prior_transactions
+    if priors is None:
+        try:
+            from api.db import get_transactions
+            priors = get_transactions(mandate_id=mandate.id)
+        except Exception:
+            priors = []
+
+    # 5a. Total Mandate Lifetime Budget (cross-session cap)
+    if mandate.total_mandate_budget and mandate.total_mandate_budget > 0:
+        total_mandate_spend = sum(
+            float(p.get("amount", 0.0))
+            for p in priors
+            if p.get("decision") != "BLOCK" and p.get("mandate_id") == mandate.id
+        )
+        if total_mandate_spend + transaction.amount > mandate.total_mandate_budget + 0.01:
+            failed_checks.append("mandate_total_budget_exceeded")
+
+    # 5b. Cumulative Period Caps check (if period_caps specified)
     if mandate.period_caps and len(mandate.period_caps) > 0:
         tx_ts = transaction.timestamp
-        # Query DB if prior transactions not explicitly supplied
-        if prior_transactions is None:
-            try:
-                from api.db import get_transactions
-                priors = get_transactions(agent_id=transaction.agent_id)
-            except Exception:
-                priors = []
-        else:
-            priors = prior_transactions
-
         for period, cap in mandate.period_caps.items():
             window_span = _get_period_timedelta(period)
             cutoff = tx_ts - window_span
@@ -144,11 +173,12 @@ def check_authorization(
             if (period_sum + transaction.amount) > float(cap):
                 failed_checks.append(f"period_cap_exceeded_{period}")
 
-    # 6. Mandate freshness check (separate flag, does not fail passed)
+    # 6. Mandate freshness & timestamp validation
     tx_ts = transaction.timestamp
     mandate_issued = mandate.issued_at
+    server_now = datetime.now(timezone.utc)
 
-    # Normalize timezone awareness if needed
+    # Normalize timezone awareness
     if tx_ts.tzinfo is not None and mandate_issued.tzinfo is None:
         mandate_issued = mandate_issued.replace(tzinfo=tx_ts.tzinfo)
     elif tx_ts.tzinfo is None and mandate_issued.tzinfo is not None:
@@ -156,6 +186,13 @@ def check_authorization(
 
     expiry_time = mandate_issued + timedelta(seconds=mandate.ttl_seconds)
     is_stale = tx_ts > expiry_time
+
+    # Timestamp sanity: Check for extreme future clock drift (> 1 year into future) or extreme backdating (> 60 days before mandate issuance)
+    if (mandate_issued - tx_ts) > timedelta(days=60):
+        failed_checks.append("timestamp_predates_mandate_issuance")
+
+    if (tx_ts - mandate_issued) > timedelta(days=365):
+        failed_checks.append("timestamp_future_drift_exceeded")
 
     passed = len(failed_checks) == 0
 
