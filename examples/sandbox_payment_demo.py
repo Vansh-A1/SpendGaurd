@@ -70,9 +70,17 @@ def _get(obj, key, default=None):
     return getattr(obj, key, default)
 
 
+from dotenv import load_dotenv
+load_dotenv()
+
+
 def run_sandbox_demo():
+    key_id = os.environ.get("RAZORPAY_KEY_ID") or os.environ.get("apikey") or os.environ.get("RAZORPAY_API_KEY")
+    mode_str = f"LIVE RAZORPAY TEST API ({key_id[:12]}...)" if key_id else "LOCAL AUTHENTIC-SCHEMA FALLBACK (No API Keys Configured)"
+
     print("=" * 100)
     print(" SPENDGUARD REAL SANDBOX PAYMENT RAIL FLOW DEMO (RAZORPAY TEST MODE)")
+    print(f" Execution Mode: {mode_str}")
     print(" Demonstrating full transaction lifecycle: Trust Gating -> Order Creation -> Sandbox Card Capture -> Settlement")
     print("=" * 100)
 

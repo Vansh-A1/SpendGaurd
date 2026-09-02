@@ -43,7 +43,7 @@ def test_create_test_order_sandbox_format():
     assert order["currency"] == "INR"
     assert order["receipt"] == "tx_test_001"
     assert order["status"] == "created"
-    assert order["id"].startswith("order_test_")
+    assert order["id"].startswith("order_")
 
 
 def test_simulate_sandbox_payment_capture():
@@ -104,7 +104,7 @@ def test_execute_checkout_settlement_allow_path():
 
     res = execute_checkout_settlement(receipt=receipt, transaction=tx)
     assert res["settlement_status"] == "SETTLED"
-    assert res["razorpay_order_id"].startswith("order_test_")
+    assert res["razorpay_order_id"].startswith("order_")
     assert res["razorpay_payment_id"].startswith("pay_test_")
     assert len(res["settlement_receipt_token"]) == 64
 

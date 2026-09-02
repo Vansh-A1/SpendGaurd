@@ -3,7 +3,10 @@ import uuid
 import hashlib
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
+from dotenv import load_dotenv
 import razorpay
+
+load_dotenv()
 
 # In-memory tracking for payment holds and sandbox payments
 _PAYMENT_HOLDS: Dict[str, Dict[str, Any]] = {}
@@ -12,8 +15,8 @@ _SANDBOX_PAYMENTS: Dict[str, Dict[str, Any]] = {}
 
 def get_razorpay_client() -> Optional[razorpay.Client]:
     """Instantiate razorpay.Client with environment credentials if configured."""
-    key_id = os.environ.get("RAZORPAY_KEY_ID")
-    key_secret = os.environ.get("RAZORPAY_KEY_SECRET")
+    key_id = os.environ.get("RAZORPAY_KEY_ID") or os.environ.get("apikey") or os.environ.get("RAZORPAY_API_KEY")
+    key_secret = os.environ.get("RAZORPAY_KEY_SECRET") or os.environ.get("secret") or os.environ.get("RAZORPAY_API_SECRET")
     if not key_id or not key_secret:
         return None
     return razorpay.Client(auth=(key_id, key_secret))
