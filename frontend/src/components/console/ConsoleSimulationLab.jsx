@@ -25,7 +25,7 @@ export function ConsoleSimulationLab() {
   const [runs, setRuns] = useState([]);
   const [metrics, setMetrics] = useState(null);
   const [tasks, setTasks] = useState([]);
-  const [modeFilter, setModeFilter] = useState("all"); // 'all', 'live_llm', 'fallback_rule_based'
+  const [modeFilter, setModeFilter] = useState("live_llm"); // 'live_llm' (default benchmark view), 'fallback_rule_based', 'all' (mixed debug)
   const [selectedRun, setSelectedRun] = useState(null);
   const [statusMessage, setStatusMessage] = useState(null);
 
@@ -162,6 +162,19 @@ export function ConsoleSimulationLab() {
         </div>
       </div>
 
+      {/* Mixed Debug View Warning Banner */}
+      {modeFilter === "all" && (
+        <div className="p-3.5 rounded bg-amber-950/50 border border-amber-500/40 text-amber-200 text-xs font-mono flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <strong className="text-amber-300 block mb-0.5">⚠️ Mixed Debug History Active (Not a Valid Benchmark Result)</strong>
+            <span>
+              This view blends unsegregated historical runs and fallback tests from earlier development sessions. For verified headline metrics, select the <strong>⚡ Live LLM Agent</strong> filter tab.
+            </span>
+          </div>
+        </div>
+      )}
+
       {statusMessage && (
         <div className="p-3.5 rounded bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2">
           <Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -207,10 +220,10 @@ export function ConsoleSimulationLab() {
           <div className="text-[10px] font-mono font-bold tracking-widest text-[#8d94a1] uppercase">
             AGENT FOOL RATE
           </div>
-          <div className="text-3xl sm:text-4xl font-mono font-bold text-amber-400">
+          <div className="text-3xl sm:text-4xl font-mono font-bold text-amber-300">
             {metrics?.agent_fool_rate !== undefined ? `${metrics.agent_fool_rate}%` : "0.0%"}
           </div>
-          <div className="text-[11px] font-mono text-amber-400/80">
+          <div className="text-[11px] font-mono text-[#8d94a1]">
             {metrics?.agent_fooled_count || 0} times agent fell for bait
           </div>
         </div>
@@ -224,7 +237,7 @@ export function ConsoleSimulationLab() {
             {metrics?.false_friction_rate !== undefined ? `${metrics.false_friction_rate}%` : "0.0%"}
           </div>
           <div className="text-[11px] font-mono text-[#8d94a1]">
-            Clean tasks incorrectly delayed
+            Clean tasks incorrectly delayed ({metrics?.false_friction_count || 0} of {metrics?.clean_tasks_count || 0})
           </div>
         </div>
       </div>
@@ -236,20 +249,31 @@ export function ConsoleSimulationLab() {
             Filter View:
           </span>
           {[
-            { id: "all", label: `All Runs (${runs.length})` },
-            { id: "live_llm", label: `⚡ Live LLM Agent (${llmRunsCount})` },
-            { id: "fallback_rule_based", label: `⚙️ Fallback Smoke Test (${fallbackRunsCount})` },
+            { id: "live_llm", label: `⚡ Live LLM Agent (${modeFilter === "live_llm" ? runs.length : llmRunsCount})`, badge: "BENCHMARK VALID" },
+            { id: "fallback_rule_based", label: `⚙️ Fallback Smoke Test (${modeFilter === "fallback_rule_based" ? runs.length : fallbackRunsCount})` },
+            { id: "all", label: `🔍 All / Mixed Debug View`, badge: "MIXED" },
           ].map((btn) => (
             <button
               key={btn.id}
               onClick={() => setModeFilter(btn.id)}
-              className={`px-3 py-1.5 rounded-sm font-semibold tracking-wider transition-all ${
+              className={`px-3 py-1.5 rounded-sm font-semibold tracking-wider transition-all flex items-center gap-2 ${
                 modeFilter === btn.id
                   ? "bg-[#a99df2] text-[#07090d]"
                   : "bg-[#10141e] border border-[#dddee8]/15 text-[#8d94a1] hover:text-[#f0eef5]"
               }`}
             >
-              {btn.label}
+              <span>{btn.label}</span>
+              {btn.badge && (
+                <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
+                  modeFilter === btn.id
+                    ? "bg-[#07090d] text-[#a99df2]"
+                    : btn.id === "live_llm"
+                    ? "bg-emerald-950/80 text-emerald-400 border border-emerald-500/30"
+                    : "bg-amber-950/80 text-amber-400 border border-amber-500/30"
+                }`}>
+                  {btn.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
