@@ -867,3 +867,39 @@ def get_simulation_metrics(execution_mode: Optional[str] = None):
     runs = get_simulation_runs(execution_mode=execution_mode)
     return compute_simulation_metrics(runs, execution_mode=execution_mode)
 
+
+# -----------------------------------------------------------------------------
+# Production SPA Frontend Static Mounting (Docker / Single-Port Deployment)
+# -----------------------------------------------------------------------------
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+frontend_build_dir = REPO_ROOT / "frontend" / "build"
+if (frontend_build_dir / "static").exists():
+    app.mount("/static", StaticFiles(directory=str(frontend_build_dir / "static")), name="static")
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def serve_frontend_spa(full_path: str):
+    # Do not intercept API or documentation routes
+    api_prefixes = (
+        "api", "transactions", "mandates", "intents", "simulation",
+        "auth", "webhooks", "health", "openapi.json", "docs", "redoc"
+    )
+    for prefix in api_prefixes:
+        if full_path == prefix or full_path.startswith(f"{prefix}/"):
+            raise HTTPException(status_code=404, detail="API route not found")
+
+    if frontend_build_dir.exists():
+        direct_file = frontend_build_dir / full_path
+        if direct_file.exists() and direct_file.is_file():
+            return FileResponse(str(direct_file))
+        index_file = frontend_build_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file))
+
+    return JSONResponse(
+        status_code=200,
+        content={"message": "SpendGuard Gateway API is running. Build frontend with 'npm run build' to view the UI."}
+    )
+
