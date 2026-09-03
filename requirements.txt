@@ -9,3 +9,5 @@ httpx
 pytest
 bcrypt
 PyJWT
+python-dotenv
+pytest-asyncio
