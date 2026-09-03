@@ -3,7 +3,7 @@ from datetime import datetime, time, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
-from data.schema import TransactionRequest
+from data.schema import TransactionRequest, normalize_canonical_text
 from policy.schema import Mandate, TimeWindowRule
 
 
@@ -15,10 +15,7 @@ class AuthorizationResult(BaseModel):
 
 def _normalize_merchant_name(name: str) -> str:
     """Normalize Unicode (NFKC), strip, and collapse whitespace for canonical comparison."""
-    if not name:
-        return ""
-    nfkc = unicodedata.normalize("NFKC", str(name))
-    return " ".join(nfkc.strip().lower().split())
+    return normalize_canonical_text(name)
 
 
 def _parse_time(time_str: str) -> time:

@@ -147,6 +147,23 @@
     "time_window_start": "00:00",
     "time_window_end": "23:59",
     "issued_at": "2026-08-01T10:30:00Z",
-    "ttl_seconds": 31536000
+    "ttl_seconds": 31536000,
+    "total_mandate_budget": 5000000.0
+  },
+  {
+    "id": "mandate_test_cross_budget",
+    "agent_id": "sim_shopping_agent_01",
+    "per_transaction_cap": 60000.0,
+    "categories": [
+      "electronics"
+    ],
+    "merchants": [
+      "Dell Official Store"
+    ],
+    "time_window_start": "00:00",
+    "time_window_end": "23:59",
+    "issued_at": "2026-08-01T10:30:00Z",
+    "ttl_seconds": 31536000,
+    "total_mandate_budget": 50000.0
   }
 ]

@@ -1,6 +1,17 @@
+import unicodedata
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 from pydantic import BaseModel, Field, field_validator
+
+
+def normalize_canonical_text(text: Any) -> str:
+    """Universal canonical text normalizer across all pillars: Unicode NFKC + strip + whitespace collapse + lowercase."""
+    if text is None:
+        return ""
+    if not isinstance(text, str):
+        text = str(text)
+    nfkc = unicodedata.normalize("NFKC", text)
+    return " ".join(nfkc.strip().lower().split())
 
 
 class Agent(BaseModel):

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
-from data.schema import Product
+from data.schema import Product, normalize_canonical_text
 from evidence.sources import EvidenceSourceRecord, is_record_fresh, resolve_source_records, get_source_rank
 
 
@@ -105,7 +105,7 @@ def _match_val(claimed_val: Any, actual_val: Any, field_name: str) -> bool:
             return abs(c_num - a_num) < 0.01
 
     if isinstance(claimed_val, str) and isinstance(actual_val, str):
-        return claimed_val.strip().lower() == actual_val.strip().lower()
+        return normalize_canonical_text(claimed_val) == normalize_canonical_text(actual_val)
 
     return claimed_val == actual_val
 

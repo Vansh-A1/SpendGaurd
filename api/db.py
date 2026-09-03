@@ -339,6 +339,7 @@ def get_transactions(
     decision: Optional[str] = None,
     agent_id: Optional[str] = None,
     session_id: Optional[str] = None,
+    mandate_id: Optional[str] = None,
     db_path: Optional[Path] = None,
 ) -> List[Dict[str, Any]]:
     conn = get_db_connection(db_path)
@@ -356,6 +357,9 @@ def get_transactions(
     if session_id:
         query += " AND session_id = ?"
         params.append(session_id)
+    if mandate_id:
+        query += " AND mandate_id = ?"
+        params.append(mandate_id)
 
     query += " ORDER BY timestamp DESC"
     cursor.execute(query, params)

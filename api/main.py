@@ -36,8 +36,14 @@ CATALOG_CACHE: List[Product] = []
 RISK_MODEL_CACHE: Any = None
 
 
-def get_resources():
+def get_resources(reload: bool = False):
     global MANDATES_CACHE, INTENTS_CACHE, CATALOG_CACHE, RISK_MODEL_CACHE
+    if reload:
+        MANDATES_CACHE = {}
+        INTENTS_CACHE = {}
+        CATALOG_CACHE = []
+        RISK_MODEL_CACHE = None
+
     if not MANDATES_CACHE:
         mandates_file = REPO_ROOT / "data" / "mandates.json"
         if mandates_file.exists():
