@@ -1,22 +1,91 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --ink: #f0eef5;
-  --muted: #8d94a1;
-  --accent: #a99df2;
-  --line: rgba(221, 222, 232, .1);
-  --bg: #07090d;
-  --mono: 'DM Mono', monospace;
-  --sans: 'Manrope', sans-serif;
-  --display: 'Playfair Display', serif;
+  /* Apple-grade color system */
+  --bg: #000000;
+  --bg-elevated: #1c1c1e;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --ink: #f5f5f7;
+  --ink-secondary: #a1a1a6;
+  --muted: #86868b;
+  --accent: #a78bfa;
+  --accent-subtle: rgba(167, 139, 250, 0.12);
+  --accent-glow: rgba(167, 139, 250, 0.25);
+  --green: #30d158;
+  --green-subtle: rgba(48, 209, 88, 0.12);
+  --red: #ff453a;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
+  /* Typography */
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+  /* Type scale */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 17px;
+  --text-lg: 21px;
+  --text-xl: 28px;
+  --text-2xl: 40px;
+  --text-3xl: 56px;
+  --text-hero: clamp(4rem, 9vw, 7.5rem);
+
+  /* Spacing */
+  --section-padding: clamp(120px, 14vh, 200px) clamp(24px, 6vw, 80px);
+  --content-max: 1120px;
+  --gap-section: 80px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 980px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 0.2s;
+  --duration-normal: 0.35s;
+  --duration-slow: 0.6s;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; background: var(--bg); }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-button { font: inherit; color: inherit; border: 0; cursor: pointer; }
-button:focus-visible { outline: 1px solid var(--accent); outline-offset: 4px; }
-::selection { color: #07090d; background: var(--accent); }
+/* Base resets */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; background: var(--bg); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+}
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+::selection {
+  color: var(--bg);
+  background: var(--accent);
+}
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+code { font-family: var(--mono); }

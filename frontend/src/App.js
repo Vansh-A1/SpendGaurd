@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, ChevronDown, RefreshCw, Copy, Check, ShieldCheck, Terminal, ExternalLink, Cpu, Bot, Zap, CheckCircle2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import "@/App.css";
@@ -147,10 +147,10 @@ function Reveal({ children, className = "", ...props }) {
   return (
     <motion.div
       className={className}
-      initial={reduced ? false : { opacity: 0, y: 30 }}
+      initial={reduced ? false : { opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
       {...props}
     >
       {children}
@@ -821,9 +821,6 @@ function App() {
   }, []);
 
   const reduced = useReducedMotion();
-  const { scrollYProgress } = useScroll();
-  const orbitScale = useTransform(scrollYProgress, [0, 0.22], [1, 1.18]);
-  const orbitY = useTransform(scrollYProgress, [0, 0.22], [0, -42]);
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
   const [replayStep, setReplayStep] = useState(decisionSteps.length - 1);
   const [isReplaying, setIsReplaying] = useState(false);
@@ -922,7 +919,7 @@ function App() {
       <div className="ambient" />
       <div className="grain" />
 
-      <motion.header className="nav" initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}>
+      <motion.header className="nav" initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1, duration: 0.6 }}>
         <button className="wordmark" onClick={() => scrollTo("top")} data-testid="brand-home-link">SpendGuard</button>
         <nav className="nav-links" aria-label="Primary navigation">
           <button onClick={() => scrollTo("product")} data-testid="nav-product-link">Product</button>
@@ -931,34 +928,31 @@ function App() {
           <button onClick={() => scrollTo("benchmark")} data-testid="nav-benchmark-link">Benchmark</button>
           <button onClick={() => scrollTo("trust")} data-testid="nav-trust-link">Trust</button>
           <button onClick={() => scrollTo("demo")} data-testid="nav-demo-link">Demo</button>
-          <button className="nav-cta" onClick={() => openConsole("overview")} data-testid="open-console-button">Open Console →</button>
+          <button className="nav-cta" onClick={() => openConsole("overview")} data-testid="open-console-button">Open Console</button>
         </nav>
       </motion.header>
 
       <section className="hero" id="top" data-testid="hero-section">
-        <motion.div className="trust-orbit" style={reduced ? undefined : { scale: orbitScale, y: orbitY }} aria-hidden="true">
+        <div className="trust-orbit" aria-hidden="true">
           <div className="orbit-field" />
-          <div className="orbit-ring outer" />
-          <div className="orbit-ring middle" />
           <div className="orbit-core" />
-          {[...Array(9)].map((_, i) => <i className="signal" key={i} style={{ "--i": i }} />)}
-        </motion.div>
+        </div>
         <div className="hero-copy">
           <Reveal><Eyebrow>EVIDENCE-DRIVEN TRUST FOR AUTONOMOUS PAYMENTS</Eyebrow></Reveal>
           <h1 data-testid="hero-heading">
-            <motion.span initial={reduced ? false : { y: "110%" }} animate={{ y: 0 }} transition={{ delay: 0.3, duration: 1 }}>TRUST FOR</motion.span>
-            <motion.span initial={reduced ? false : { y: "110%" }} animate={{ y: 0 }} transition={{ delay: 0.43, duration: 1 }}>AUTONOMOUS</motion.span>
-            <motion.span className="accent" initial={reduced ? false : { y: "110%" }} animate={{ y: 0 }} transition={{ delay: 0.56, duration: 1 }}>SPENDING.</motion.span>
+            <motion.span initial={reduced ? false : { y: "110%" }} animate={{ y: 0 }} transition={{ delay: 0.25, duration: 0.85 }}>TRUST FOR</motion.span>
+            <motion.span initial={reduced ? false : { y: "110%" }} animate={{ y: 0 }} transition={{ delay: 0.35, duration: 0.85 }}>AUTONOMOUS</motion.span>
+            <motion.span className="accent" initial={reduced ? false : { y: "110%" }} animate={{ y: 0 }} transition={{ delay: 0.45, duration: 0.85 }}>SPENDING.</motion.span>
           </h1>
-          <motion.div className="hero-bottom" initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.15, duration: 0.8 }}>
+          <motion.div className="hero-bottom" initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.7 }}>
             <p data-testid="hero-description">SpendGuard evaluates authority, intent, behavior, and evidence before money moves.</p>
             <div className="hero-actions">
-              <button className="button-primary" onClick={() => openConsole("overview")} data-testid="explore-spendguard-button">Open Live Console →</button>
-              <button className="text-button" onClick={() => scrollTo("how")} data-testid="see-how-it-works-button">See how it works ↗</button>
+              <button className="button-primary" onClick={() => openConsole("overview")} data-testid="explore-spendguard-button">Open Live Console</button>
+              <button className="text-button" onClick={() => scrollTo("how")} data-testid="see-how-it-works-button">See how it works</button>
             </div>
           </motion.div>
         </div>
-        <button className="scroll-cue" onClick={() => scrollTo("problem")} data-testid="scroll-cue-button"><span>ENTER</span><ChevronDown size={15} /></button>
+        <button className="scroll-cue" onClick={() => scrollTo("problem")} data-testid="scroll-cue-button"><span>SCROLL</span><ChevronDown size={14} /></button>
       </section>
 
       <section className="section problem" id="problem" data-testid="problem-section">
