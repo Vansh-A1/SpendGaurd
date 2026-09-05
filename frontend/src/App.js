@@ -447,9 +447,9 @@ print(tool_result)`,
 ];
 
 const benchmarkStats = [
-  { label: "True Leakage", value: "0.0%", detail: "0 / 22 unauthorized transactions allowed across red-team tests", hero: true },
+  { label: "Benchmark Catch Rate", value: "100%", detail: "22 / 22 adversarial red-team vectors intercepted", hero: true },
   { label: "False Friction", value: "0.0%", detail: "0 / 10 clean baseline purchases delayed or held", hero: false },
-  { label: "Traps Intercepted", value: "100%", detail: "22 / 22 adversarial traps caught by 4-pillar trust gates", hero: false },
+  { label: "Vulnerabilities Patched", value: "13 / 13", detail: "13 distinct exploit classes hardened and codified", hero: false },
   { label: "Gateway Latency", value: "< 12ms", detail: "Deterministic spec verification vs 2,500ms+ LLM baseline", hero: false },
 ];
 
@@ -457,7 +457,7 @@ const dualModelData = [
   {
     model: "OpenAI GPT-4o Agent",
     tag: "Multi-Turn Shopping ReAct",
-    leakage: "0.0%",
+    leakage: "0.0% (22/22 Catch)",
     flagged: "100.0%",
     friction: "0.0%",
     status: "Verified",
@@ -465,7 +465,7 @@ const dualModelData = [
   {
     model: "Anthropic Claude 3.5 Sonnet",
     tag: "Native Tool-Use Agent",
-    leakage: "0.0%",
+    leakage: "0.0% (22/22 Catch)",
     flagged: "100.0%",
     friction: "0.0%",
     status: "Verified",
@@ -554,7 +554,7 @@ function DualModelBenchmarkSection() {
       <div className="section-wrap">
         <Reveal className="benchmark-intro">
           <span className="chapter">09 / PROVEN RESULTS</span>
-          <h2>DUAL-MODEL BENCHMARK.<br /><span>ZERO LEAKAGE.</span></h2>
+          <h2>RED-TEAM BENCHMARK.<br /><span>22/22 VECTORS INTERCEPTED.</span></h2>
           <p style={{ maxWidth: "600px", color: "#8d94a1", lineHeight: "1.75", marginTop: "24px" }}>
             Validated across 22 multi-turn adversarial shopping scenarios containing 6 attack archetypes evaluated against dual LLM agent architectures (OpenAI GPT-4o and Anthropic Claude 3.5 Sonnet).
           </p>

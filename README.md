@@ -8,7 +8,7 @@
 [![React](https://img.shields.io/badge/React-18.2-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-Payment%20Rail%20Verified-0C2340.svg?logo=razorpay&logoColor=white)](https://razorpay.com/)
 [![Tests](https://img.shields.io/badge/Tests-128%2F128%20Passing%20(100%25)-brightgreen.svg?logo=pytest&logoColor=white)](tests/)
-[![Security Leakage](https://img.shields.io/badge/True%20Leakage%20Rate-0.0%25-success.svg)](#-red-team-benchmark-results)
+[![Benchmark Interception](https://img.shields.io/badge/Benchmark%20Catch%20Rate-22%2F22%20(100%25)-success.svg)](#-red-team-benchmark-results)
 [![False Friction](https://img.shields.io/badge/False%20Friction%20Rate-0.0%25-success.svg)](#-red-team-benchmark-results)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -29,7 +29,7 @@ As autonomous AI agents (procurement bots, shopping assistants, personal financi
 **SpendGuard** is an infrastructure-grade Trust & Authorization Gate that intercepts AI agents before financial settlement occurs. Built directly on **Razorpay Test-Mode APIs**, SpendGuard enforces deterministic mandates, semantic intent alignment, cryptographic evidence verification, and ML behavioral anomaly scoring.
 
 ### Key Highlights
-* **Zero Leakage**: **0.0% True Leakage Rate** across 22 adversarial scenarios evaluated under live **Gemini 2.5 Flash** and **OpenAI GPT-4o-mini** shopping agents.
+* **22/22 Benchmark Traps Intercepted**: 100% catch rate across 22 multi-turn adversarial red-team scenarios evaluated under live **Gemini 2.5 Flash** and **OpenAI GPT-4o-mini** shopping agents.
 * **Real Payment Rail Settled**: Every `ALLOW` decision completes a genuine test-mode Razorpay checkout loop (order creation $\rightarrow$ simulated payment authorization $\rightarrow$ capture $\rightarrow$ signed receipt token with HMAC-SHA256 signature verification).
 * **Two-Phase Pre-Auth Hold & Human Review Desk**: `VERIFY` decisions place funds on an authorization hold and route to an operator queue with SLA timeouts and webhook dispatch.
 * **13/13 Adversarial Vulnerabilities Patched**: Resilient against race conditions, replay attacks, Unicode homoglyph merchant spoofing, timestamp manipulation, and privilege injection.
@@ -294,6 +294,29 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 cd frontend && npm install && npm start
 ```
 Open **`http://localhost:3000`** in your browser to access the **Interactive Landing Page**, **Simulation Lab**, and **Review Desk**.
+
+---
+
+---
+
+## 🔬 Open Threat Model & Enterprise Advancement Roadmap
+
+True financial security requires intellectual honesty about frontier attack surfaces. While SpendGuard successfully intercepts all 22 benchmark vectors and 13 hardened vulnerability classes, we have mapped the key theoretical edge cases and our roadmap to solve them:
+
+### 1. Malicious Merchant Collusion (Rogue Sellers)
+* **Challenge**: If an adversary controls both the agent prompt and the merchant e-commerce storefront, the scraped catalog metadata will match the agent's claimed SKU 100%, evading catalog spec mismatch detection.
+* **Roadmap Mitigation**: Integrate **zkTLS (Zero-Knowledge TLS / TLSNotary)** cryptographic proofs and **Razorpay Merchant Underwriting / KYC Reputation Scoring** into Pillar 3 to verify legal seller identity before settlement.
+
+### 2. Distributed "Low-and-Slow" Sybil Swarms
+* **Challenge**: An adversary deploying hundreds of ephemeral sub-agents across multiple IP subnets, each making small micro-transactions below individual velocity anomaly thresholds.
+* **Roadmap Mitigation**: Upgrade Pillar 4 from single-session XGBoost to **Global Graph Neural Networks (GNNs)** that analyze wallet clustering, cost-center correlation, and cross-agent relationship graphs in real-time.
+
+### 3. Qualitative Intent Ambiguity
+* **Challenge**: Converting fuzzy natural language user intents ("reasonable layover", "good quality") into deterministic boolean rules risks false friction or subtle scope creep.
+* **Roadmap Mitigation**: Implement a **Neuro-Symbolic Intent Compiler** grounded in **Linear Temporal Logic (LTL)** formal verification, converting user policies into verifiable mathematical bounds.
+
+### 4. Hardware Security & Enclave Isolation
+* **Roadmap Mitigation**: Move cryptographic HMAC-SHA256 signing keys and session mutex states into **AWS Nitro Enclaves / Hardware Security Modules (HSM)** with distributed SAGA transaction reconciliation.
 
 ---
 
